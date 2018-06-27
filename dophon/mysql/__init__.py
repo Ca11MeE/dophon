@@ -1,0 +1,365 @@
+# coding: utf-8
+import dophon.reader as reader
+from dophon.mysql import Pool, Connection, PageHelper
+import threading
+import os
+import re
+from dophon.mysql import binlog
+from dophon.mysql.binlog import Schued
+
+"""
+后续开发;
+(完成)1.远程读取mapperxml
+(完成)2.语句对象定时更新暂定为本地xml文件增量binlog更新,后续开发远程增量更新(流程未定)
+    (完成)2.1本地binlog处理对比
+    (完成)2.2远程binlog处理对比
+(半完成)3.binlog生成算法以及对比算法以及增量写入
+(完成)4.细粒度事务控制
+(完成)5.配置文件配置连接数
+(完成)6.参照mybatis完成sql骨架拼写
+
+
+单条语句执行demo:
+# obj = getDbObj(project_path + '/mappers/ShopGoodsMapper.xml')
+# setObjUpdateRound(obj, '2')
+# obj.exe_sql("findGoodsList")
+
+批量语句执行DEMO:
+# obj=getDbObj(path=project_path +'/mysql/test.xml',debug=True)
+# obj.exe_sql_obj_queue(queue_obj={"test":(1,2),"test":(2,3)})
+或者
+# obj.exe_sql_queue(method_queue=['test','test','test_s','test','test'],args_queue=[('1','2'),('2','3'),(),('3','4'),('3','4')])
+"""
+# 定义连接池实例
+pool = None
+
+# 定义项目路径
+project_path = os.path.dirname(os.path.dirname(__file__))
+
+
+class curObj:
+    _page = False
+    _db = None
+    _cursor = None
+    _conn = None
+    _debug = False
+    _cursor = None
+    sql = reader.Mapper()
+
+    def __init__(self, db, path, poolFlag, debug):
+        self._debug = debug
+        self._poolFlag = poolFlag
+        if poolFlag:
+            # 连接池实例化
+            self._pool = db
+        else:
+            self._db = db
+        self.sql.openDom(path)
+        self._path = path
+        self._sqls = self.sql.getTree()
+
+    def refreash_sqls(self):
+        global sql
+        self.sql.openDom(self._path)
+        self._sqls = self.sql.getTree()
+
+    def check_conn(self, transaction=False):
+        try:
+            if not self._db:
+                # 无连接,需要获取连接
+                if self._poolFlag:
+                    # 连接池
+                    self._conn = self._pool.getConn()
+                    self._db = self._conn.getConnect()
+                else:
+                    # 单个连接理论上只执行一次,过后直接关闭
+                    self._db = Connection()
+        except Exception as e:
+            print(e)
+            raise Exception('检查连接失败')
+
+    def set_cursor(self):
+        # 初始化指针(如果不存在指针)
+        if not self._cursor:
+            self._cursor = self._db.cursor()
+
+    # 获取sql语句(包含处理)
+    def get_sql(self, methodName, pageInfo, args=()):
+        # 单独连接实例化
+        # 判断是否存在子节点
+        if methodName not in self._sqls:
+            raise Exception('没有该方法!method:' + str(methodName))
+        _sql = self._sqls[methodName]
+        # 判断是否分页(总开关)
+        # 开启之后该实例所有语句都认为是 需要分页
+        # 慎用!!!!
+        if self._page:
+            # 分页
+            _sql = _sql + 'limit ' + str((self._pageNum - 1) * self._pageSize) + ',' + str(self._pageSize)
+        if pageInfo:
+            # 分页
+            _sql = _sql + PageHelper.depkg_page_info(pageInfo)
+        # 判断是否骨架拼接
+        if args:
+            # 检查骨架实参传入类型,并作不同处理
+            if type(args) is type(()):
+                if re.match(r'(\#|\$)\{.*\}', _sql):
+                    raise Exception('骨架与参数不匹配')
+                _sql = _sql % args[:]
+            elif type(args) is type({}):
+                for key in args.keys():
+                    reg_str = r'(\#|\$)\{' + str(key) + '\}'
+                    if not re.search(reg_str, _sql):
+                        '''
+                        此处有几种情况:
+                        1.语句骨架不存在该key的空位(多余参数)
+                        2.骨架参数与骨架不对应(多余空位)
+                        '''
+                        pass
+                    else:
+                        _sql = re.sub('\#\{' + str(key) + '\}', '\'' + str(args[key]) + '\'',
+                                      re.sub('\$\{' + str(key) + '\}', str(args[key]), _sql))
+                # 多余空位检查
+                if re.search('(\#|\$)\{' + str(key) + '\}', _sql):
+                    raise Exception('存在无法配对的骨架参数')
+            else:
+                try:
+                    _sql = _sql % args[:]
+                except Exception as e:
+                    print(e)
+        # 去除注释与空格,换行等
+        __sql = re.sub('\\s+', ' ', re.sub('<!--.*-->', ' ', _sql))
+        return __sql
+
+    # 设定分页信息
+    def set_page(self, pageNum, pageSize):
+        self._pageNum = pageNum
+        self._pageSize = pageSize
+        self._page = True
+
+    def initial_page(self):
+        self._page = False
+
+    # 批量执行语句(整体版)
+    """
+    queue_obj中key为方法名,value为参数
+    注意!!!!
+    对于一个业务来说,一个sql方法只使用一次(因为有内部数据缓存)
+    若其中有重复方法,建议用分割版
+    """
+
+    def exe_sql_obj_queue(self, queue_obj={}):
+        if queue_obj:
+            methods = list(queue_obj.keys())
+            args = list(queue_obj.values())
+            self.exe_sql_queue(method_queue=methods, args_queue=args)
+        else:
+            raise Exception('queue_obj参数不正确')
+
+    # 批量执行语句(拆分版)
+    """
+    method_queue中存放顺序执行的sql方法名[str]
+    args_queue中存放对应下标方法的参数元组[()]
+    若其中包含select无条件参数语句,请用空元组()占位
+    """
+
+    def exe_sql_queue(self, method_queue=[], args_queue=[]):
+        # 参数检查
+        if not method_queue:
+            raise Exception('语句方法为空')
+            return
+        if not args_queue:
+            raise Exception('语句参数列表为空')
+            return
+        self.check_conn()
+        self.set_cursor()
+        try:
+            # 开启事务
+            # 批量取语句(以方法名为准,多于参数队列元素将丢弃)
+            while method_queue:
+                method = method_queue.pop(0)
+                args = args_queue.pop(0)
+                """
+                对于增改查来说,并不需要分页,参数列表是必须的
+                """
+                _sql = self.get_sql(methodName=method, args=args, pageInfo=None)
+                # 执行sql语句
+                self._cursor.execute(_sql)
+                # 调试模式打印语句
+                if self._debug:
+                    print_debug(methodName=method, args=args, sql=_sql, result=self._cursor.rowcount)
+            # 事务提交(pymysql要求除查询外所有语句必须手动提交)
+        except Exception as e:
+            print(e)
+            self._db.rollback()
+            print('事务回滚' + str(method_queue))
+        else:
+            self._db.commit()
+            print('事务提交' + str(method_queue))
+
+        # 关闭连接
+        self.close()
+
+    # 执行单条语句
+    # 防报错参数设定默认值
+    def exe_sql(self, methodName='', pageInfo=None, args=()):
+        lock = threading.Lock()
+        lock.acquire(blocking=True)
+        # 参数检查
+        if not re.sub('\s+', '', methodName):
+            raise Exception('语句方法为空')
+            return
+        self.check_conn()
+        self.set_cursor()
+        # 定义返回结果集
+        result = []
+        try:
+            if pageInfo and type(pageInfo) is type({}):
+                _sql = self.get_sql(methodName=methodName, pageInfo=pageInfo, args=args)
+            else:
+                _sql = self.get_sql(methodName=methodName, args=args, pageInfo=None)
+        except Exception as ex:
+            print(ex)
+            return result
+        try:
+            # 试执行语句
+            self._cursor.execute(_sql)
+            self._db.commit()
+            self.initial_page()
+            '''
+            下列代码弃用是因为查询事务不提交会导致查询数据为历史数据,
+            同时查询事务会导致重复读（REPEATABLE READ）表锁生效,需要提交事务消除表行锁
+            '''
+        except Exception as e:
+            self._db.rollback()
+            self.initial_page()
+            print("执行出错,错误信息为:", e)
+            return result
+        if 'select' not in _sql and 'SELECT' not in _sql:
+            data = [[self._cursor.rowcount]]
+            description = [['row_count']]
+        else:
+            data = self._cursor.fetchall()
+            description = self._cursor.description
+        result = sort_result(data, description, result)
+        # 关闭连接
+        self.close()
+        # 调试模式语句执行信息打印
+        if self._debug:
+            print_debug(methodName=methodName, args=args, sql=_sql, result=result)
+        lock.release()
+        # 非查询语句返回影响行数
+        if 'select' not in _sql and 'SELECT' not in _sql:
+            return data[0][0]
+        return result
+
+    def close(self):
+        self._cursor.close()
+        if self._poolFlag:
+            # 为连接池定义
+            pool.closeConn(self._conn)
+            # 归还连接后清除指针
+            self._cursor = None
+            self._db = None
+            self._conn = None
+        else:
+            # 为单独连接定义
+            self._db.close()
+
+    # 定义插入更新器方法
+    def insert_to_update_dispacther(self, millionSecond):
+        if isinstance(millionSecond, int):
+            w_time = millionSecond
+            pass
+        else:
+            try:
+                w_time = int(millionSecond)
+            except Exception as e:
+                print(e)
+
+        # 此处为增量更新代码
+        '''
+        临时思路
+        1.设定定时间隔
+        2.传入当前语句对象
+        3.内部压缩保存binlog
+        4.定时完毕重新获取语句,获取新语句对象binlog
+        5.对比binlog
+            5.1若更新后binog无差异则不作处理
+            5.2若存在差异,替换语句对象
+        '''
+        self._bin_cache = binlog.BinCache(self._path)
+        # 添加变更处理
+        self._bin_cache.set_false_fun(self.refreash_sqls)
+        # 调度器添加任务
+        Schued.sech_obj(fun=self._bin_cache.chk_diff, delay=w_time).enter()
+
+
+# 整理结果集并返回
+def sort_result(data, description, result):
+    for index in range(len(data)):
+        item = data[index]
+        r_item = {}
+        for i in range(len(item)):
+            colName = description[i][0]
+            val = item[i]
+            value = 'none'
+            if type(val) is not type(None):
+                value = str(val)
+            # 组装data
+            r_item[colName] = value
+        # 组装结果集
+        result.append(r_item)
+    return result
+
+
+def getDbObj(path: str, debug=False, auto_fix: bool = False):
+    """
+    获取数据表实例
+    :param path: xml文件路径
+    :param debug: 是否开启调试模式
+    :param auto_fix: 是否开启路径修复模式(损耗资源) <===  待测试
+    :return: xml对应实例
+    """
+    if pool is None:
+        raise Exception('连接池未定义')
+    if 0 >= pool.size():
+        # 配置属性生命周期过短,拟用__import__导入减轻内存废址
+        prop = __import__('properties')
+        if hasattr(prop, 'pool_conn_num'):
+            pool.initPool(getattr(prop, 'pool_conn_num'), Connection.Connection)
+        else:
+            # 初始5个连接
+            pool.initPool(5, Connection.Connection)
+    if auto_fix:
+        pattern = re.sub(r'\\', '\\\\', re.sub('/', '\\/', project_path))
+        if not re.search(pattern, path):
+            r_path = str(project_path) + str(path)
+        else:
+            r_path = str(path)
+    else:
+        r_path = path
+    return curObj(pool, r_path, True, debug)
+
+
+def setObjUpdateRound(obj, milllionSecond):
+    if isinstance(obj, curObj):
+        obj.insert_to_update_dispacther(milllionSecond)
+    else:
+        raise Exception('类型错误!!!!')
+
+
+# 调试模式下的打印
+def print_debug(methodName, sql, args, result):
+    print('METHOD:==>' + methodName)
+    print('SQL:=====>' + sql)
+    print('PARAMS:==>' + str(args))
+    if result and result[0]:
+        # 拿出列名
+        print('ROWS:====>' + str(list(result[0].keys())))
+        print('RESULT:==>' + str(list(result[0].values())))
+        for r in result[1:]:
+            print('=========>' + str(list(r.values())))
+    else:
+        print('ROWS:====>None')
+        print('RESULT:==>None')
