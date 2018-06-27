@@ -1,5 +1,6 @@
 # coding: utf-8"
 import sys
+
 """
 配置集合
 author:CallMeE
@@ -13,8 +14,8 @@ port = 443
 ssl_context = 'adhoc'
 
 # 此处为蓝图文件夹配置
-blueprint_path = ['/routes_package_path']
-pool_conn_num = 'db_connect_pool_size'
+blueprint_path = ['/routes'] # route model dir path
+pool_conn_num = 5  # size of db connect pool
 
 # 此处为数据库配置
 pydc_host = 'localhost'
@@ -26,4 +27,4 @@ pydc_database = 'database'
 
 def get_properties(prop_path=None):
     if prop_path:
-        sys.modules['properties']=__import__(prop_path,fromlist=True)
+        sys.modules['properties'] = __import__(prop_path, fromlist=True)
