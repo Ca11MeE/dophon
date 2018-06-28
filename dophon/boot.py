@@ -16,8 +16,14 @@ except Exception as e:
     sys.stdout.write('没有找到自定义配置:(application.py)')
     sys.stdout.flush()
 
+project_path=None
+
+def get_project_path():
+    return project_root
+
 from flask import Flask
-import dophon.mysql as mysql, os, re
+import os, re
+from dophon import mysql
 from dophon.mysql import Pool
 from dophon import properties
 
@@ -41,7 +47,8 @@ def map_apps(dir_path):
             print('加载蓝图模块:', file)
             f_model = __import__(re.sub('/', '', dir_path) + '.' + re.sub('\.py', '', file), fromlist=True)
             app.register_blueprint(f_model.app)
-        except:
+        except Exception as e:
+            raise e
             pass
 
 

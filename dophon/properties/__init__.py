@@ -1,11 +1,14 @@
 # coding: utf-8"
 import sys
+import os
 
 """
 配置集合
 author:CallMeE
 date:2018-06-01
 """
+
+project_root=os.getcwd()
 
 print('引用默认配置')
 # 此处为服务器配置
@@ -28,4 +31,3 @@ pydc_database = 'database'
 def get_properties(prop_path=None):
     if prop_path:
         sys.modules['properties'] = __import__(prop_path, fromlist=True)
-        sys.modules['dophon.properties'] = __import__(prop_path, fromlist=True)

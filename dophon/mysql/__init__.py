@@ -6,6 +6,7 @@ import os
 import re
 from dophon.mysql import binlog
 from dophon.mysql.binlog import Schued
+from dophon import properties
 
 """
 后续开发;
@@ -34,7 +35,7 @@ from dophon.mysql.binlog import Schued
 pool = None
 
 # 定义项目路径
-project_path = os.path.dirname(os.path.dirname(__file__))
+project_path = properties.project_root
 
 
 class curObj:
@@ -332,7 +333,7 @@ def getDbObj(path: str, debug=False, auto_fix: bool = False):
             # 初始5个连接
             pool.initPool(5, Connection.Connection)
     if auto_fix:
-        pattern = re.sub(r'\\', '\\\\', re.sub('/', '\\/', project_path))
+        pattern = re.sub(r'\\', r'\\\\', re.sub('/', '\\/', project_path))
         if not re.search(pattern, path):
             r_path = str(project_path) + str(path)
         else:
