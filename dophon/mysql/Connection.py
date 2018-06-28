@@ -1,6 +1,7 @@
 # coding: utf-8
 # 连接包装类
-import pymysql, dophon.properties as properties
+import pymysql
+from dophon import properties
 
 """
 mysql连接实例(半成品)

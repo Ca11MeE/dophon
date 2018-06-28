@@ -8,17 +8,18 @@
 import sys
 def read_self_prop():
     sys.modules['properties']=__import__('application',fromlist=True)
+    sys.modules['dophon.properties']=__import__('application',fromlist=True)
 
 try:
     read_self_prop()
-except:
+except Exception as e:
     sys.stdout.write('没有找到自定义配置:(application.py)')
     sys.stdout.flush()
 
 from flask import Flask
 import dophon.mysql as mysql, os, re
 from dophon.mysql import Pool
-import dophon.properties as properties
+from dophon import properties
 
 
 # 定义WEB容器(同时防止json以ascii解码返回)

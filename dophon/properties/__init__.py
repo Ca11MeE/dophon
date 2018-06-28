@@ -28,3 +28,4 @@ pydc_database = 'database'
 def get_properties(prop_path=None):
     if prop_path:
         sys.modules['properties'] = __import__(prop_path, fromlist=True)
+        sys.modules['dophon.properties'] = __import__(prop_path, fromlist=True)

@@ -1,4 +1,4 @@
-import dophon.boot as boot
+from dophon import boot
 
 # 启动服务器
 if '__main__' == __name__:
