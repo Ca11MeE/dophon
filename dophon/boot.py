@@ -61,7 +61,10 @@ def run_app(host=properties.host, port=properties.port):
 def run_app_ssl(host=properties.host, port=properties.port, ssl_context=properties.ssl_context):
     app.run(host=host, port=port, ssl_context=ssl_context)
 
-
+def bootstrap_app():
+    global app
+    b=__import__('flask_bootstrap')
+    b.Bootstrap(app)
 
 print('加载数据库模块')
 mysql.pool = Pool.Pool()

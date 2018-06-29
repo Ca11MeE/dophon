@@ -14,6 +14,7 @@ setup(
         'PyMySQL>=0.9.0',
         'pyOpenSSL>=18.0.0',
         'schedule>=0.5.0',
-        'urllib3>=1.23'
+        'urllib3>=1.23',
+        'Flask_Bootstrap>=3.3.7.1'
     ]
 )
