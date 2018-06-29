@@ -16,26 +16,24 @@ except Exception as e:
     sys.stdout.write('没有找到自定义配置:(application.py)')
     sys.stdout.flush()
 
-project_path=None
-
-def get_project_path():
-    return project_root
-
-from flask import Flask
+from flask import Flask,Blueprint
 import os, re
 from dophon import mysql
 from dophon.mysql import Pool
 from dophon import properties
 
-
+app_name=properties.service_name if hasattr(properties,'service_name') else __name__
 # 定义WEB容器(同时防止json以ascii解码返回)
-app = Flask(__name__)
+app = Flask(app_name)
 app.config['JSON_AS_ASCII'] = False
 
 # 处理各模块中的自动注入以及组装各蓝图
 # dir_path中为蓝图模块路径,例如需要引入的蓝图都在routes文件夹中,则传入参数'/routes'
 def map_apps(dir_path):
     path = os.getcwd() + dir_path
+    if not os.path.exists(path):
+        print('蓝图文件夹不存在,创建蓝图文件夹')
+        os.mkdir(path)
     list = os.listdir(path)
     print('蓝图文件夹:', '.', dir_path)
     # list.remove('__pycache__')
@@ -62,6 +60,7 @@ def run_app(host=properties.host, port=properties.port):
 
 def run_app_ssl(host=properties.host, port=properties.port, ssl_context=properties.ssl_context):
     app.run(host=host, port=port, ssl_context=ssl_context)
+
 
 
 print('加载数据库模块')
