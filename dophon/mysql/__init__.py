@@ -2,7 +2,6 @@
 import dophon.reader as reader
 from dophon.mysql import Pool, Connection, PageHelper
 import threading
-import os
 import re
 from dophon.mysql import binlog
 from dophon.mysql.binlog import Schued

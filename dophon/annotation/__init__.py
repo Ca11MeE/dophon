@@ -1,7 +1,8 @@
 # coding: utf-8
-from flask import jsonify, request, abort,render_template,before_render_template
+from flask import jsonify, request, abort, render_template, before_render_template
 import functools
 import sys
+from dophon.annotation import AutoWired
 
 """
 注解集合(部分)
@@ -10,6 +11,16 @@ date:2018-06-01
 
 
 """
+__all__ = [
+    'ResponseBody',
+    'ResponseTemplate',
+    'AutoParam',
+    'FullParam',
+    'RequestMapping',
+    'AutoWired'
+]
+
+AutoWired = AutoWired
 
 
 # 响应返回数据修饰器(跳过视图解析器)
@@ -31,19 +42,21 @@ def ResponseBody():
 
 
 # 返回web模板
-def ResponseTemplate(template:list):
+def ResponseTemplate(template: list):
     """
     返回模板页面
     :param template: 模板页面路径
     :return:
     """
+
     def method(f):
         def args(*args, **kwargs):
-            page_param=f(*args,**kwargs)
-            if isinstance(page_param,type({})):
-                return render_template(template,**page_param)
+            page_param = f(*args, **kwargs)
+            if isinstance(page_param, type({})):
+                return render_template(template, **page_param)
             else:
                 raise KeyError('页面参数错误!')
+
         return args
 
     return method
@@ -53,6 +66,8 @@ def ResponseTemplate(template:list):
 参数体可以为多个,形参名称必须与请求参数名一一对应(只少不多)
 装饰器中关键字参数列表可以指定参数名
 '''
+
+
 # 处理请求参数装饰器(分离参数)
 def AutoParam(kwarg_list=[]):
     def method(f):
@@ -81,6 +96,8 @@ def AutoParam(kwarg_list=[]):
 不匹配会打印异常
 参数以json形式赋值
 '''
+
+
 # 处理请求参数装饰器(统一参数,参数体内参数指向json串)
 def FullParam(kwarg_list=[]):
     def method(f):

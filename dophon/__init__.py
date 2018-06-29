@@ -25,10 +25,11 @@ def blue_print(inject_config:dict,name, import_name, static_folder=None,
                  static_url_path=static_url_path, template_folder=template_folder,
                  url_prefix=url_prefix, subdomain=subdomain, url_defaults=url_defaults,
                  root_path=root_path)
-    autowire=__import__('dophon.annotation.AutoWired',fromlist=True)
-    outerwired=getattr(autowire,'OuterWired')
-    outerwired(
-        obj_obj=inject_config['inj_obj_list'],
-        g=inject_config['global_obj']
-    )
+    if inject_config:
+        autowire=__import__('dophon.annotation.AutoWired',fromlist=True)
+        outerwired=getattr(autowire,'OuterWired')
+        outerwired(
+            obj_obj=inject_config['inj_obj_list'],
+            g=inject_config['global_obj']
+        )
     return blue_print_obj

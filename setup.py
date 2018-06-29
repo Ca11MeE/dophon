@@ -2,7 +2,7 @@ from setuptools import setup,find_packages
 
 setup(
     name='dophon',
-    version='1.0.1',
+    version='1.0.3',
     packages=find_packages(),
     url='https://github.com/Ca11MeE/dophon',
     license='Apache 2.0',
