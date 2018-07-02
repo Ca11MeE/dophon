@@ -31,5 +31,12 @@ def blue_print(inject_config:dict,name, import_name, static_folder=None,
         outerwired(
             obj_obj=inject_config['inj_obj_list'],
             g=inject_config['global_obj']
-        )
+        )(inject)()
     return blue_print_obj
+
+def inject():
+    """
+    用于构造注入入口,无意义
+    :return:
+    """
+    pass
