@@ -1,6 +1,6 @@
 # coding: utf-8
 import dophon
-from dophon import annotation
+from dophon.annotation import *
 
 _DemoRou=None
 
@@ -11,9 +11,15 @@ app=dophon.blue_print(inject_config={
     'global_obj': globals()
 },
 name='demo',
-import_name=__name__)
+import_name=__name__,
+template_folder='../templates')
 
-@annotation.RequestMapping(app=app,path='/',methods=['get'])
-@annotation.ResponseBody()
+@RequestMapping(app=app,path='/',methods=['get'])
+@ResponseBody()
 def test():
     return {'hahahah':'测试成功'}
+
+@RequestMapping(app=app,path='/index',methods=['get'])
+@ResponseTemplate(template=['index.html'])
+def index():
+    return {}
