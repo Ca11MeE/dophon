@@ -2,22 +2,97 @@ from dophon.mysql import Connection
 from dophon import mysql
 import types
 
-tables_in_db = []  # 数据库表名列表
-tables_param_list = {}
+
+class OrmManager:
+    @staticmethod
+    def create_class(table_name: str, table_args: list):
+        """
+        创建数据表类
+        :param table_name:  表名
+        :param table_args: 表参数
+        :return:
+        """
+        class_obj = type(table_name, (object,), {})
+        for table_arg in table_args:
+            # 获取表字段名以及属性
+            table_arg_field = table_arg['Field']
+            table_arg_type = table_arg['Type']
+            table_arg_null = table_arg['Null']
+            table_arg_key = table_arg['Key']
+            table_arg_default = table_arg['Default']
+
+            setter_code = compile(
+                'def setter_' + table_arg_field + '(self,value):' +
+                '\n\tself._' + table_arg_field + ' = value',
+                '',
+                'exec'
+            )
+            setter_function_code = [c for c in setter_code.co_consts if isinstance(c, types.CodeType)][0]
+            setter_method = types.FunctionType(setter_function_code, {})
+
+            getter_code = compile(
+                'def getter_' + table_arg_field + '(self):' +
+                '\n\treturn self._' + table_arg_field,
+                '',
+                'exec'
+            )
+            getter_function_code = [c for c in getter_code.co_consts if isinstance(c, types.CodeType)][0]
+            getter_method = types.FunctionType(getter_function_code, {})
+
+            setattr(
+                class_obj,
+                '_' + table_arg_field,
+                table_arg_default if table_arg_null == 'YES' else None,
+            )
+
+            setattr(
+                class_obj,
+                table_arg_field,
+                property(getter_method, setter_method)
+            )
+        return class_obj
+
+    def add_orm_obj(self, table_obj: object):
+        if 'table_name' in table_obj:
+            # 添加表名单位
+            table_name = table_obj['table_name']
+            # 编译表名属性方法(property)
+            getter_module_code = compile(
+                'def ' + table_name + '(self):\n\treturn self._' + table_name,
+                '',
+                'exec'
+            )
+            function_code = [c for c in getter_module_code.co_consts if isinstance(c, types.CodeType)][0]
+            getter_method = types.FunctionType(function_code, {})
+            # 获取表结构
+            table_arg = table_obj['table_obj']
+            # 组装新类
+            table_class = OrmManager.create_class(table_name, table_arg)
+            # 植入类内
+            setattr(OrmManager, '_' + table_name, table_class)
+            setattr(OrmManager, table_name, property(getter_method))
+        else:
+            raise Exception('插入对象异常')
 
 
-def init_tables_in_db():
+def init_tables_in_db(manager: OrmManager,tables:list=[]):
+    print('数据库全表ORM初始化开始' if not tables else str(tables[:])+'ORM初始化开始')
     connect = Connection.Connection().getConnect()
     cursor = connect.cursor()
     cursor.execute('SHOW TABLES')
     connect.commit()
     # 整理数据表名列表
     for tup_item in cursor.fetchall():
-        tables_in_db.append(tup_item[0])
+        if tables:
+            if tup_item[0] in tables:
+                init_table_param(tup_item[0], manager)
+        else:
+            init_table_param(tup_item[0], manager)
     connect.close()
+    print('数据库ORM初始化完毕')
 
 
-def init_table_param(table_name):
+def init_table_param(table_name, manager: OrmManager):
     connect = Connection.Connection().getConnect()
     cursor = connect.cursor()
     cursor.execute('DESC ' + table_name)
@@ -25,60 +100,9 @@ def init_table_param(table_name):
     titles = cursor.description
     values = cursor.fetchall()
     result = mysql.sort_result(values, titles, [])
-    tables_param_list[table_name] = result
+    table_obj = {
+        'table_name': table_name,
+        'table_obj': result
+    }
+    manager.add_orm_obj(table_obj)
     connect.close()
-
-
-# init_tables_in_db()
-# for table_name in tables_in_db:
-#     init_table_param(table_name)
-# init_table_param(tables_in_db[0])
-# print(tables_param_list)
-
-def inject_method(arg_name):
-    # compile setter method
-    setter_name = 'set_' + arg_name
-    setter_module_code = compile('def ' + setter_name + '(): return ' + setter_name, setter_name, 'exec')
-    function_code = [c for c in setter_module_code.co_consts if isinstance(c, types.CodeType)][0]
-    setter_method = types.FunctionType(function_code, {})
-
-    # compile getter method
-    getter_name = 'get_' + arg_name
-    getter_module_code = compile('def ' + getter_name + '(): return ' + getter_name, getter_name, 'exec')
-    function_code = [c for c in getter_module_code.co_consts if isinstance(c, types.CodeType)][0]
-    getter_method = types.FunctionType(function_code, {})
-
-
-def set_arg_demo():
-    pass
-
-
-class test():
-    local = locals()
-
-    def set_arg(self, value):
-        self._arg = value
-
-    def get_arg(self):
-        return self._arg
-
-    def print_local(self):
-        print(self.local)
-
-    _arg = property(get_arg, set_arg)
-
-    @property
-    def prop_arg(self):
-        return 'prop_arg'
-
-    @prop_arg.setter
-    def prop_arg(self):
-        pass
-
-    @prop_arg.getter
-    def prop_arg(self):
-        pass
-
-
-test = test()
-test.print_local()
