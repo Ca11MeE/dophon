@@ -23,9 +23,9 @@ pool_conn_num = 5  # size of db connect pool
 # 此处为数据库配置
 pydc_host = 'localhost'
 pydc_port = 3306
-pydc_user = 'username'
-pydc_password = 'password'
-pydc_database = 'database'
+pydc_user = 'root'
+pydc_password = 'root'
+pydc_database = 'zxyzt'
 
 
 def get_properties(prop_path=None):

@@ -1,6 +1,9 @@
 from dophon.mysql import Connection
 from dophon import mysql
 import types
+import re
+from dophon.orm.db_obj.type_dict import db_type_python_dict
+from dophon.orm.db_obj.type_dict import set_check
 
 
 class OrmManager:
@@ -28,7 +31,7 @@ class OrmManager:
                 'exec'
             )
             setter_function_code = [c for c in setter_code.co_consts if isinstance(c, types.CodeType)][0]
-            setter_method = types.FunctionType(setter_function_code, {})
+            setter_method = set_check(table_arg_type)(types.FunctionType(setter_function_code, {}))
 
             getter_code = compile(
                 'def getter_' + table_arg_field + '(self):' +
@@ -75,8 +78,8 @@ class OrmManager:
             raise Exception('插入对象异常')
 
 
-def init_tables_in_db(manager: OrmManager,tables:list=[]):
-    print('数据库全表ORM初始化开始' if not tables else str(tables[:])+'ORM初始化开始')
+def init_tables_in_db(manager: OrmManager, tables: list = []):
+    print('数据库全表ORM初始化开始' if not tables else str(tables[:]) + 'ORM初始化开始')
     connect = Connection.Connection().getConnect()
     cursor = connect.cursor()
     cursor.execute('SHOW TABLES')
