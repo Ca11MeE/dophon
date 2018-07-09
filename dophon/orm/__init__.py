@@ -10,10 +10,14 @@ def init_orm_manager():
 import datetime
 
 if '__main__' == __name__:
+    print('初始化orm管理器')
     manager = init_orm_manager()
+    print('获取orm管理器中对应表映射对象')
     user = manager.user()
-    # for attr in dir(user):
-    #     print(attr, ":", eval("user." + attr))
+    print('打印对象变量域')
+    for attr in dir(user):
+        print(attr, ":", eval("user." + attr))
+    print('开始对对象赋值')
     user.user_id = 'id'
     user.info_id = 'info_id'
     user.user_name = 'user_name'
@@ -21,5 +25,9 @@ if '__main__' == __name__:
     user.user_status = 123
     user.create_time = datetime.datetime.now()
     user.update_time = datetime.datetime.now()
-    # for attr in dir(user):
-    #     print(attr, ":", eval("user." + attr))
+    print('对象赋值完毕')
+    print('打印对象变量域')
+    for attr in dir(user):
+        print(attr, ":", eval("user." + attr))
+
+    dept_info=manager.dept_info()

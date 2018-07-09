@@ -5,55 +5,54 @@ import re
 from dophon.orm.db_obj.type_dict import db_type_python_dict
 from dophon.orm.db_obj.type_dict import set_check
 
+def create_class(table_name: str, table_args: list):
+    """
+    创建数据表类
+    :param table_name:  表名
+    :param table_args: 表参数
+    :return:
+    """
+    class_obj = type(table_name, (object,), {})
+    for table_arg in table_args:
+        # 获取表字段名以及属性
+        table_arg_field = table_arg['Field']
+        table_arg_type = table_arg['Type']
+        table_arg_null = table_arg['Null']
+        table_arg_key = table_arg['Key']
+        table_arg_default = table_arg['Default']
+
+        setter_code = compile(
+            'def setter_' + table_arg_field + '(self,value):' +
+            '\n\tself._' + table_arg_field + ' = value',
+            '',
+            'exec'
+        )
+        setter_function_code = [c for c in setter_code.co_consts if isinstance(c, types.CodeType)][0]
+        setter_method = set_check(table_arg_type)(types.FunctionType(setter_function_code, {}))
+
+        getter_code = compile(
+            'def getter_' + table_arg_field + '(self):' +
+            '\n\treturn self._' + table_arg_field,
+            '',
+            'exec'
+        )
+        getter_function_code = [c for c in getter_code.co_consts if isinstance(c, types.CodeType)][0]
+        getter_method = types.FunctionType(getter_function_code, {})
+
+        setattr(
+            class_obj,
+            '_' + table_arg_field,
+            table_arg_default if table_arg_null == 'YES' else None,
+        )
+
+        setattr(
+            class_obj,
+            table_arg_field,
+            property(getter_method, setter_method)
+        )
+    return class_obj
 
 class OrmManager:
-    @staticmethod
-    def create_class(table_name: str, table_args: list):
-        """
-        创建数据表类
-        :param table_name:  表名
-        :param table_args: 表参数
-        :return:
-        """
-        class_obj = type(table_name, (object,), {})
-        for table_arg in table_args:
-            # 获取表字段名以及属性
-            table_arg_field = table_arg['Field']
-            table_arg_type = table_arg['Type']
-            table_arg_null = table_arg['Null']
-            table_arg_key = table_arg['Key']
-            table_arg_default = table_arg['Default']
-
-            setter_code = compile(
-                'def setter_' + table_arg_field + '(self,value):' +
-                '\n\tself._' + table_arg_field + ' = value',
-                '',
-                'exec'
-            )
-            setter_function_code = [c for c in setter_code.co_consts if isinstance(c, types.CodeType)][0]
-            setter_method = set_check(table_arg_type)(types.FunctionType(setter_function_code, {}))
-
-            getter_code = compile(
-                'def getter_' + table_arg_field + '(self):' +
-                '\n\treturn self._' + table_arg_field,
-                '',
-                'exec'
-            )
-            getter_function_code = [c for c in getter_code.co_consts if isinstance(c, types.CodeType)][0]
-            getter_method = types.FunctionType(getter_function_code, {})
-
-            setattr(
-                class_obj,
-                '_' + table_arg_field,
-                table_arg_default if table_arg_null == 'YES' else None,
-            )
-
-            setattr(
-                class_obj,
-                table_arg_field,
-                property(getter_method, setter_method)
-            )
-        return class_obj
 
     def add_orm_obj(self, table_obj: object):
         if 'table_name' in table_obj:
@@ -70,7 +69,7 @@ class OrmManager:
             # 获取表结构
             table_arg = table_obj['table_obj']
             # 组装新类
-            table_class = OrmManager.create_class(table_name, table_arg)
+            table_class = create_class(table_name, table_arg)
             # 植入类内
             setattr(OrmManager, '_' + table_name, table_class)
             setattr(OrmManager, table_name, property(getter_method))
