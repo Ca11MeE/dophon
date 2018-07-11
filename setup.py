@@ -1,8 +1,14 @@
 from setuptools import setup,find_packages
 
+'''
+发布命令:
+python setup.py bdist_wheel
+twine upload dist/dophon-1.0.6-py3.whl
+'''
+
 setup(
     name='dophon',
-    version='1.0.4',
+    version='1.0.7',
     packages=find_packages(),
     url='https://github.com/Ca11MeE/dophon',
     license='Apache 2.0',
