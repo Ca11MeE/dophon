@@ -1,9 +1,9 @@
 from dophon.orm import db_obj
 
 
-def init_orm_manager():
+def init_orm_manager(table_list:list=[]):
     manager = db_obj.OrmManager()
-    db_obj.init_tables_in_db(manager, ['user', 'dept_info'])
+    db_obj.init_tables_in_db(manager, table_list)
     return manager
 
 
@@ -11,7 +11,7 @@ import datetime
 
 if '__main__' == __name__:
     print('初始化orm管理器')
-    manager = init_orm_manager()
+    manager = init_orm_manager(['user', 'dept_info'])
     print('获取orm管理器中对应表映射对象')
     user = manager.user()
     print('打印对象变量域')

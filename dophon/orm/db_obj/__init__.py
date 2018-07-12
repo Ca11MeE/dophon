@@ -5,6 +5,7 @@ import re
 from dophon.orm.db_obj.type_dict import db_type_python_dict
 from dophon.orm.db_obj.type_dict import set_check
 
+
 def create_class(table_name: str, table_args: list):
     """
     创建数据表类
@@ -39,6 +40,15 @@ def create_class(table_name: str, table_args: list):
         getter_function_code = [c for c in getter_code.co_consts if isinstance(c, types.CodeType)][0]
         getter_method = types.FunctionType(getter_function_code, {})
 
+        str_code = compile(
+            'def __str__(self):' +
+            '\n\treturn \'' + table_name + '.' + table_arg_field + '\'',
+            '',
+            'exec'
+        )
+        str_function_code = [c for c in str_code.co_consts if isinstance(c, types.CodeType)][0]
+        str_method = types.FunctionType(str_function_code, {})
+
         setattr(
             class_obj,
             '_' + table_arg_field,
@@ -50,10 +60,16 @@ def create_class(table_name: str, table_args: list):
             table_arg_field,
             property(getter_method, setter_method)
         )
+
+        setattr(
+            class_obj,
+            '__str__',
+            str_method
+        )
     return class_obj
 
-class OrmManager:
 
+class OrmManager:
     def add_orm_obj(self, table_obj: object):
         if 'table_name' in table_obj:
             # 添加表名单位
