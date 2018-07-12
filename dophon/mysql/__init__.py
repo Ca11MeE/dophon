@@ -6,6 +6,7 @@ import re
 from dophon.mysql import binlog
 from dophon.mysql.binlog import Schued
 from dophon import properties
+import sys
 
 """
 后续开发;
@@ -44,11 +45,12 @@ class curObj:
     _conn = None
     _debug = False
     _cursor = None
-    sql = reader.Mapper()
+    sql = None
 
     def __init__(self, db, path, poolFlag, debug):
         self._debug = debug
         self._poolFlag = poolFlag
+        self.sql=reader.Mapper()
         if poolFlag:
             # 连接池实例化
             self._pool = db
@@ -56,12 +58,13 @@ class curObj:
             self._db = db
         self.sql.openDom(path)
         self._path = path
-        self._sqls = self.sql.getTree()
+        self._file_part_mark=re.sub('\\..*', '', path.split('/')[len(path.split('/')) - 1])
+        self._sqls = self.sql.getTree()[self._file_part_mark]
 
     def refreash_sqls(self):
         global sql
         self.sql.openDom(self._path)
-        self._sqls = self.sql.getTree()
+        self._sqls = self.sql.getTree()[self._file_part_mark]
 
     def check_conn(self, transaction=False):
         try:
@@ -233,7 +236,8 @@ class curObj:
         except Exception as e:
             self._db.rollback()
             self.initial_page()
-            print("执行出错,错误信息为:", e)
+            sys.stderr.write("执行出错,错误信息为:"+str(e)+'sql语句为:'+_sql)
+            sys.stderr.flush()
             return result
         if 'select' not in _sql and 'SELECT' not in _sql:
             data = [[self._cursor.rowcount]]
