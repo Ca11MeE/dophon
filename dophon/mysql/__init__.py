@@ -47,10 +47,17 @@ class curObj:
     _cursor = None
     sql = None
 
-    def __init__(self, db, path, poolFlag, debug):
+    def __init__(self, db, path: str, poolFlag: bool, debug: bool):
+        """
+        初始化结果集对象
+        :param db: 连接工具实例(连接池或单个连接)
+        :param path: 结果集管理xml路径
+        :param poolFlag: 连接池标识
+        :param debug: 调试标识
+        """
         self._debug = debug
         self._poolFlag = poolFlag
-        self.sql=reader.Mapper()
+        self.sql = reader.Mapper()
         if poolFlag:
             # 连接池实例化
             self._pool = db
@@ -58,15 +65,24 @@ class curObj:
             self._db = db
         self.sql.openDom(path)
         self._path = path
-        self._file_part_mark=re.sub('\\..*', '', path.split('/')[len(path.split('/')) - 1])
+        self._file_part_mark = re.sub('\\..*', '', path.split('/')[len(path.split('/')) - 1])
         self._sqls = self.sql.getTree()[self._file_part_mark]
 
     def refreash_sqls(self):
+        """
+        刷新sql语句(动态调试sql)
+        ps:慎用
+        :return:
+        """
         global sql
         self.sql.openDom(self._path)
         self._sqls = self.sql.getTree()[self._file_part_mark]
 
-    def check_conn(self, transaction=False):
+    def check_conn(self):
+        """
+        检查数据库连接
+        :return:
+        """
         try:
             if not self._db:
                 # 无连接,需要获取连接
@@ -82,12 +98,23 @@ class curObj:
             raise Exception('检查连接失败')
 
     def set_cursor(self):
+        """
         # 初始化指针(如果不存在指针)
+
+        :return:
+        """
         if not self._cursor:
             self._cursor = self._db.cursor()
 
-    # 获取sql语句(包含处理)
-    def get_sql(self, methodName, pageInfo, args=()):
+    def get_sql(self, methodName: str, pageInfo, args=()):
+        """
+        # 获取sql语句(包含处理)
+
+        :param methodName: 结果集代号
+        :param pageInfo: 分页标识
+        :param args: 结果集映射语句参数集
+        :return:
+        """
         # 单独连接实例化
         # 判断是否存在子节点
         if methodName not in self._sqls:
@@ -134,24 +161,34 @@ class curObj:
         __sql = re.sub('\\s+', ' ', re.sub('<!--.*-->', ' ', _sql))
         return __sql
 
-    # 设定分页信息
-    def set_page(self, pageNum, pageSize):
+    def set_page(self, pageNum: str, pageSize: str):
+        """
+        # 设定分页信息
+
+        :param pageNum:页号(从0开始)
+        :param pageSize: 页容(>0)
+        :return:
+        """
         self._pageNum = pageNum
         self._pageSize = pageSize
         self._page = True
 
     def initial_page(self):
+        """
+        重置结果集实例的分页信息
+        :return:
+        """
         self._page = False
 
-    # 批量执行语句(整体版)
-    """
-    queue_obj中key为方法名,value为参数
-    注意!!!!
-    对于一个业务来说,一个sql方法只使用一次(因为有内部数据缓存)
-    若其中有重复方法,建议用分割版
-    """
-
     def exe_sql_obj_queue(self, queue_obj={}):
+        # 批量执行语句(整体版)
+        """
+        queue_obj中key为方法名,value为参数
+        注意!!!!
+        对于一个业务来说,一个sql方法只使用一次(因为有内部数据缓存)
+        若其中有重复方法,建议用分割版
+        """
+
         if queue_obj:
             methods = list(queue_obj.keys())
             args = list(queue_obj.values())
@@ -159,14 +196,13 @@ class curObj:
         else:
             raise Exception('queue_obj参数不正确')
 
-    # 批量执行语句(拆分版)
-    """
-    method_queue中存放顺序执行的sql方法名[str]
-    args_queue中存放对应下标方法的参数元组[()]
-    若其中包含select无条件参数语句,请用空元组()占位
-    """
-
     def exe_sql_queue(self, method_queue=[], args_queue=[]):
+        # 批量执行语句(拆分版)
+        """
+        method_queue中存放顺序执行的sql方法名[str]
+        args_queue中存放对应下标方法的参数元组[()]
+        若其中包含select无条件参数语句,请用空元组()占位
+        """
         # 参数检查
         if not method_queue:
             raise Exception('语句方法为空')
@@ -191,7 +227,7 @@ class curObj:
                 # 调试模式打印语句
                 if self._debug:
                     print_debug(methodName=method, args=args, sql=_sql, result=self._cursor.rowcount)
-            # 事务提交(pymysql要求除查询外所有语句必须手动提交)
+                    # 事务提交(pymysql要求除查询外所有语句必须手动提交)
         except Exception as e:
             print(e)
             self._db.rollback()
@@ -203,9 +239,17 @@ class curObj:
         # 关闭连接
         self.close()
 
-    # 执行单条语句
-    # 防报错参数设定默认值
-    def exe_sql(self, methodName='', pageInfo=None, args=()):
+    def exe_sql(self, methodName='', pageInfo=None, args=()) -> list:
+        """
+        # 执行单条语句
+
+        # 防报错参数设定默认值
+        :param methodName: 结果集映射代号
+        :param pageInfo: 结果集分页信息
+        :param args: 结果集查询参数
+        :return: <select>  ==>  查询结果
+                  <insert,update,delete>  ==>  有效行数
+        """
         lock = threading.Lock()
         lock.acquire(blocking=True)
         # 参数检查
@@ -236,7 +280,7 @@ class curObj:
         except Exception as e:
             self._db.rollback()
             self.initial_page()
-            sys.stderr.write("执行出错,错误信息为:"+str(e)+'sql语句为:'+_sql)
+            sys.stderr.write("执行出错,错误信息为:" + str(e) + 'sql语句为:' + _sql)
             sys.stderr.flush()
             return result
         if 'select' not in _sql and 'SELECT' not in _sql:
@@ -258,6 +302,11 @@ class curObj:
         return result
 
     def close(self):
+        """
+        (单个连接):关闭数据库连接
+        (连接池):归还连接
+        :return:
+        """
         self._cursor.close()
         if self._poolFlag:
             # 为连接池定义
@@ -270,8 +319,13 @@ class curObj:
             # 为单独连接定义
             self._db.close()
 
-    # 定义插入更新器方法
     def insert_to_update_dispacther(self, millionSecond):
+        """
+        # 定义插入更新调度方法
+
+        :param millionSecond: 更新频率
+        :return:
+        """
         if isinstance(millionSecond, int):
             w_time = millionSecond
             pass
@@ -299,8 +353,15 @@ class curObj:
         Schued.sech_obj(fun=self._bin_cache.chk_diff, delay=w_time).enter()
 
 
-# 整理结果集并返回
-def sort_result(data, description, result):
+
+def sort_result(data: list, description: tuple, result: list) -> list:
+    """
+    # 整理结果集并返回
+    :param data: 数据集
+    :param description:数据描述
+    :param result: 结果列表(或许产生多个集合)
+    :return:
+    """
     for index in range(len(data)):
         item = data[index]
         r_item = {}
@@ -317,7 +378,7 @@ def sort_result(data, description, result):
     return result
 
 
-def getDbObj(path: str, debug=False, auto_fix: bool = False):
+def getDbObj(path: str, debug: bool = False, auto_fix: bool = False):
     """
     获取数据表实例
     :param path: xml文件路径
@@ -346,15 +407,29 @@ def getDbObj(path: str, debug=False, auto_fix: bool = False):
     return curObj(pool, r_path, True, debug)
 
 
-def setObjUpdateRound(obj, milllionSecond):
+def setObjUpdateRound(obj: curObj, second: int):
+    """
+    设置结果集映射实例定时更新
+    :param obj: 结果集映射实例
+    :param second: 更新频率
+    :return:
+    """
     if isinstance(obj, curObj):
-        obj.insert_to_update_dispacther(milllionSecond)
+        obj.insert_to_update_dispacther(second)
     else:
         raise Exception('类型错误!!!!')
 
 
-# 调试模式下的打印
-def print_debug(methodName, sql, args, result):
+def print_debug(methodName: str, sql: str, args: dict, result: list):
+    """
+    # 调试模式下的语句信息打印
+
+    :param methodName: 结果集映射实例的结果集代号
+    :param sql: 结果集生成语句
+    :param args: 结果集实例执行参数
+    :param result: 结果集实例执行结果
+    :return:
+    """
     print('METHOD:==>' + methodName)
     print('SQL:=====>' + sql)
     print('PARAMS:==>' + str(args))
@@ -367,3 +442,22 @@ def print_debug(methodName, sql, args, result):
     else:
         print('ROWS:====>None')
         print('RESULT:==>None')
+
+
+def whereCause(args: dict) -> str:
+    """
+    将字典转换为sql条件语句
+    :param args: 字典(条件字典)
+    :return: sql条件语句
+    """
+    cache = []
+    for key in args.keys():
+        cache.append(str(key) + '=' + str(args[key]))
+    return 'WHERE ' + re.sub('\[|\]|\\\"|\\\'', '', re.sub(',', ' AND ', str(cache)))
+
+
+__all__ = {
+    'db_obj': getDbObj,
+    'update_round': setObjUpdateRound,
+    'where': whereCause,
+}
