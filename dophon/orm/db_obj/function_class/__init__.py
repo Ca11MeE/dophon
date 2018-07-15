@@ -4,10 +4,17 @@ import re
 功能特性类集合
 """
 
-__all__ = ['WhereAble', 'ValueAble','SetAble']
+__all__ = ['WhereAble', 'ValueAble', 'SetAble', 'OrmObj']
 
 
-class FieldsCallable(object):
+class OrmObj(object):
+    """
+    表映射基础类(标注作用)
+    """
+    pass
+
+
+class FieldsCallable(OrmObj):
     """
     可取出内置数据集合的功能类
     """
@@ -53,6 +60,11 @@ class FieldsCallable(object):
                 cache.append(getattr(self, '__alias') + '.' + f_name)
             else:
                 print('警告:表(', getattr(self, 'table_map_key'), ')缺失字段(', f_name, '),表映射存在风险')
+        return cache
+
+    def fields(self):
+        fields_list = self.get_field_list()
+        cache = re.sub('\[|\]|\\\'|\\\"', '', str(fields_list))
         return cache
 
 
@@ -121,7 +133,10 @@ class WhereAble(FieldsCallable):
         :param fields:条件列表
         :return:
         """
-        args = self.get_fields(fields)
+        if fields:
+            args = self.get_fields(fields)
+        else:
+            return ''
         return ' WHERE ' + self.where_cause(args)
 
 
@@ -145,17 +160,19 @@ class SetAble(WhereAble):
         args = self.get_fields(fields)
         return ' SET ' + self.where_cause(args)
 
-class JoinAble:
+
+class JoinAble(OrmObj):
     """
     可关联化功能类
     """
+
     def __init__(self):
         """
         初始化关联列表
         """
-        self.__join_list=[]
+        self.__join_list = []
 
-    def left_join(self,target:FieldsCallable):
+    def left_join(self, target: FieldsCallable):
         """
         左关联功能
         :param target: 关联实例
@@ -164,13 +181,13 @@ class JoinAble:
         self.__join_list.append(target)
         return self
 
-    def right_join(self,target):
+    def right_join(self, target):
         """
         右关联功能
         :param target: 关联实例
         :return: 自身实例
         """
-        if isinstance(target,JoinAble):
+        if isinstance(target, JoinAble):
             target.left_join(self)
             return self
         else:

@@ -11,7 +11,7 @@ import datetime
 
 if '__main__' == __name__:
     print('初始化orm管理器')
-    manager = init_orm_manager(['user'])
+    manager = init_orm_manager(['user','dept_info'])
     print('获取orm管理器中对应表映射对象')
     user = manager.user()
     # print('打印对象变量域')
@@ -37,5 +37,7 @@ if '__main__' == __name__:
     # print("user.get_field_list():", user.get_field_list())
     # print("user.alias('user_table').get_field_list():", user.alias('user_table').get_field_list())
 
-    print(user.where())
-    print(user.values())
+    # print(user.where())
+    # print(user.values())
+
+    user.select()

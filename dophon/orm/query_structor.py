@@ -1,3 +1,5 @@
+from dophon.orm.db_obj.function_class import *
+
 """
 查询语句结构映射
 
@@ -11,23 +13,26 @@ where
 <sort_param>
 """
 
+
 class Fields:
     """
     查询语句查询列参数类
     """
-    def __init__(self,*args,**kwargs):
+
+    def __init__(self, *args, **kwargs):
         print(*args)
         print(**kwargs)
+
 
 class Struct():
     """
     查询语句结构类
     """
-    pass
 
-if '__main__'==__name__:
-    import dophon.orm as orm
-    manager=orm.init_orm_manager(['user'])
-    user=manager.user()
-    Fields(str(user.user_id),str(user.info_id))
-    print(user([]))
+    def before_select(self, orm_obj: OrmObj, fields: list) -> str:
+        result='SELECT ' + orm_obj.fields() + ' FROM ' + orm_obj.table_map_key + orm_obj.where(fields)
+        return result
+
+    def select(self, fields: list = []):
+        sql = self.before_select(self, fields)
+        print('执行:', sql)
