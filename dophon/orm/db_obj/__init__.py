@@ -4,6 +4,7 @@ import types
 import re
 from dophon.orm.db_obj.type_dict import db_type_python_dict
 from dophon.orm.db_obj.type_dict import set_check
+from dophon.orm.db_obj.function_class import *
 
 
 def create_class(table_name: str, table_args: list):
@@ -13,7 +14,7 @@ def create_class(table_name: str, table_args: list):
     :param table_args: 表参数
     :return:
     """
-    class_obj = type(table_name, (object,), {})
+    class_obj = type(table_name, (WhereAble,ValueAble), {'__alias':table_name,'table_map_key':table_name})
     for table_arg in table_args:
         # 获取表字段名以及属性
         table_arg_field = table_arg['Field']
@@ -22,9 +23,13 @@ def create_class(table_name: str, table_args: list):
         table_arg_key = table_arg['Key']
         table_arg_default = table_arg['Default']
 
+        '''
+        映射类属性方法组装
+        '''
         setter_code = compile(
             'def setter_' + table_arg_field + '(self,value):' +
-            '\n\tself._' + table_arg_field + ' = value',
+            '\n\tself._' + table_arg_field + ' = value' +
+            '\n\tself.append(\'' + table_arg_field + '\')',
             '',
             'exec'
         )
@@ -40,15 +45,6 @@ def create_class(table_name: str, table_args: list):
         getter_function_code = [c for c in getter_code.co_consts if isinstance(c, types.CodeType)][0]
         getter_method = types.FunctionType(getter_function_code, {})
 
-        str_code = compile(
-            'def __str__(self):' +
-            '\n\treturn \'' + table_name + '.' + table_arg_field + '\'',
-            '',
-            'exec'
-        )
-        str_function_code = [c for c in str_code.co_consts if isinstance(c, types.CodeType)][0]
-        str_method = types.FunctionType(str_function_code, {})
-
         setattr(
             class_obj,
             '_' + table_arg_field,
@@ -61,11 +57,42 @@ def create_class(table_name: str, table_args: list):
             property(getter_method, setter_method)
         )
 
-        setattr(
-            class_obj,
-            '__str__',
-            str_method
-        )
+    '''
+    映射类固定方法组装
+    '''
+    # 重载直接调用运算符
+    callable_code = compile(
+        'def __call__(self,call_list):' +
+        '\n\treturn self.get_fields(call_list)',
+        '',
+        'exec'
+    )
+    callable_function_code = [c for c in callable_code.co_consts if isinstance(c, types.CodeType)][0]
+    callable_method = types.FunctionType(callable_function_code, {})
+
+    setattr(
+        class_obj,
+        '__call__',
+        callable_method
+    )
+
+    # 重载映射类别名运算符
+    alias_code=compile(
+        'def alias(self,alias_name:str):'+
+        '\n\tself.__alias=alias_name'+
+        '\n\treturn self',
+        '',
+        'exec'
+    )
+    alias_function_code = [c for c in alias_code.co_consts if isinstance(c, types.CodeType)][0]
+    alias_method = types.FunctionType(alias_function_code, {})
+
+    setattr(
+        class_obj,
+        'alias',
+        alias_method
+    )
+
     return class_obj
 
 

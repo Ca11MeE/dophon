@@ -156,7 +156,8 @@ class curObj:
                 try:
                     _sql = _sql % args[:]
                 except Exception as e:
-                    print(e)
+                    sys.stderr.write(e+'\n')
+                    sys.stderr.flush()
         # 去除注释与空格,换行等
         __sql = re.sub('\\s+', ' ', re.sub('<!--.*-->', ' ', _sql))
         return __sql
@@ -229,12 +230,14 @@ class curObj:
                     print_debug(methodName=method, args=args, sql=_sql, result=self._cursor.rowcount)
                     # 事务提交(pymysql要求除查询外所有语句必须手动提交)
         except Exception as e:
-            print(e)
+            sys.stderr.write(e+'\n')
             self._db.rollback()
-            print('事务回滚' + str(method_queue))
+            sys.stderr.write('事务回滚' + str(method_queue))
         else:
             self._db.commit()
             print('事务提交' + str(method_queue))
+        finally:
+            sys.stderr.flush()
 
         # 关闭连接
         self.close()
@@ -333,7 +336,8 @@ class curObj:
             try:
                 w_time = int(millionSecond)
             except Exception as e:
-                print(e)
+                sys.stderr.write(e)
+                sys.stderr.flush()
 
         # 此处为增量更新代码
         '''

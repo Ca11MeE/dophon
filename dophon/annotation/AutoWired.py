@@ -1,5 +1,6 @@
 # coding: utf-8
 # 自动注入修饰器
+import sys
 """
 自动注入注解
 author:CallMeE
@@ -76,7 +77,11 @@ def OuterWired(obj_obj, g):
                     a_name = args[0]
             for index in range(len(a_name)):
                 print(str(a_name[index]), "注入" + str(clz[index]))
-                g[a_name[index]] = clz[index]()
+                try:
+                    g[a_name[index]] = clz[index]()
+                except Exception as e:
+                    sys.stderr.write('注入'+str(a_name[index])+'失败,原因:'+str(e)+'\n')
+                    sys.stderr.flush()
             return f()
 
         return inner_function

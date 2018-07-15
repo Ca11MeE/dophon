@@ -36,7 +36,8 @@ app.config['JSON_AS_ASCII'] = False
 def map_apps(dir_path):
     path = os.getcwd() + dir_path
     if not os.path.exists(path):
-        print('蓝图文件夹不存在,创建蓝图文件夹')
+        sys.stderr.write('蓝图文件夹不存在,创建蓝图文件夹')
+        sys.stderr.flush()
         os.mkdir(path)
     list = os.listdir(path)
     print('蓝图文件夹:', '.', dir_path)

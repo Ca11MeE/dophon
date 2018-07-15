@@ -83,6 +83,8 @@ def AutoParam(kwarg_list=[]):
             except TypeError as t_e:
                 sys.stderr.write('参数不匹配!!,msg:' + repr(t_e))
                 return abort(500)
+            finally:
+                sys.stderr.flush()
 
         return args
 

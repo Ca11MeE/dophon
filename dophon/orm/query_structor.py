@@ -30,4 +30,4 @@ if '__main__'==__name__:
     manager=orm.init_orm_manager(['user'])
     user=manager.user()
     Fields(str(user.user_id),str(user.info_id))
-    print(user)
+    print(user([]))
