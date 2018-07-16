@@ -285,7 +285,6 @@ class curObj:
             self.initial_page()
             sys.stderr.write("执行出错,错误信息为:" + str(e) + 'sql语句为:' + _sql)
             sys.stderr.flush()
-            return result
         if 'select' not in _sql and 'SELECT' not in _sql:
             data = [[self._cursor.rowcount]]
             description = [['row_count']]
