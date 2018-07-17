@@ -13,7 +13,7 @@ class Pool():
     _size = 0
 
     # 初始化连接池
-    def initPool(self, num, Conn):
+    def initPool(self, num:int, Conn:Connection):
         _pool = []
         self._Conn = Conn
         for item_c in range(num):
@@ -22,12 +22,13 @@ class Pool():
             _pool.append(conn)
         self._pool = _pool
         self._size = num
+        return self
 
     def __init__(self):
         print('初始化连接池')
 
     # 定义取出连接
-    def getConn(self):
+    def getConn(self) -> Connection:
         __pool = self._pool
         if __pool:
             currConn = __pool.pop(0)
@@ -44,6 +45,7 @@ class Pool():
             # 连接数不足则新增连接
             conn = Connection.Connection()
             self._pool.append(conn)
+            return self.getConn()
 
     # 定义归还连接
     def closeConn(self, conn):
