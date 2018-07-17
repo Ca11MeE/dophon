@@ -18,7 +18,8 @@ def create_class(table_name: str, table_args: list):
     :param table_args: 表参数
     :return:
     """
-    class_obj = type(table_name, (WhereAble, ValueAble,Struct), {'__alias': table_name, 'table_map_key': table_name})
+    class_obj = type(table_name, (WhereAble, ValueAble, Struct), {'__alias': table_name, 'table_map_key': table_name})
+    default_arg_list = []
     for table_arg in table_args:
         # 获取表字段名以及属性
         table_arg_field = table_arg['Field']
@@ -60,6 +61,11 @@ def create_class(table_name: str, table_args: list):
             table_arg_field,
             property(getter_method, setter_method)
         )
+
+        default_arg_list.append(table_arg_field)
+
+    # 设定默认字段列表(所有字段)
+    setattr(class_obj, '__default_arg_list', default_arg_list)
 
     '''
     映射类固定方法组装
@@ -118,9 +124,9 @@ class OrmManager:
             if not search_class_by_name(table_name):
                 # 组装新类
                 table_class = create_class(table_name, table_arg)
-                save_cache(table_name,table_class)
+                save_cache(table_name, table_class)
             else:
-                table_class=get_cache(table_name)
+                table_class = get_cache(table_name)
             # 植入类内
             setattr(OrmManager, '_' + table_name, table_class)
             setattr(OrmManager, table_name, property(getter_method))
@@ -163,27 +169,29 @@ def init_table_param(table_name, manager: OrmManager):
 
 def save_cache(table_name: str, table_class: object):
     """
-    将orm映射类写入缓存
+    将orm映射类写入缓存,减少重复创建类
     :param table_class: orm映射类
     :return:
     """
-    print('保存映射缓存:',table_name,str(table_class))
+    print('保存映射缓存:', table_name, str(table_class))
     table_cache[table_name] = table_class
 
-def get_cache(table_name:str) -> object:
+
+def get_cache(table_name: str) -> object:
     """
     根据表名获取orm映射类缓存
     :param table_name: 映射表名
     :return: orm映射类
     """
-    print('获取映射缓存:',table_name)
+    print('获取映射缓存:', table_name)
     return table_cache[table_name]
 
-def search_class_by_name(table_name:str) -> bool:
+
+def search_class_by_name(table_name: str) -> bool:
     """
     根据表名查找缓存
     :param table_name: 映射表名
     :return: 是否命中缓存
     """
-    print('检查映射缓存:',table_name)
+    print('检查映射缓存:', table_name)
     return table_name in table_cache

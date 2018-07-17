@@ -3,6 +3,9 @@
 import sys
 """
 自动注入注解
+
+ps:默认为单例模式,利用模块局内变量域管理实例,减少内存冗余
+
 author:CallMeE
 date:2018-06-01
 
@@ -18,6 +21,7 @@ def inject_obj():
 注意:
 1.a_w_list中的元素为注入引用名,必须要与注入目标引用名一致,否则注入失效
 2.注入位置必须显式定义一个值为None的引用,否则编译不通过
+3.注入类型必须为可初始化类型(定义__new__ or __init__)
 """
 
 
@@ -41,7 +45,14 @@ def InnerWired(clz, g, a_w_list=[]):
                     # 被装饰函数位置参数查找赋值
                     a_name = args[0]
             for index in range(len(a_name)):
-                g[a_name[index]] = clz[index]()
+                print(str(a_name[index]), "注入" + str(clz[index]))
+                obj_name=a_name[index]
+                if obj_name in globals():
+                    g[obj_name] = globals()[obj_name]
+                else:
+                    instance=clz[index]()
+                    globals()[obj_name]=instance
+                    g[obj_name] = instance
             # return arg
             return f()
 
@@ -78,10 +89,17 @@ def OuterWired(obj_obj, g):
             for index in range(len(a_name)):
                 print(str(a_name[index]), "注入" + str(clz[index]))
                 try:
-                    g[a_name[index]] = clz[index]()
+                    obj_name = a_name[index]
+                    if obj_name in globals():
+                        g[obj_name] = globals()[obj_name]
+                    else:
+                        instance = clz[index]()
+                        globals()[obj_name] = instance
+                        g[obj_name] = instance
                 except Exception as e:
                     sys.stderr.write('注入'+str(a_name[index])+'失败,原因:'+str(e)+'\n')
                     sys.stderr.flush()
+                    continue
             return f()
 
         return inner_function

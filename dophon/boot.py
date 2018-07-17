@@ -21,7 +21,7 @@ except Exception as e:
     sys.stdout.write('没有找到自定义配置:(application.py)')
     sys.stdout.flush()
 
-from flask import Flask, Blueprint
+from flask import Flask
 import os, re
 from dophon import mysql
 from dophon.mysql import Pool
@@ -96,18 +96,18 @@ def stop_thread(thread):
 def free_source():
     def method(f):
         def args(*arg,**kwarg):
-            try:
-                f(*arg,**kwarg)
-            except:
-                """
-                释放所有资源
-                :return:
-                """
-                print('服务器关闭')
-                print('释放资源')
-                # 释放连接池资源
-                connection_pool.free_pool()
-                print('释放连接池')
+            print('启动服务器')
+            f(*arg,**kwarg)
+            """
+            释放所有资源
+            :return:
+            """
+            print('服务器关闭')
+            print('释放资源')
+            # 释放连接池资源
+            connection_pool.free_pool()
+            print('释放连接池')
+            print('再次按下Ctrl+C退出')
         return args
     return method
 
@@ -123,6 +123,10 @@ def run_app_ssl(host=properties.host, port=properties.port, ssl_context=properti
 
 
 def bootstrap_app():
+    """
+    bootstrap样式页面初始化
+    :return:
+    """
     global app
     b = __import__('flask_bootstrap')
     b.Bootstrap(app)

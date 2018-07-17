@@ -156,7 +156,7 @@ class curObj:
                 try:
                     _sql = _sql % args[:]
                 except Exception as e:
-                    sys.stderr.write(e+'\n')
+                    sys.stderr.write(e + '\n')
                     sys.stderr.flush()
                     raise e
         # 去除注释与空格,换行等
@@ -231,7 +231,7 @@ class curObj:
                     print_debug(methodName=method, args=args, sql=_sql, result=self._cursor.rowcount)
                     # 事务提交(pymysql要求除查询外所有语句必须手动提交)
         except Exception as e:
-            sys.stderr.write(str(e)+'\n')
+            sys.stderr.write(str(e) + '\n')
             self._db.rollback()
             sys.stderr.write('事务回滚' + str(method_queue))
             raise e
@@ -246,7 +246,7 @@ class curObj:
 
     def exe_sql(self, methodName='', pageInfo=None, args=()) -> list:
         """
-        # 执行单条语句
+        # 执行单条语句,返回结果列表(select more)
 
         # 防报错参数设定默认值
         :param methodName: 结果集映射代号
@@ -287,7 +287,7 @@ class curObj:
             self.initial_page()
             sys.stderr.write("执行出错,错误信息为:" + str(e) + 'sql语句为:' + _sql)
             sys.stderr.flush()
-        if 'select' not in _sql and 'SELECT' not in _sql:
+        if not _sql.startswith('select') and not _sql.startswith('SELECT'):
             data = [[self._cursor.rowcount]]
             description = [['row_count']]
         else:
@@ -301,9 +301,30 @@ class curObj:
             print_debug(methodName=methodName, args=args, sql=_sql, result=result)
         lock.release()
         # 非查询语句返回影响行数
-        if 'select' not in _sql and 'SELECT' not in _sql:
+        if not _sql.startswith('select') and not _sql.startswith('SELECT'):
             return data[0][0]
         return result
+
+    def exe_sql_single(self, methodName='', pageInfo=None, args=()) -> object:
+        """
+        返回单个对象(select one)
+        # 防报错参数设定默认值
+        :param methodName: 结果集映射代号
+        :param pageInfo: 结果集分页信息
+        :param args: 结果集查询参数
+        :return: <select>  ==>  查询结果
+                  <insert,update,delete>  ==>  有效行数
+        """
+        result = self.exe_sql(methodName=methodName, pageInfo=pageInfo, args=args)
+        if isinstance(result, list):
+            # 列表类型执行取值
+            if 1 < len(result):
+                # 多个结果
+                raise Exception('过多结果')
+            else:
+                return result[0]
+        else:
+            return result
 
     def close(self):
         """
@@ -356,7 +377,6 @@ class curObj:
         self._bin_cache.set_false_fun(self.refreash_sqls)
         # 调度器添加任务
         Schued.sech_obj(fun=self._bin_cache.chk_diff, delay=w_time).enter()
-
 
 
 def sort_result(data: list, description: tuple, result: list) -> list:

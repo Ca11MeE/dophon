@@ -41,7 +41,9 @@ class FieldsCallable(OrmObj):
         :return:
         """
         cache = {}
-        for f_name in self.__field_callable_list if not list else list:
+        for f_name in self.__field_callable_list \
+                if self.__field_callable_list else getattr(self,'__default_arg_list') \
+                if hasattr(self, '__default_arg_list') else list:
             if hasattr(self, f_name):
                 cache[f_name] = getattr(self, f_name)
             else:
@@ -55,7 +57,9 @@ class FieldsCallable(OrmObj):
         :return:
         """
         cache = []
-        for f_name in self.__field_callable_list if not list else list:
+        for f_name in self.__field_callable_list \
+                if self.__field_callable_list else getattr(self,'__default_arg_list') \
+                if hasattr(self, '__default_arg_list') else list:
             if getattr(self, f_name):
                 cache.append(getattr(self, '__alias') + '.' + f_name)
             else:
