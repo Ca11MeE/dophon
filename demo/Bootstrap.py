@@ -1,8 +1,11 @@
 from dophon import boot
+import threading
 
 # 启动服务器
-if '__main__' == __name__:
+def run():
     boot.bootstrap_app()
     # 启动服务器
     boot.run_app_ssl()
+
+run()
 

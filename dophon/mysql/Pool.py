@@ -52,3 +52,8 @@ class Pool():
     # 定义查询连接池连接数
     def size(self):
         return self._size
+
+    # 定义释放所有连接
+    def free_pool(self):
+        for conn in self._pool:
+            conn.getConnect().close()
