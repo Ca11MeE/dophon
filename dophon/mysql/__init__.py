@@ -287,12 +287,12 @@ class curObj:
             self.initial_page()
             sys.stderr.write("执行出错,错误信息为:" + str(e) + 'sql语句为:' + _sql)
             sys.stderr.flush()
-        if not _sql.startswith('select') and not _sql.startswith('SELECT'):
-            data = [[self._cursor.rowcount]]
-            description = [['row_count']]
-        else:
+        if re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', _sql):
             data = self._cursor.fetchall()
             description = self._cursor.description
+        else:
+            data = [[self._cursor.rowcount]]
+            description = [['row_count']]
         result = sort_result(data, description, result)
         # 关闭连接
         self.close()
@@ -301,9 +301,10 @@ class curObj:
             print_debug(methodName=methodName, args=args, sql=_sql, result=result)
         lock.release()
         # 非查询语句返回影响行数
-        if not _sql.startswith('select') and not _sql.startswith('SELECT'):
+        if re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', _sql):
+            return result
+        else:
             return data[0][0]
-        return result
 
     def exe_sql_single(self, methodName='', pageInfo=None, args=()) -> object:
         """

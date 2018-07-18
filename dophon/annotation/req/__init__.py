@@ -24,6 +24,7 @@ def auto_param(kwarg_list=[]):
                     sys.stderr.write('方法不支持!!')
             except TypeError as t_e:
                 sys.stderr.write('参数不匹配!!,msg:' + repr(t_e))
+                raise t_e
                 return abort(500)
             finally:
                 sys.stderr.flush()
