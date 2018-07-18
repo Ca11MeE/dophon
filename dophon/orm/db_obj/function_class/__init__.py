@@ -10,6 +10,8 @@ __all__ = ['WhereAble', 'ValueAble', 'SetAble', 'OrmObj']
 class OrmObj(object):
     """
     表映射基础类(标注作用)
+
+    待添加:sql关键字保护策略算法
     """
     pass
 
@@ -24,6 +26,7 @@ class FieldsCallable(OrmObj):
         初始化类功能实现的数据域
         """
         if not hasattr(self, '__field_callable_list'):
+            setattr(self, '__field_callable_list', [])
             self.__field_callable_list = []
 
     def append(self, field_name: str):
@@ -32,42 +35,50 @@ class FieldsCallable(OrmObj):
         :param field_name:
         :return:
         """
+        f_list = getattr(self, '__field_callable_list')
+        f_list.append(field_name)
+        setattr(self, '__field_callable_list', f_list)
         self.__field_callable_list.append(field_name)
 
-    def get_fields(self, list: list = []) -> dict:
+    def get_fields(self, f_list: list = []) -> dict:
         """
         获取字段映射
         :param list:
         :return:
         """
         cache = {}
-        for f_name in self.__field_callable_list \
-                if self.__field_callable_list else getattr(self,'__default_arg_list') \
-                if hasattr(self, '__default_arg_list') else list:
+        for f_name in getattr(self, '__field_callable_list') \
+                if (hasattr(self, '__field_callable_list') and len(
+                    getattr(self, '__field_callable_list')) > 0) else self.__field_callable_list \
+                if self.__field_callable_list else getattr(self, '__default_arg_list') \
+                if hasattr(self, '__default_arg_list') else f_list:
             if hasattr(self, f_name):
                 cache[f_name] = getattr(self, f_name)
             else:
                 print('警告:表(', getattr(self, 'table_map_key'), ')缺失字段(', f_name, '),表映射存在风险')
         return cache
 
-    def get_field_list(self, list: list = []) -> list:
+    def get_field_list(self, f_list: list = []) -> list:
         """
         获取字段列表
         :param list:
         :return:
         """
         cache = []
-        for f_name in self.__field_callable_list \
-                if self.__field_callable_list else getattr(self,'__default_arg_list') \
-                if hasattr(self, '__default_arg_list') else list:
+        for f_name in getattr(self, '__field_callable_list') \
+                if (hasattr(self, '__field_callable_list') and len(
+                    getattr(self, '__field_callable_list')) > 0) else self.__field_callable_list \
+                if self.__field_callable_list else getattr(self, '__default_arg_list') \
+                if hasattr(self, '__default_arg_list') else f_list:
             if getattr(self, f_name):
                 cache.append(getattr(self, '__alias') + '.' + f_name)
             else:
                 print('警告:表(', getattr(self, 'table_map_key'), ')缺失字段(', f_name, '),表映射存在风险')
+
         return cache
 
-    def fields(self):
-        fields_list = self.get_field_list()
+    def fields(self, fields: list = []):
+        fields_list = self.get_field_list(fields)
         cache = re.sub('\[|\]|\\\'|\\\"', '', str(fields_list))
         return cache
 
@@ -137,11 +148,12 @@ class WhereAble(FieldsCallable):
         :param fields:条件列表
         :return:
         """
-        if fields:
-            args = self.get_fields(fields)
+        if len(fields) > 0 or (
+                    hasattr(self, '__field_callable_list') and len(getattr(self, '__field_callable_list')) > 0):
+            args = getattr(self, 'get_fields')(fields)
         else:
             return ''
-        return ' WHERE ' + self.where_cause(args)
+        return ' WHERE ' + getattr(self, 'where_cause')(args)
 
 
 class SetAble(WhereAble):

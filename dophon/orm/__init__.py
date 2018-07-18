@@ -41,3 +41,12 @@ if '__main__' == __name__:
     # print(user.values())
 
     user.select()
+    user.user_name = '111'
+    user.select_one()
+    user.select_all()
+
+    user = manager.user()
+    user.alias('u').select()
+    user.user_name = '111'
+    user.alias('us').select_one()
+    user.alias('userr').select_all()
