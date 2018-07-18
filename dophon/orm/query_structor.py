@@ -37,7 +37,10 @@ class Struct():
                  getattr(self, 'fields')(fields_list) + \
                  ' FROM ' + \
                  getattr(self, 'table_map_key') + \
-                 ((' AS ' + getattr(self,'__alias')) if hasattr(self,'__alias') else '') + \
+                 (
+                     (' AS ' + getattr(self, '__alias'))
+                     if getattr(self,'__alias') != getattr(self,'table_map_key') else ''
+                 ) + \
                  (getattr(self, 'where')() if has_where else '')
         return result
 

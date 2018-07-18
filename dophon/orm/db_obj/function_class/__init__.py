@@ -49,7 +49,7 @@ class FieldsCallable(OrmObj):
         cache = {}
         for f_name in getattr(self, '__field_callable_list') \
                 if (hasattr(self, '__field_callable_list') and len(
-                    getattr(self, '__field_callable_list')) > 0) else self.__field_callable_list \
+            getattr(self, '__field_callable_list')) > 0) else self.__field_callable_list \
                 if self.__field_callable_list else getattr(self, '__default_arg_list') \
                 if hasattr(self, '__default_arg_list') else f_list:
             if hasattr(self, f_name):
@@ -64,16 +64,13 @@ class FieldsCallable(OrmObj):
         :param list:
         :return:
         """
+        cache_list = list(self.get_fields(f_list=f_list).keys())
         cache = []
-        for f_name in getattr(self, '__field_callable_list') \
-                if (hasattr(self, '__field_callable_list') and len(
-                    getattr(self, '__field_callable_list')) > 0) else self.__field_callable_list \
-                if self.__field_callable_list else getattr(self, '__default_arg_list') \
-                if hasattr(self, '__default_arg_list') else f_list:
-            if getattr(self, f_name):
-                cache.append(getattr(self, '__alias') + '.' + f_name)
-            else:
-                print('警告:表(', getattr(self, 'table_map_key'), ')缺失字段(', f_name, '),表映射存在风险')
+        for f_name in cache_list:
+            cache.append(
+                getattr(self, '__alias') + '.' +
+                f_name
+            )
 
         return cache
 
