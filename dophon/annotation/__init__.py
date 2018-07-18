@@ -115,7 +115,7 @@ def FullParam(kwarg_list=[]):
                         r_kwarg[kwarg_list[0]] = request.json
                     return f(*r_arg, **r_kwarg)
                 else:
-                    sys.stderr.write('方法不支持!!')
+                    sys.stderr.write('json统一参数不支持该请求方法!!')
                     return abort(400)
             except TypeError as t_e:
                 sys.stderr.write('参数不匹配!!,msg:' + repr(t_e))
@@ -123,6 +123,30 @@ def FullParam(kwarg_list=[]):
 
         return args
 
+    return method
+
+def FileParam():
+    """
+    文件参数装在装饰器
+
+    ps 文件上传暂时只支持路由方法内单个参数接收(会有校验策略)
+
+    参数demo(小程序):
+        ImmutableMultiDict([('img_upload_test', <FileStorage: 'filename' ('image/jpeg')>)])
+    :return:
+    """
+    def method(f):
+        @functools.wraps(f)
+        def args(*args,**kwargs):
+            # 检测参数
+            a_nums=len(args)+len(kwargs)
+            if a_nums != 1:
+                raise Exception('路由绑定参数数量异常')
+            k_args={
+                'file_dict':request.files
+            }
+            f(**k_args)
+        return args
     return method
 
 
