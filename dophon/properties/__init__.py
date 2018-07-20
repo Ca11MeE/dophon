@@ -26,14 +26,6 @@ pydc_user = 'root'
 pydc_password = 'root'
 pydc_database = 'zxyzt'
 
-# 此处为日志配置
-logger_config={
-    # 'filename': 'app.log',
-    # 'level': 'logging.DEBUG',
-    'format': '%(levelname)s : <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
-    'datefmt': '%Y-%m-%d %H:%M:%S'
-}
-
 
 def get_properties(prop_path=None):
     if prop_path:

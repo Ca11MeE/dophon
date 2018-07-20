@@ -1,7 +1,12 @@
 import logging
-from dophon import properties
 
-logging_config = properties.logger_config
+# 此处为日志配置
+logging_config={
+    # 'filename': 'app.log',
+    # 'level': 'logging.DEBUG',
+    'format': '%(levelname)s %(name)s: <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
+    'datefmt': '%Y-%m-%d %H:%M:%S'
+}
 
 if 'level' in logging_config:
     logging_config['level']=eval(logging_config['level'])
