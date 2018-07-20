@@ -1,5 +1,6 @@
 # coding: utf-8
 from dophon.mysql.binlog import ZipBinLog
+from dophon import logger
 
 """
 xml文件增强功能封装单元
@@ -7,6 +8,7 @@ author:CallMeE
 date:2018-06-01
 """
 
+logger.inject_logger(globals())
 
 class BinCache():
     _bin = ''
@@ -25,7 +27,7 @@ class BinCache():
         if self._bin == ZipBinLog.zip_as_bin(self._file):
             pass
         else:
-            print('文件发生增量更新(' + self._file + ')')
+            logger.info('文件发生增量更新(' + self._file + ')')
             # 执行增量更新方法
             if not self._false_fun:
                 pass
@@ -36,4 +38,4 @@ class BinCache():
 
 
 def def_false_fun(file):
-    print('xml文件发生增量改变!(' + str(file) + ')')
+    logger.info('xml文件发生增量改变!(' + str(file) + ')')

@@ -1,6 +1,7 @@
 # coding: utf-8
 from threading import Thread
 import schedule, time
+from dophon import logger
 
 _sched = schedule.Scheduler()
 
@@ -9,6 +10,8 @@ _sched = schedule.Scheduler()
 author:CallMeE
 date:2018-06-01
 """
+
+logger.inject_logger(globals())
 
 
 class sech_obj:
@@ -30,5 +33,5 @@ def run():
         time.sleep(1)
 
 
-print('xml自动更新调度启动')
+logger.info('xml自动更新调度启动')
 Thread(target=run).start()

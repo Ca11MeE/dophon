@@ -1,7 +1,6 @@
 from dophon.mysql import Pool, Connection
 from dophon import mysql
-import sys
-
+from dophon import logger
 """
 查询语句结构映射
 
@@ -16,6 +15,7 @@ where
 """
 pool = Pool.Pool().initPool(5, Connection.Connection)
 
+logger.inject_logger(globals())
 
 class Fields:
     """
@@ -51,7 +51,7 @@ class Struct():
         :return: <list> 多条结果列表
         """
         sql = self.before_select(fields, has_where)
-        print('执行:', sql)
+        logger.info('执行:', sql)
         result = []
         cursor = pool.getConn().getConnect().cursor()
         cursor.execute(sql)
@@ -76,8 +76,10 @@ class Struct():
             if len(result) == 1:
                 return result
             else:
+                logger.error('过多结果集')
                 raise Exception('过多结果集')
         else:
+            logger.error('无法预料的唯一结果集,找不到查询过滤条件')
             raise Exception('无法预料的唯一结果集,找不到查询过滤条件')
 
     def select_all(self, fields: list = []) -> list:
@@ -87,6 +89,5 @@ class Struct():
         :return:
         """
         if hasattr(self, '__field_callable_list') and len(getattr(self, '__field_callable_list')) > 0:
-            sys.stderr.write('警告:存在查询过滤条件\n')
-            sys.stderr.flush()
+            logger.error('警告:存在查询过滤条件\n')
         return self.select(fields=fields, has_where=False)

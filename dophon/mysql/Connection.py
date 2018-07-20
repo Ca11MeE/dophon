@@ -2,6 +2,7 @@
 # 连接包装类
 import pymysql
 from dophon import properties
+from dophon import logger
 
 """
 mysql连接实例(半成品)
@@ -11,6 +12,8 @@ mysql连接实例(半成品)
 author:CallMeE
 date:2018-06-01
 """
+
+logger.inject_logger(globals())
 
 namespace = [
     '_host',
@@ -65,7 +68,6 @@ class Connection:
 
     def __init__(self, __host=_host, __port=_port, __user=_user, __password=_password, __database=_database,
                  __charset='utf8'):
-        # print('初始化连接')
         self._db = pymysql.connect(host=__host, port=__port, user=__user, password=__password, database=__database,
                                    charset=__charset)
 
@@ -80,5 +82,4 @@ class Connection:
             return False
 
     def reConn(self):
-        # print('重连接')
         self._db = pymysql.connect(self._host, self._port, self._user, self._pwd, self._db, charset='utf8')

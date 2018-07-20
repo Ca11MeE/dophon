@@ -5,7 +5,10 @@ import re
 from dophon.orm.db_obj.type_dict import db_type_python_dict
 from dophon.orm.db_obj.type_dict import set_check
 from dophon.orm.db_obj.function_class import *
-from  dophon.orm.query_structor import Struct
+from dophon.orm.query_structor import Struct
+from dophon import logger
+
+logger.inject_logger(globals())
 
 # 初始化表结构缓存
 table_cache = {}
@@ -131,11 +134,12 @@ class OrmManager:
             setattr(OrmManager, '_' + table_name, table_class)
             setattr(OrmManager, table_name, property(getter_method))
         else:
+            logger.error('插入对象异常')
             raise Exception('插入对象异常')
 
 
 def init_tables_in_db(manager: OrmManager, tables: list = []):
-    print('数据库全表ORM初始化开始' if not tables else str(tables[:]) + 'ORM初始化开始')
+    logger.info('数据库全表ORM初始化开始' if not tables else str(tables[:]) + 'ORM初始化开始')
     connect = Connection.Connection().getConnect()
     cursor = connect.cursor()
     cursor.execute('SHOW TABLES')
@@ -148,7 +152,7 @@ def init_tables_in_db(manager: OrmManager, tables: list = []):
         else:
             init_table_param(tup_item[0], manager)
     connect.close()
-    print('数据库ORM初始化完毕')
+    logger.info('数据库ORM初始化完毕')
 
 
 def init_table_param(table_name, manager: OrmManager):
@@ -173,7 +177,7 @@ def save_cache(table_name: str, table_class: object):
     :param table_class: orm映射类
     :return:
     """
-    print('保存映射缓存:', table_name, str(table_class))
+    logger.info('保存映射缓存: %s %s', (table_name, str(table_class)))
     table_cache[table_name] = table_class
 
 
@@ -183,7 +187,7 @@ def get_cache(table_name: str) -> object:
     :param table_name: 映射表名
     :return: orm映射类
     """
-    print('获取映射缓存:', table_name)
+    logger.info('获取映射缓存: %s', (table_name,))
     return table_cache[table_name]
 
 
@@ -193,5 +197,5 @@ def search_class_by_name(table_name: str) -> bool:
     :param table_name: 映射表名
     :return: 是否命中缓存
     """
-    print('检查映射缓存:', table_name)
+    logger.info('检查映射缓存: %s', (table_name,))
     return table_name in table_cache

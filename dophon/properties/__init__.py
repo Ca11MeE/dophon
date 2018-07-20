@@ -10,7 +10,6 @@ date:2018-06-01
 
 project_root = os.getcwd()
 
-print('引用默认配置')
 # 此处为服务器配置
 host = '127.0.0.1'
 port = 443
@@ -26,6 +25,14 @@ pydc_port = 3306
 pydc_user = 'root'
 pydc_password = 'root'
 pydc_database = 'zxyzt'
+
+# 此处为日志配置
+logger_config={
+    # 'filename': 'app.log',
+    # 'level': 'logging.DEBUG',
+    'format': '%(levelname)s : <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
+    'datefmt': '%Y-%m-%d %H:%M:%S'
+}
 
 
 def get_properties(prop_path=None):

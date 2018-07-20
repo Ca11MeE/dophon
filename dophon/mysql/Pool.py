@@ -1,12 +1,14 @@
 # coding: utf-8
 #  连接
 from dophon.mysql import Connection
-
+from dophon import logger
 """
 连接池
 author:CallMeE
 date:2018-06-01
 """
+
+logger.inject_logger(globals())
 
 
 class Pool():
@@ -25,7 +27,7 @@ class Pool():
         return self
 
     def __init__(self):
-        print('初始化连接池')
+        logger.info('初始化连接池')
 
     # 定义取出连接
     def getConn(self) -> Connection:
@@ -37,7 +39,7 @@ class Pool():
                 # 不作处理
                 pass
             else:
-                print('连接无效')
+                logger.info('连接无效')
                 currConn.reConn()
 
             return currConn

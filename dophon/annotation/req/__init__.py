@@ -1,12 +1,14 @@
 import functools
 import sys
 from flask import request, abort
+from dophon import logger
 
 '''
 参数体可以为多个,形参名称必须与请求参数名一一对应(只少不多)
 装饰器中关键字参数列表可以指定参数名
 '''
 
+logger.inject_logger(globals())
 
 # 处理请求参数装饰器(分离参数)
 
@@ -21,13 +23,11 @@ def auto_param(kwarg_list=[]):
                 elif 'POST' == str(request.method):
                     return is_post(f, request, kwarg_list)
                 else:
-                    sys.stderr.write('方法不支持!!')
+                    logger.error('方法不支持!!')
             except TypeError as t_e:
-                sys.stderr.write('参数不匹配!!,msg:' + repr(t_e))
+                logger.error('参数不匹配!!,msg:' + repr(t_e))
                 raise t_e
                 return abort(500)
-            finally:
-                sys.stderr.flush()
 
         return args
 
@@ -58,10 +58,10 @@ def full_param(kwarg_list=[]):
                         r_kwarg[kwarg_list[0]] = request.json
                     return f(*r_arg, **r_kwarg)
                 else:
-                    sys.stderr.write('json统一参数不支持该请求方法!!')
+                    logger.error('json统一参数不支持该请求方法!!')
                     return abort(400)
             except TypeError as t_e:
-                sys.stderr.write('参数不匹配!!,msg:' + repr(t_e))
+                logger.error('参数不匹配!!,msg:' + repr(t_e))
                 return abort(500)
 
         return args
@@ -86,6 +86,7 @@ def file_param():
             # 检测参数
             a_nums = len(args) + len(kwargs)
             if a_nums != 1:
+                logger.error('路由绑定参数数量异常')
                 raise Exception('路由绑定参数数量异常')
             k_args = {
                 'file_dict': request.files

@@ -2,9 +2,10 @@
 # 响应体形式返回
 # (自带AutoParam) <------暂未完成
 import functools
-
+from dophon import logger
 from flask import jsonify, render_template
 
+logger.inject_logger(globals())
 
 def response_body():
     def method(f):
@@ -35,6 +36,7 @@ def response_template(template: list):
             if isinstance(page_param, type({})):
                 return render_template(template, **page_param)
             else:
+                logger.error('页面参数错误!')
                 raise KeyError('页面参数错误!')
 
         return args

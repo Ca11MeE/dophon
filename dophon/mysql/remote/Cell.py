@@ -2,6 +2,7 @@
 from urllib import request
 import uuid, os, dophon.mysql as mysql, time, stat
 import dophon.mysql.binlog.Schued as schued
+from dophon import logger
 
 """
 远程xml映射实例模板
@@ -21,6 +22,9 @@ read_only设置远程xml文件是否为只读，注意防止与自动增量更�
 """
 
 
+logger.inject_logger(globals())
+
+
 class cell():
     def __init__(self, file_name='', remote_path='', read_only=False):
         self._file_name = file_name
@@ -37,15 +41,15 @@ class cell():
             # 下载远程文件
             try:
                 response = request.urlretrieve(url=remote_path, filename=self._file_path + '/' + self._file_name)
-                print('加载远程mapper：' + response[0])
+                logger.info('加载远程mapper：' + response[0])
                 # 放置路径
                 self._abs_path = response[0]
                 if read_only:
                     self.lock_to_read()
                 break
             except Exception as e:
-                print(e)
-                print('连接远程计算机失败,请检查连接,3秒后重试(' + str(id(self)) + ')')
+                logger.error(e)
+                logger.error('连接远程计算机失败,请检查连接,3秒后重试(' + str(id(self)) + ')')
                 time.sleep(3)
 
     # 重新加载文件
@@ -57,7 +61,7 @@ class cell():
             self.lock_to_read()
         else:
             response = request.urlretrieve(url=self._remote_path, filename=self._file_path + '/' + self._file_name)
-        print('加载远程mapper：' + response[0])
+        logger.info('加载远程mapper：' + response[0])
         # 放置路径
         self._abs_path = response[0]
         # 链式调用（非必需）
@@ -94,7 +98,7 @@ class cell():
             if "[Errno 13] Permission denied" in str(e):
                 return True
             else:
-                print(str(e))
+                logger.error(str(e))
                 return False
 
 

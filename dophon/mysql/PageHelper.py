@@ -1,5 +1,6 @@
 # coding: utf-8
 import re
+from dophon import logger
 
 """
 sql分页工具(自带正则寻值)
@@ -15,6 +16,8 @@ sql分页工具(自带正则寻值)
 author:CallMeE
 date:2018-06-01
 """
+
+logger.inject_logger(globals())
 
 
 # 打包分页信息

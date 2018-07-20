@@ -8,25 +8,44 @@
 import ctypes
 import inspect
 import sys
+from dophon import logger
+
+logger.inject_logger(globals())
 
 
 def read_self_prop():
-    sys.modules['properties'] = __import__('application', fromlist=True)
-    sys.modules['dophon.properties'] = __import__('application', fromlist=True)
+    try:
+        # 加载自定义配置
+        app_prop=__import__('application', fromlist=True)
+        # 导入未写入的默认配置
+        import dophon.properties as p
+        import re
+        for name in dir(p):
+            if re.match('^__.+__$', name):
+                continue
+            else:
+                if hasattr(app_prop,name):
+                    continue
+                else:
+                    setattr(app_prop,name,getattr(p,name))
+    except Exception as e:
+        logger.error(e)
+        pass
+    sys.modules['properties'] = app_prop
+    sys.modules['dophon.properties'] = app_prop
 
 
 try:
     read_self_prop()
 except Exception as e:
-    sys.stdout.write('没有找到自定义配置:(application.py)')
-    sys.stdout.flush()
+    logger.error('没有找到自定义配置:(application.py)')
+    logger.info('引用默认配置')
 
 from flask import Flask
 import os, re
 from dophon import mysql
 from dophon.mysql import Pool
 from dophon import properties
-import threading
 
 app_name = properties.service_name if hasattr(properties, 'service_name') else __name__
 # 定义WEB容器(同时防止json以ascii解码返回)
@@ -39,21 +58,19 @@ app.config['JSON_AS_ASCII'] = False
 def map_apps(dir_path):
     path = os.getcwd() + dir_path
     if not os.path.exists(path):
-        sys.stderr.write('蓝图文件夹不存在,创建蓝图文件夹')
-        sys.stderr.flush()
+        logger.error('蓝图文件夹不存在,创建蓝图文件夹')
         os.mkdir(path)
-    list = os.listdir(path)
-    print('蓝图文件夹:', '.', dir_path)
-    # list.remove('__pycache__')
-    while list:
+    f_list = os.listdir(path)
+    logger.info('蓝图文件夹: %s', (dir_path,))
+    while f_list:
         try:
-            file = list.pop(0)
+            file = f_list.pop(0)
             if file.startswith('__') and file.endswith('__'):
                 continue
             i = os.path.join(path, file)
             if os.path.isdir(i):
                 continue
-            print('加载蓝图模块:', file)
+                logger.info('加载蓝图模块: %s', (file,))
             f_model = __import__(re.sub('/', '', dir_path) + '.' + re.sub('\.py', '', file), fromlist=True)
             app.register_blueprint(f_model.app)
         except Exception as e:
@@ -61,11 +78,11 @@ def map_apps(dir_path):
             pass
 
 
-print('加载数据库模块')
+logger.info('加载数据库模块')
 connection_pool = mysql.pool = Pool.Pool()
 # print('加载完毕')
 
-print('蓝图初始化')
+logger.info('蓝图初始化')
 for path in properties.blueprint_path:
     map_apps(path)
 
@@ -96,18 +113,18 @@ def stop_thread(thread):
 def free_source():
     def method(f):
         def args(*arg,**kwarg):
-            print('启动服务器')
+            logger.info('启动服务器')
             f(*arg,**kwarg)
             """
             释放所有资源
             :return:
             """
-            print('服务器关闭')
-            print('释放资源')
+            logger.info('服务器关闭')
+            logger.info('释放资源')
             # 释放连接池资源
             connection_pool.free_pool()
-            print('释放连接池')
-            print('再次按下Ctrl+C退出')
+            logger.info('释放连接池')
+            logger.info('再次按下Ctrl+C退出')
         return args
     return method
 

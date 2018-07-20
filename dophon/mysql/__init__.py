@@ -7,6 +7,7 @@ from dophon.mysql import binlog
 from dophon.mysql.binlog import Schued
 from dophon import properties
 import sys
+from dophon import logger
 
 """
 后续开发;
@@ -36,6 +37,8 @@ pool = None
 
 # 定义项目路径
 project_path = properties.project_root
+
+logger.inject_logger(globals())
 
 
 class curObj:
@@ -94,7 +97,7 @@ class curObj:
                     # 单个连接理论上只执行一次,过后直接关闭
                     self._db = Connection()
         except Exception as e:
-            print(e)
+            logger.error(e)
             raise Exception('检查连接失败')
 
     def set_cursor(self):
@@ -118,6 +121,7 @@ class curObj:
         # 单独连接实例化
         # 判断是否存在子节点
         if methodName not in self._sqls:
+            logger.error('没有该方法!method: ' + str(methodName))
             raise Exception('没有该方法!method:' + str(methodName))
         _sql = self._sqls[methodName]
         # 判断是否分页(总开关)
@@ -134,6 +138,7 @@ class curObj:
             # 检查骨架实参传入类型,并作不同处理
             if type(args) is type(()):
                 if re.match(r'(\#|\$)\{.*\}', _sql):
+                    logger.error('骨架与参数不匹配')
                     raise Exception('骨架与参数不匹配')
                 _sql = _sql % args[:]
             elif type(args) is type({}):
@@ -151,13 +156,13 @@ class curObj:
                                       re.sub('\$\{' + str(key) + '\}', str(args[key]), _sql))
                 # 多余空位检查
                 if re.search('(\#|\$)\{' + str(key) + '\}', _sql):
+                    logger.error('存在无法配对的骨架参数')
                     raise Exception('存在无法配对的骨架参数')
             else:
                 try:
                     _sql = _sql % args[:]
                 except Exception as e:
-                    sys.stderr.write(e + '\n')
-                    sys.stderr.flush()
+                    logger.error(e + '\n')
                     raise e
         # 去除注释与空格,换行等
         __sql = re.sub('\\s+', ' ', re.sub('<!--.*-->', ' ', _sql))
@@ -196,6 +201,7 @@ class curObj:
             args = list(queue_obj.values())
             self.exe_sql_queue(method_queue=methods, args_queue=args)
         else:
+            logger.error('queue_obj参数不正确')
             raise Exception('queue_obj参数不正确')
 
     def exe_sql_queue(self, method_queue=[], args_queue=[]):
@@ -207,9 +213,11 @@ class curObj:
         """
         # 参数检查
         if not method_queue:
+            logger.error('语句方法为空')
             raise Exception('语句方法为空')
             return
         if not args_queue:
+            logger.error('语句参数列表为空')
             raise Exception('语句参数列表为空')
             return
         self.check_conn()
@@ -231,15 +239,13 @@ class curObj:
                     print_debug(methodName=method, args=args, sql=_sql, result=self._cursor.rowcount)
                     # 事务提交(pymysql要求除查询外所有语句必须手动提交)
         except Exception as e:
-            sys.stderr.write(str(e) + '\n')
+            logger.error(str(e) + '\n')
             self._db.rollback()
-            sys.stderr.write('事务回滚' + str(method_queue))
+            logger.error('事务回滚' + str(method_queue))
             raise e
         else:
             self._db.commit()
-            print('事务提交' + str(method_queue))
-        finally:
-            sys.stderr.flush()
+            logger.info('事务提交' + str(method_queue))
 
             # 关闭连接
             self.close()
@@ -259,6 +265,7 @@ class curObj:
         lock.acquire(blocking=True)
         # 参数检查
         if not re.sub('\s+', '', methodName):
+            logger.error('语句方法为空')
             raise Exception('语句方法为空')
             return
         self.check_conn()
@@ -271,7 +278,7 @@ class curObj:
             else:
                 _sql = self.get_sql(methodName=methodName, args=args, pageInfo=None)
         except Exception as ex:
-            print(ex)
+            logger.error(ex)
             return result
         try:
             # 试执行语句
@@ -285,8 +292,7 @@ class curObj:
         except Exception as e:
             self._db.rollback()
             self.initial_page()
-            sys.stderr.write("执行出错,错误信息为:" + str(e) + 'sql语句为:' + _sql)
-            sys.stderr.flush()
+            logger.error("执行出错,错误信息为:" + str(e) + 'sql语句为:' + _sql)
         if re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', _sql):
             data = self._cursor.fetchall()
             description = self._cursor.description
@@ -321,6 +327,7 @@ class curObj:
             # 列表类型执行取值
             if 1 < len(result):
                 # 多个结果
+                logger.error('过多结果')
                 raise Exception('过多结果')
             else:
                 return result[0]
@@ -359,8 +366,7 @@ class curObj:
             try:
                 w_time = int(millionSecond)
             except Exception as e:
-                sys.stderr.write(e)
-                sys.stderr.flush()
+                logger.error(e)
 
         # 此处为增量更新代码
         '''
@@ -413,6 +419,7 @@ def getDbObj(path: str, debug: bool = False, auto_fix: bool = False):
     :return: xml对应实例
     """
     if pool is None:
+        logger.error('连接池未定义')
         raise Exception('连接池未定义')
     if 0 >= pool.size():
         # 配置属性生命周期过短,拟用__import__导入减轻内存废址
@@ -443,6 +450,7 @@ def setObjUpdateRound(obj: curObj, second: int):
     if isinstance(obj, curObj):
         obj.insert_to_update_dispacther(second)
     else:
+        logger.error('类型错误!!!!')
         raise Exception('类型错误!!!!')
 
 

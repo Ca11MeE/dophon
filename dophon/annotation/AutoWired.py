@@ -1,6 +1,8 @@
 # coding: utf-8
 # 自动注入修饰器
 import sys
+from dophon import logger
+
 """
 自动注入注解
 
@@ -24,6 +26,8 @@ def inject_obj():
 3.注入类型必须为可初始化类型(定义__new__ or __init__)
 """
 
+logger.inject_logger(globals())
+
 
 # 显式参数注入
 def InnerWired(clz, g, a_w_list=[]):
@@ -41,22 +45,24 @@ def InnerWired(clz, g, a_w_list=[]):
                     a_name = dic_args['a_w_list']
                 else:
                     if not args:
+                        logger.error('动态形参为空')
                         raise Exception('动态形参为空!!')
                     # 被装饰函数位置参数查找赋值
                     a_name = args[0]
             for index in range(len(a_name)):
-                print(str(a_name[index]), "注入" + str(clz[index]))
-                obj_name=a_name[index]
+                logger.info(str(a_name[index]) + " 注入 " + str(clz[index]))
+                obj_name = a_name[index]
                 if obj_name in globals():
                     g[obj_name] = globals()[obj_name]
                 else:
-                    instance=clz[index]()
-                    globals()[obj_name]=instance
+                    instance = clz[index]()
+                    globals()[obj_name] = instance
                     g[obj_name] = instance
             # return arg
             return f()
 
         return inner_function
+
     return wn
 
 
@@ -71,7 +77,8 @@ def OuterWired(obj_obj, g):
 
     # 注入实例
     def wn(f):
-        print('开始注入实例')
+        logger.info('开始注入实例')
+
         def inner_function(*args, **dic_args):
             # 获取数组
             if a_w_list and 0 < len(a_w_list):
@@ -83,11 +90,12 @@ def OuterWired(obj_obj, g):
                     a_name = dic_args['a_w_list']
                 else:
                     if not args:
+                        logger.error('动态形参为空!!')
                         raise Exception('动态形参为空!!')
                     # 被装饰函数位置参数查找赋值
                     a_name = args[0]
             for index in range(len(a_name)):
-                print(str(a_name[index]), "注入" + str(clz[index]))
+                logger.info(str(a_name[index]) + " 注入 " + str(clz[index]))
                 try:
                     obj_name = a_name[index]
                     if obj_name in globals():
@@ -97,10 +105,10 @@ def OuterWired(obj_obj, g):
                         globals()[obj_name] = instance
                         g[obj_name] = instance
                 except Exception as e:
-                    sys.stderr.write('注入'+str(a_name[index])+'失败,原因:'+str(e)+'\n')
-                    sys.stderr.flush()
+                    logger.error('注入' + str(a_name[index]) + '失败,原因:' + str(e) + '\n')
                     continue
             return f()
 
         return inner_function
+
     return wn

@@ -1,8 +1,10 @@
 from datetime import datetime
 import sys
 import re
-
+from dophon import logger
 import struct
+
+logger.inject_logger(globals())
 
 db_type_python_dict = {
     # 字符串类型
@@ -181,8 +183,7 @@ def check_data(data, type_str: str):
                 try:
                     max_length = int(length_info)
                 except Exception as e:
-                    sys.stderr.write(e)
-                    sys.stderr.flush()
+                    logger.error(e)
             try:
                 data_bytes = None
 
@@ -198,19 +199,20 @@ def check_data(data, type_str: str):
                 else:
                     return False
             except:
-                raise Exception(
-                    '数据类型错误( data_type = ' +
-                    str(type(data)) +
-                    ' , db_type = ' +
-                    type_str +
-                    ' , required_type = ' +
-                    str(data_struct_info['type']) + ' ) '
-                )
-
+                err_msg = '数据类型错误( data_type = ' + \
+                          str(type(data)) + \
+                          ' , db_type = ' + \
+                          type_str + \
+                          ' , required_type = ' + \
+                          str(data_struct_info['type']) + ' ) '
+                logger.error(err_msg)
+                raise Exception(err_msg)
+    err_msg = '不支持的数据类型( data = ' + \
+              (type(data)) + \
+              ' ) '
+    logger.error(err_msg)
     raise Exception(
-        '不支持的数据类型( data = ' +
-        (type(data)) +
-        ' ) '
+        err_msg
     )
 
 
@@ -222,14 +224,16 @@ def set_check(data_type):
                 result = f(*args, **kwargs)
                 return result
             else:
+                err_msg = '数据类型校验不通过( data = ' + \
+                          value + \
+                          ' , data_type = ' + \
+                          str(type(value)) + \
+                          ' , db_type = ' + \
+                          data_type + \
+                          ' )'
+                logger.error(err_msg)
                 raise Exception(
-                    '数据类型校验不通过( data = ' +
-                    value +
-                    ' , data_type = ' +
-                    str(type(value)) +
-                    ' , db_type = ' +
-                    data_type +
-                    ' )'
+                    err_msg
                 )
 
         return arg
