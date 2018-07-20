@@ -177,7 +177,7 @@ def save_cache(table_name: str, table_class: object):
     :param table_class: orm映射类
     :return:
     """
-    logger.info('保存映射缓存: %s %s', (table_name, str(table_class)))
+    logger.info('保存映射缓存: %s %s %s', table_name, ' => ', str(table_class))
     table_cache[table_name] = table_class
 
 
@@ -187,7 +187,7 @@ def get_cache(table_name: str) -> object:
     :param table_name: 映射表名
     :return: orm映射类
     """
-    logger.info('获取映射缓存: %s', (table_name,))
+    logger.info('获取映射缓存: %s', table_name)
     return table_cache[table_name]
 
 
@@ -197,5 +197,5 @@ def search_class_by_name(table_name: str) -> bool:
     :param table_name: 映射表名
     :return: 是否命中缓存
     """
-    logger.info('检查映射缓存: %s', (table_name,))
+    logger.info('检查映射缓存: %s', table_name)
     return table_name in table_cache

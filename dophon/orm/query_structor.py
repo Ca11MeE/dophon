@@ -51,7 +51,7 @@ class Struct():
         :return: <list> 多条结果列表
         """
         sql = self.before_select(fields, has_where)
-        logger.info('执行:', sql)
+        logger.info('执行: %s', sql)
         result = []
         cursor = pool.getConn().getConnect().cursor()
         cursor.execute(sql)
@@ -89,5 +89,5 @@ class Struct():
         :return:
         """
         if hasattr(self, '__field_callable_list') and len(getattr(self, '__field_callable_list')) > 0:
-            logger.error('警告:存在查询过滤条件\n')
+            logger.warning('警告:存在查询过滤条件')
         return self.select(fields=fields, has_where=False)

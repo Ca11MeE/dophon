@@ -49,7 +49,7 @@ def map_apps(dir_path):
         logger.error('蓝图文件夹不存在,创建蓝图文件夹')
         os.mkdir(path)
     f_list = os.listdir(path)
-    logger.info('蓝图文件夹: %s', (dir_path,))
+    logger.info('蓝图文件夹: %s', dir_path)
     while f_list:
         try:
             file = f_list.pop(0)
@@ -57,8 +57,8 @@ def map_apps(dir_path):
                 continue
             i = os.path.join(path, file)
             if os.path.isdir(i):
+                logger.info('加载蓝图模块: %s', file)
                 continue
-                logger.info('加载蓝图模块: %s', (file,))
             f_model = __import__(re.sub('/', '', dir_path) + '.' + re.sub('\.py', '', file), fromlist=True)
             app.register_blueprint(f_model.app)
         except Exception as e:

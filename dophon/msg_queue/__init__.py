@@ -74,11 +74,11 @@ def consumer(tag: str, delay: int = 1, retry: int = 3, as_args: bool = False):
                                 retrys += 1
                                 time.sleep(delay)
                                 if retrys >= retry:
-                                    logger.error('超出重试次数,文件名 %s', (file_path,))
+                                    logger.error('超出重试次数,文件名 %s', file_path)
                                     # 超出重试后重命名文件
                                     msg_mark = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + full_0(
                                         str(random.randint(0, 999999999999)), 6)
-                                    logger.debug('新文件名 %s', (str(msg_mark),))
+                                    logger.debug('新文件名 %s', str(msg_mark))
                                     n_file_path=os.path.join(root, msg_mark)
                                     os.rename(file_path, n_file_path)
 
