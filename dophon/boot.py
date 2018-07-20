@@ -8,40 +8,26 @@
 import ctypes
 import inspect
 import sys
-from imp import reload
-
-from dophon import logger
-
-logger.inject_logger(globals())
+import logging
 
 
 def read_self_prop():
     try:
-        # 加载自定义配置
-        app_prop = __import__('application')
-        # 导入未写入的默认配置
-        p = __import__('dophon.properties', fromlist=('properties',))
-        import re
-        for name in dir(p):
-            if re.match('^__.+__$', name):
-                continue
-            else:
-                if callable(getattr(p,name)) or hasattr(app_prop, name):
-                    continue
-                else:
-                    logger.warn('缺少 %s 参数,可能引起异常',name)
+        sys.modules['properties'] = __import__('application', fromlist=True)
+        sys.modules['dophon.properties'] = __import__('application', fromlist=True)
     except Exception as e:
-        logger.error(e)
-        pass
-    sys.modules['properties'] = __import__('application')
-    sys.modules['dophon.properties'] = __import__('application')
+        logging.error(e)
 
 
 try:
     read_self_prop()
 except Exception as e:
-    logger.error('没有找到自定义配置:(application.py)')
-    logger.info('引用默认配置')
+    logging.error('没有找到自定义配置:(application.py)')
+    logging.error('引用默认配置')
+
+from dophon import logger
+
+logger.inject_logger(globals())
 
 from flask import Flask
 import os, re

@@ -10,7 +10,7 @@ project_root=os.getcwd()
 # 此处为服务器配置
 host='0.0.0.0'
 port=443
-ssl_context=('./ssl/1_274698001.zxyzt.cn_bundle.crt','./ssl/2_274698001.zxyzt.cn.key')
+ssl_context='adhoc'
 
 # 此处为蓝图文件夹配置
 blueprint_path = ['/routes']
@@ -27,3 +27,10 @@ pydc_user = 'root'
 pydc_password = 'ealohu31841'
 pydc_database = 'agymall_db'
 
+# 此处为日志配置
+logger_config={
+    # 'filename': 'app.log',
+    # 'level': 'logging.DEBUG',
+    'format': '%(levelname)s : <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
+    'datefmt': '%Y-%m-%d %H:%M:%S'
+}
