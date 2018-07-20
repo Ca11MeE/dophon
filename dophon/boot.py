@@ -8,6 +8,8 @@
 import ctypes
 import inspect
 import sys
+from imp import reload
+
 from dophon import logger
 
 logger.inject_logger(globals())
@@ -16,23 +18,23 @@ logger.inject_logger(globals())
 def read_self_prop():
     try:
         # 加载自定义配置
-        app_prop=__import__('application', fromlist=True)
+        app_prop = __import__('application')
         # 导入未写入的默认配置
-        import dophon.properties as p
+        p = __import__('dophon.properties', fromlist=('properties',))
         import re
         for name in dir(p):
             if re.match('^__.+__$', name):
                 continue
             else:
-                if hasattr(app_prop,name):
+                if callable(getattr(p,name)) or hasattr(app_prop, name):
                     continue
                 else:
-                    setattr(app_prop,name,getattr(p,name))
+                    logger.warn('缺少 %s 参数,可能引起异常',name)
     except Exception as e:
         logger.error(e)
         pass
-    sys.modules['properties'] = app_prop
-    sys.modules['dophon.properties'] = app_prop
+    sys.modules['properties'] = __import__('application')
+    sys.modules['dophon.properties'] = __import__('application')
 
 
 try:
@@ -112,9 +114,9 @@ def stop_thread(thread):
 
 def free_source():
     def method(f):
-        def args(*arg,**kwarg):
+        def args(*arg, **kwarg):
             logger.info('启动服务器')
-            f(*arg,**kwarg)
+            f(*arg, **kwarg)
             """
             释放所有资源
             :return:
@@ -125,18 +127,22 @@ def free_source():
             connection_pool.free_pool()
             logger.info('释放连接池')
             logger.info('再次按下Ctrl+C退出')
+
         return args
+
     return method
+
 
 @free_source()
 def run_app(host=properties.host, port=properties.port):
     # 开启多线程处理
-    app.run(host=host, port=port,threaded=True)
+    app.run(host=host, port=port, threaded=True)
+
 
 @free_source()
 def run_app_ssl(host=properties.host, port=properties.port, ssl_context=properties.ssl_context):
     # 开启多线程处理
-    app.run(host=host, port=port, ssl_context=ssl_context,threaded=True)
+    app.run(host=host, port=port, ssl_context=ssl_context, threaded=True)
 
 
 def bootstrap_app():
