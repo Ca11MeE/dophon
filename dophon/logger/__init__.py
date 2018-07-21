@@ -7,6 +7,7 @@ logging_config = {
     # 'filename': 'app.log',
     # 'level': 'logging.DEBUG',
     'format': '%(levelname)s : (%(asctime)s) ==> ::: %(message)s',
+    # 'format': '%(levelname)s %(name)s: <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
     'datefmt': '%Y-%m-%d %H:%M:%S'
 }
 
