@@ -1,8 +1,6 @@
 # coding: utf-8
 # 自动注入修饰器
-import random
 import re
-import sys
 import inspect
 from dophon import logger
 
@@ -31,8 +29,7 @@ def inject_obj():
 
 logger.inject_logger(globals())
 
-
-obj_manager={}
+obj_manager = {}
 
 
 class UniqueError(Exception):
@@ -126,9 +123,29 @@ def OuterWired(obj_obj, g):
     return wn
 
 
+"""
+2018-07-22
+
+参照spring实例管理实现实例管理
+1.bean装饰器
+    参照spring中bean注解
+    需执行被装饰方法才能交由实例管理器管理
+    默认使用方法名作为实例管理名
+    可传入自定义别名替换别名
+    同名别名会抛出二义性错误
+    暂不支持lambda表达式(强制调用非装饰器装饰lambda表达式会产生注册实例无效)
+2.BeanConfig实例管理器
+    定义管理器子类后定义bean装饰方法后实例化一次后全部交由全局实例管理管理实例
+    支持with语法
+3.Bean实例获取类
+    实例获取需传入实例别名或实例类型
+    可直接赋值变量
+"""
+
+
 def bean(name: str = None):
     """
-    向全局实例字典插入实例
+    向实例管理器插入实例
     :param by_name: 别名(不传值默认为类型)
     :return:
     """
@@ -140,7 +157,7 @@ def bean(name: str = None):
                 raise TypeError('无法注册实例:' + str(result))
             if name:
                 if name in obj_manager:
-                    raise UniqueError('存在已注册的实例')
+                    raise UniqueError('存在已注册的实例:' + name)
                 obj_manager[name] = result
             else:
                 alias_name = getattr(f, '__name__') if getattr(f, '__name__') else getattr(type(result), '__name__')
@@ -202,22 +219,9 @@ class Bean:
                 bean_obj = obj_manager[key]
                 if isinstance(bean_obj, bean_key):
                     if len(type_list) > 0:
-                        raise UniqueError('存在定义模糊的实例获取')
+                        raise UniqueError('存在定义模糊的实例获取类型')
                     type_list.append(bean_obj)
             if not type_list:
                 raise KeyError('不存在该类型实例')
             return type_list[0]
 
-
-class config(BeanConfig):
-    # @bean()
-    @bean(name='self_random')
-    def test(self):
-        import random
-        return random.Random()
-
-
-with config() as c:
-    print(obj_manager['test'])
-
-print(Bean(random.Random))
