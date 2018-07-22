@@ -1,6 +1,9 @@
 # coding: utf-8
 # 自动注入修饰器
+import random
+import re
 import sys
+import inspect
 from dophon import logger
 
 """
@@ -29,6 +32,15 @@ def inject_obj():
 logger.inject_logger(globals())
 
 
+obj_manager={}
+
+
+class UniqueError(Exception):
+    """
+    唯一错误,存在覆盖已存在的别名实例
+    """
+
+
 # 显式参数注入
 def InnerWired(clz, g, a_w_list=[]):
     # print(locals())
@@ -52,11 +64,11 @@ def InnerWired(clz, g, a_w_list=[]):
             for index in range(len(a_name)):
                 logger.info(str(a_name[index]) + " 注入 " + str(clz[index]))
                 obj_name = a_name[index]
-                if obj_name in globals():
-                    g[obj_name] = globals()[obj_name]
+                if obj_name in obj_manager:
+                    g[obj_name] = obj_manager[obj_name]
                 else:
                     instance = clz[index]()
-                    globals()[obj_name] = instance
+                    obj_manager[obj_name] = instance
                     g[obj_name] = instance
             # return arg
             return f()
@@ -98,11 +110,11 @@ def OuterWired(obj_obj, g):
                 logger.info(str(a_name[index]) + " 注入 " + str(clz[index]))
                 try:
                     obj_name = a_name[index]
-                    if obj_name in globals():
-                        g[obj_name] = globals()[obj_name]
+                    if obj_name in obj_manager:
+                        g[obj_name] = obj_manager[obj_name]
                     else:
                         instance = clz[index]()
-                        globals()[obj_name] = instance
+                        obj_manager[obj_name] = instance
                         g[obj_name] = instance
                 except Exception as e:
                     logger.error('注入' + str(a_name[index]) + '失败,原因:' + str(e) + '\n')
@@ -112,3 +124,100 @@ def OuterWired(obj_obj, g):
         return inner_function
 
     return wn
+
+
+def bean(name: str = None):
+    """
+    向全局实例字典插入实例
+    :param by_name: 别名(不传值默认为类型)
+    :return:
+    """
+
+    def method(f):
+        def args(*args, **kwargs):
+            result = f(*args, **kwargs)
+            if result is None:
+                raise TypeError('无法注册实例:' + str(result))
+            if name:
+                if name in obj_manager:
+                    raise UniqueError('存在已注册的实例')
+                obj_manager[name] = result
+            else:
+                alias_name = getattr(f, '__name__') if getattr(f, '__name__') else getattr(type(result), '__name__')
+                if alias_name in obj_manager:
+                    raise UniqueError('存在已注册的实例')
+                else:
+                    obj_manager[alias_name] = result
+            return
+
+        return args
+
+    return method
+
+
+class BeanConfig:
+    """
+    实力配置类,类内自定义方法带上bean注解即可(参照springboot中been定义)
+    """
+
+    def __call__(self, *args, **kwargs):
+        for name in dir(self):
+            if re.match('__.+__', name):
+                continue
+            attr = getattr(self, name)
+            if callable(attr):
+                fields = inspect.getfullargspec(attr).args
+                staticmethod(attr(*fields))
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type and exc_val and exc_tb:
+            logger.error('%s 实例不存在', str(exc_val))
+        pass
+
+    def __init__(self):
+        logger.info('执行批量实例管理初始化')
+        self()
+
+
+class Bean:
+    def __new__(cls, *args, **kwargs):
+        if args or len(args) > 1:
+            bean_key = args[0]
+        elif kwargs or len(kwargs) > 1:
+            bean_key = kwargs.keys()[0]
+        else:
+            raise KeyError('不存在实例别名或实例类型')
+        if isinstance(bean_key, str):
+            if bean_key in obj_manager:
+                return obj_manager[bean_key]
+            raise KeyError('不存在该别名实例')
+        elif isinstance(bean_key, type):
+            type_list = []
+            for key in obj_manager.keys():
+                if re.match('__.+__', key):
+                    continue
+                bean_obj = obj_manager[key]
+                if isinstance(bean_obj, bean_key):
+                    if len(type_list) > 0:
+                        raise UniqueError('存在定义模糊的实例获取')
+                    type_list.append(bean_obj)
+            if not type_list:
+                raise KeyError('不存在该类型实例')
+            return type_list[0]
+
+
+class config(BeanConfig):
+    # @bean()
+    @bean(name='self_random')
+    def test(self):
+        import random
+        return random.Random()
+
+
+with config() as c:
+    print(obj_manager['test'])
+
+print(Bean(random.Random))

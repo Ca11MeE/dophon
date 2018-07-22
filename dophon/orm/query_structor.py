@@ -17,21 +17,11 @@ pool = Pool.Pool().initPool(5, Connection.Connection)
 
 logger.inject_logger(globals())
 
-class Fields:
-    """
-    查询语句查询列参数类
-    """
 
-    def __init__(self, *args, **kwargs):
-        print(*args)
-        print(**kwargs)
-
-
-class Struct():
+class Selelct:
     """
-    查询语句结构类
+    查询结构类
     """
-
     def before_select(self, fields_list: list, has_where: bool) -> str:
         result = 'SELECT ' + \
                  getattr(self, 'fields')(fields_list) + \
@@ -91,3 +81,12 @@ class Struct():
         if hasattr(self, '__field_callable_list') and len(getattr(self, '__field_callable_list')) > 0:
             logger.warning('警告:存在查询过滤条件')
         return self.select(fields=fields, has_where=False)
+
+class Struct(Selelct):
+    """
+    查询语句结构类
+    """
+
+
+
+
