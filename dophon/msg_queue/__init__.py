@@ -7,6 +7,10 @@ import json
 from threading import Thread
 from dophon import logger
 
+__all__ = [
+    'producer', 'consumer'
+]
+
 logger.inject_logger(globals())
 
 
@@ -20,6 +24,16 @@ def threadable():
     def method(f):
         def args(*args, **kwargs):
             Thread(target=f, args=args, kwargs=kwargs).start()
+
+        return args
+
+    return method
+
+
+def join_threadable():
+    def method(f):
+        def args(*args, **kwargs):
+            Thread(target=f, args=args, kwargs=kwargs).join()
 
         return args
 
@@ -49,67 +63,89 @@ def producer(tag: str, delay: int = 0):
 
 
 def consumer(tag: str, delay: int = 1, retry: int = 3, as_args: bool = False):
-    def method(f):
-        @threadable()
-        # 启用多线程监听消息
-        def args(*args, **kwargs):
-            while True:
-                for root, dirs, files in os.walk('./' + tag):
-                    for name in files:
-                        retrys = 0
-                        while retrys < retry:
-                            try:
-                                file_path = os.path.join(root, name)
-                                with open(file_path, 'r') as file:
-                                    new_kwargs = json.load(file)
-                                    if as_args:
-                                        f(args=new_kwargs)
-                                    else:
-                                        f(**new_kwargs)
-                            except TypeError as te:
-                                print(te)
-                            else:
-                                os.remove(file_path)
-                                break
-                            finally:
-                                retrys += 1
-                                time.sleep(delay)
-                                if retrys >= retry:
-                                    logger.error('超出重试次数,文件名 %s', file_path)
-                                    # 超出重试后重命名文件
-                                    msg_mark = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + full_0(
-                                        str(random.randint(0, 999999999999)), 6)
-                                    logger.debug('新文件名 %s', str(msg_mark))
-                                    n_file_path = os.path.join(root, msg_mark)
-                                    os.rename(file_path, n_file_path)
+    tags = tag.split('|')
 
-        return args
+    def method(f):
+        def queue_args(*args, **kwargs):
+            @threadable()
+            # 启用多线程监听消息
+            def args(tag, *args, **kwargs):
+                while True:
+                    for root, dirs, files in os.walk('./' + tag):
+                        for name in files:
+                            retrys = 0
+                            while retrys < retry:
+                                try:
+                                    file_path = os.path.join(root, name)
+                                    with open(file_path, 'r') as file:
+                                        new_kwargs = json.load(file)
+                                        if as_args:
+                                            f(args=new_kwargs)
+                                        else:
+                                            f(**new_kwargs)
+                                except TypeError as te:
+                                    print(te)
+                                else:
+                                    os.remove(file_path)
+                                    break
+                                finally:
+                                    retrys += 1
+                                    time.sleep(delay)
+                                    if retrys >= retry:
+                                        logger.error('超出重试次数,文件名 %s', file_path)
+                                        # 超出重试后重命名文件
+                                        msg_mark = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + full_0(
+                                            str(random.randint(0, 999999999999)), 6)
+                                        logger.debug('新文件名 %s', str(msg_mark))
+                                        n_file_path = os.path.join(root, msg_mark)
+                                        os.rename(file_path, n_file_path)
+
+            for tag in tags:
+                args(tag)
+
+        if len(tags) > 1:
+            print('监听多个标签', tags)
+
+        return queue_args
 
     return method
 
 
-"""
-
-DEMO:
+# """
+#
+# DEMO:
 
 @producer(tag='test_msg_tag')
 def produce_msg(mark):
-    return {'msg': '一条消息' + str(mark), 'timestamp': datetime.datetime.now().timestamp()}
+    return {'msg': '一条消息' + str(mark), 'timestamp': datetime.datetime.now().timestamp(), 'tag': 'test_msg_tag'}
 
 
-@consumer(tag='test_msg_tag', as_args=False, delay=1)
-def consume_msg(msg, timestamp):
+@producer(tag='test_msg_tag')
+def produce_msg1(mark):
+    return {'msg': '一条消息' + str(mark), 'timestamp': datetime.datetime.now().timestamp(), 'tag': 'test_msg_tag1'}
+
+
+@producer(tag='test_msg_tag2')
+def produce_msg2(mark):
+    return {'msg': '一条消息' + str(mark), 'timestamp': datetime.datetime.now().timestamp(), 'tag': 'test_msg_tag2'}
+
+
+@consumer(tag='test_msg_tag|test_msg_tag2', as_args=False, delay=1)
+def consume_msg(msg, timestamp, tag):
     print(msg)
     print(timestamp)
+    print(tag)
 
 
 produce_msg(1)
 produce_msg(2)
-produce_msg(3)
-produce_msg(4)
+produce_msg1(3)
+produce_msg1(4)
+produce_msg2(5)
+produce_msg2(6)
+produce_msg1(7)
+produce_msg2(8)
 consume_msg()
-produce_msg(5)
-produce_msg(6)
-produce_msg(7)
-produce_msg(8)
-"""
+produce_msg(9)
+produce_msg1(0)
+# """
