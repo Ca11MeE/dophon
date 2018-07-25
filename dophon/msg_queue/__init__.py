@@ -6,6 +6,8 @@ import datetime
 import json
 from threading import Thread
 from dophon import logger
+import inspect
+import re
 
 __all__ = [
     'producer', 'consumer'
@@ -79,12 +81,15 @@ def consumer(tag: str, delay: int = 1, retry: int = 3, as_args: bool = False):
                                     file_path = os.path.join(root, name)
                                     with open(file_path, 'r') as file:
                                         new_kwargs = json.load(file)
+                                        # 执行失败启动重试流程
                                         if as_args:
                                             f(args=new_kwargs)
                                         else:
                                             f(**new_kwargs)
                                 except TypeError as te:
-                                    print(te)
+                                    logger.error('%s: %s', name, te)
+                                except Exception as e:
+                                    logger.error('%s: %s', name, e)
                                 else:
                                     os.remove(file_path)
                                     break
@@ -111,9 +116,31 @@ def consumer(tag: str, delay: int = 1, retry: int = 3, as_args: bool = False):
     return method
 
 
-# """
-#
-# DEMO:
+class Consumer:
+    """
+    消息消费者封装(带自动运行)
+    """
+
+    def __init__(self):
+        """
+        注意!!!!
+        重写该类的init方法必须显式执行该类的init方法,否则定义的消息消费将失效
+        """
+        for name in dir(self):
+            item = getattr(self, name)
+            if not re.match('__.+__', name) and \
+                    callable(item) and \
+                    re.match('consumer.<locals>.method.<locals>.*', getattr(getattr(item, '__func__'), '__qualname__')):
+                for nn in dir(inspect.getfullargspec(item)):
+                    print(nn, '--', getattr(inspect.getfullargspec(item), nn))
+                fields = inspect.getfullargspec(item).args
+                # 清除自对象参数
+                staticmethod(item(*fields))
+
+
+"""
+
+DEMO:
 
 @producer(tag='test_msg_tag')
 def produce_msg(mark):
@@ -130,12 +157,15 @@ def produce_msg2(mark):
     return {'msg': '一条消息' + str(mark), 'timestamp': datetime.datetime.now().timestamp(), 'tag': 'test_msg_tag2'}
 
 
-@consumer(tag='test_msg_tag|test_msg_tag2', as_args=False, delay=1)
-def consume_msg(msg, timestamp, tag):
-    print(msg)
-    print(timestamp)
-    print(tag)
+class TestConsumer(Consumer):
 
+    @consumer(tag='test_msg_tag|test_msg_tag2', as_args=False, delay=1)
+    def consume_msg(msg, timestamp, tag):
+        print(msg)
+        print(timestamp)
+        print(tag)
+
+TestConsumer()
 
 produce_msg(1)
 produce_msg(2)
@@ -145,7 +175,6 @@ produce_msg2(5)
 produce_msg2(6)
 produce_msg1(7)
 produce_msg2(8)
-consume_msg()
 produce_msg(9)
 produce_msg1(0)
-# """
+"""

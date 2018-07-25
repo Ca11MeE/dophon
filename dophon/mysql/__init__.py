@@ -32,6 +32,7 @@ from dophon import logger
 或者
 # obj.exe_sql_queue(method_queue=['test','test','test_s','test','test'],args_queue=[('1','2'),('2','3'),(),('3','4'),('3','4')])
 """
+
 # 定义连接池实例
 pool = None
 
@@ -49,6 +50,7 @@ class curObj:
     _debug = False
     _cursor = None
     sql = None
+    lock = threading.Lock()
 
     def __init__(self, db, path: str, poolFlag: bool, debug: bool):
         """
@@ -261,8 +263,8 @@ class curObj:
         :return: <select>  ==>  查询结果
                   <insert,update,delete>  ==>  有效行数
         """
-        lock = threading.Lock()
-        lock.acquire(blocking=True)
+
+        self.lock.acquire(blocking=True)
         # 参数检查
         if not re.sub('\s+', '', methodName):
             logger.error('语句方法为空')
@@ -305,7 +307,8 @@ class curObj:
         # 调试模式语句执行信息打印
         if self._debug:
             print_debug(methodName=methodName, args=args, sql=_sql, result=result)
-        lock.release()
+
+        self.lock.release()
         # 非查询语句返回影响行数
         if re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', _sql):
             return result
@@ -329,6 +332,8 @@ class curObj:
                 # 多个结果
                 logger.error('过多结果')
                 raise Exception('过多结果')
+            elif 0 == len(result):
+                return None
             else:
                 return result[0]
         else:
@@ -493,8 +498,10 @@ def whereCause(args: dict) -> str:
     return 'WHERE ' + re.sub('\[|\]|\\\"|\\\'', '', re.sub(',', ' AND ', str(cache)))
 
 
-__all__ = {
-    'db_obj': getDbObj,
-    'update_round': setObjUpdateRound,
-    'where': whereCause,
-}
+db_obj = getDbObj
+update_round = setObjUpdateRound
+where = whereCause
+
+__all__ = [
+    'db_obj', 'update_round', 'where'
+]

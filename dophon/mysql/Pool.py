@@ -2,6 +2,7 @@
 #  连接
 from dophon.mysql import Connection
 from dophon import logger
+import threading
 """
 连接池
 author:CallMeE
@@ -33,6 +34,8 @@ class Pool():
     def getConn(self) -> Connection:
         __pool = self._pool
         if __pool:
+            lock = threading.Lock()
+            lock.acquire(blocking=True)
             currConn = __pool.pop(0)
             if currConn.testConn():
                 # 连接有效
@@ -41,7 +44,7 @@ class Pool():
             else:
                 logger.info('连接无效')
                 currConn.reConn()
-
+            lock.release()
             return currConn
         else:
             # 连接数不足则新增连接
