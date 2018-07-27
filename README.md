@@ -57,7 +57,7 @@ pydc_database = 'database' # 连接数据库名(可在后面跟连接参数)
 
 ## 4.路由
 
-方式一:
+<span id="to4routeOne">方式一:</span>
 
 ```python
 import dophon
@@ -81,9 +81,9 @@ from flask import Blueprint
 app=Blueprint('demo',__name__) # 具体参数参照flask.Blueprint
 ```
 
-## 5.对象注入
+## <span id = "to5Autowired">5.对象注入</span>
 
-方式一: 参考<4.路由.方式一>
+方式一: 参考<a href="#to4routeOne"><4.路由.方式一></a>
 
 方式二:
 
@@ -158,15 +158,31 @@ ps:额外管理页面路径请在路由定义(dophon.blue_print())中配置templ
 ### 6.3    AutoParam
 
 自动配置请求中的参数(分离形式)
+```python
+@AutoParam()
+def ...
+```
 
 ### 6.4    FullParam
 
 自动配置请求中的参数(集中形式)
+```python
+@FullParam()
+def ...
+```
 
 ### 6.5    RequestMapping
 
 简化版路由(同app.route())
+```python
+@RequestMapping()
+def ...
+```
 
 ### 6.5    Autowired
 
-参考<5.对象注入>
+参考<a href="#to5Autowired"><5.对象注入></a>
+```python
+@Autowired()
+def ...
+```
