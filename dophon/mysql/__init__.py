@@ -288,29 +288,29 @@ class curObj:
             self._db.commit()
             self.initial_page()
             '''
-            下列代码弃用是因为查询事务不提交会导致查询数据为历史数据,
-            同时查询事务会导致重复读（REPEATABLE READ）表锁生效,需要提交事务消除表行锁
+            尝试执行语句成功后会解析结果集
             '''
+            if re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', _sql):
+                data = self._cursor.fetchall()
+                description = self._cursor.description
+            else:
+                data = [[self._cursor.rowcount]]
+                description = [['row_count']]
+            result = sort_result(data, description, result)
         except Exception as e:
             self._db.rollback()
             self.initial_page()
             logger.error("执行出错,错误信息为:" + str(e) + 'sql语句为:' + _sql)
-        if re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', _sql):
-            data = self._cursor.fetchall()
-            description = self._cursor.description
-        else:
-            data = [[self._cursor.rowcount]]
-            description = [['row_count']]
-        result = sort_result(data, description, result)
-        # 关闭连接
-        self.close()
-        # 调试模式语句执行信息打印
-        if self._debug:
-            print_debug(methodName=methodName, args=args, sql=_sql, result=result)
+        finally:
+            # 关闭连接
+            self.close()
+            # 调试模式语句执行信息打印
+            if self._debug:
+                print_debug(methodName=methodName, args=args, sql=_sql, result=result)
 
-        self.lock.release()
+            self.lock.release()
         # 非查询语句返回影响行数
-        if re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', _sql):
+        if result and re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', _sql):
             return result
         else:
             return data[0][0]
