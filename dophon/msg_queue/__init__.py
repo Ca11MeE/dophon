@@ -8,12 +8,15 @@ from threading import Thread
 from dophon import logger
 import inspect
 import re
+import traceback
 
 __all__ = [
     'producer', 'consumer'
 ]
 
 logger.inject_logger(globals())
+
+trace_manager = {}
 
 
 def full_0(string: str, num_of_zero: int) -> str:
@@ -88,14 +91,22 @@ def consumer(tag: str, delay: int = 1, retry: int = 3, as_args: bool = False):
                                             f(**new_kwargs)
                                 except TypeError as te:
                                     logger.error('%s: %s', name, te)
+                                    trace_manager[tag] = {
+                                        'type': 'TypeError',
+                                        'msg': traceback.format_exc()
+                                    }
                                 except Exception as e:
                                     logger.error('%s: %s', name, e)
+                                    trace_manager[tag] = {
+                                        'type': 'TypeError',
+                                        'msg': traceback.format_exc()
+                                    }
                                 else:
                                     os.remove(file_path)
                                     break
                                 finally:
                                     retrys += 1
-                                    time.sleep(delay)
+                                    time.sleep(delay * (retrys + 1))
                                     if retrys >= retry:
                                         logger.error('超出重试次数,文件名 %s', file_path)
                                         # 超出重试后重命名文件

@@ -41,6 +41,10 @@ project_path = properties.project_root
 
 logger.inject_logger(globals())
 
+obj_manager={}
+
+class BlockingThreadError(Exception):
+    pass
 
 class curObj:
     _page = False
@@ -213,6 +217,7 @@ class curObj:
         args_queue中存放对应下标方法的参数元组[()]
         若其中包含select无条件参数语句,请用空元组()占位
         """
+        self.lock.acquire(blocking=True)
         # 参数检查
         if not method_queue:
             logger.error('语句方法为空')
@@ -248,7 +253,8 @@ class curObj:
         else:
             self._db.commit()
             logger.info('事务提交' + str(method_queue))
-
+        finally:
+            self.lock.release()
             # 关闭连接
             self.close()
 
@@ -263,7 +269,6 @@ class curObj:
         :return: <select>  ==>  查询结果
                   <insert,update,delete>  ==>  有效行数
         """
-
         self.lock.acquire(blocking=True)
         # 参数检查
         if not re.sub('\s+', '', methodName):
@@ -307,13 +312,15 @@ class curObj:
             # 调试模式语句执行信息打印
             if self._debug:
                 print_debug(methodName=methodName, args=args, sql=_sql, result=result)
-
             self.lock.release()
         # 非查询语句返回影响行数
-        if result and re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', _sql):
-            return result
+        if result:
+            if re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', _sql):
+                return result
+            else:
+                return data[0][0]
         else:
-            return data[0][0]
+            return []
 
     def exe_sql_single(self, methodName='', pageInfo=None, args=()) -> object:
         """
@@ -390,6 +397,22 @@ class curObj:
         # 调度器添加任务
         Schued.sech_obj(fun=self._bin_cache.chk_diff, delay=w_time).enter()
 
+    """
+    细粒度sql语句执行组
+    """
+    def execute(self,method_name:str, pageInfo=None, args=()):
+        if self.lock.locked():
+            raise BlockingThreadError('还有事务尚未提交!!!')
+        self.lock.acquire(blocking=True)
+        self._cursor.execute(sql)
+
+    def commit(self):
+        self._db.commit()
+        self.lock.release()
+
+    def rollback(self):
+        self._db.rollback()
+        self.lock.release()
 
 def sort_result(data: list, description: tuple, result: list) -> list:
     """
@@ -442,7 +465,12 @@ def getDbObj(path: str, debug: bool = False, auto_fix: bool = False):
             r_path = str(path)
     else:
         r_path = path
-    return curObj(pool, r_path, True, debug)
+    # 数据语句对象改为单例模式获取
+    if r_path in obj_manager:
+        return obj_manager[r_path]
+    singleton_obj=curObj(pool, r_path, True, debug)
+    obj_manager[r_path]=singleton_obj
+    return singleton_obj
 
 
 def setObjUpdateRound(obj: curObj, second: int):
