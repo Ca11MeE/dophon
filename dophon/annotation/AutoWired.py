@@ -114,7 +114,7 @@ def OuterWired(obj_obj, g):
                         obj_manager[obj_name] = instance
                         g[obj_name] = instance
                 except Exception as e:
-                    logger.error('注入' + str(a_name[index]) + '失败,原因:' + str(e) + '\n')
+                    logger.error('注入' + str(a_name[index]) + '失败,原因:' + str(e))
                     continue
             return f()
 

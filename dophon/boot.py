@@ -9,14 +9,25 @@ import ctypes
 import inspect
 import sys
 import logging
-
+import os, re
 
 def read_self_prop():
     try:
-        sys.modules['properties'] = __import__('application', fromlist=True)
-        sys.modules['dophon.properties'] = __import__('application', fromlist=True)
+        def_prop = __import__('dophon.def_prop.default_properties', fromlist=True)
+        u_prop = __import__('application', fromlist=True)
+        # 对比配置文件
+        for name in dir(def_prop):
+            if re.match('__.*__',name):
+                continue
+            if name in dir(u_prop):
+                continue
+            setattr(u_prop,name,getattr(def_prop,name))
+        sys.modules['properties'] = u_prop
+        sys.modules['dophon.properties'] = u_prop
     except Exception as e:
         logging.error(e)
+        sys.modules['properties'] = def_prop
+        sys.modules['dophon.properties'] = def_prop
 
 
 try:
@@ -30,7 +41,6 @@ from dophon import logger
 logger.inject_logger(globals())
 
 from flask import Flask
-import os, re
 from dophon import mysql
 from dophon.mysql import Pool
 from dophon import properties
@@ -53,7 +63,7 @@ def map_apps(dir_path):
     while f_list:
         try:
             file = f_list.pop(0)
-            if file.startswith('__') and file.endswith('__'):
+            if re.match('__.*__',file):
                 continue
             i = os.path.join(path, file)
             if os.path.isdir(i):
