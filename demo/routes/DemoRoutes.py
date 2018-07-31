@@ -1,12 +1,13 @@
 # coding: utf-8
 import dophon
 from dophon.annotation import *
+from demo.controller.controller import TestController
 
 _DemoRou=None
 
 app=dophon.blue_print(inject_config={
     'inj_obj_list': {
-        '_DemoRou': 'test'
+        '_DemoRou': TestController
     },
     'global_obj': globals()
 },
