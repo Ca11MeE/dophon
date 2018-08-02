@@ -25,3 +25,5 @@ pydc_user = 'root'
 pydc_password = 'root'
 pydc_database = 'zxyzt'
 
+# 消息队列线程池工人数
+msg_queue_max_num=30

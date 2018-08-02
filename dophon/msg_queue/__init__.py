@@ -5,7 +5,7 @@ import random
 import datetime
 import json
 from threading import Thread
-from dophon import logger
+from dophon import logger,properties
 import inspect
 import re
 import traceback
@@ -19,7 +19,9 @@ logger.inject_logger(globals())
 
 trace_manager = {}
 
-pool = ThreadPoolExecutor(max_workers=3)
+max_workers=properties.msg_queue_max_num
+
+pool = ThreadPoolExecutor(max_workers=max_workers)
 
 
 def full_0(string: str, num_of_zero: int) -> str:
@@ -78,6 +80,7 @@ def consumer(tag: str, delay: int = 1, retry: int = 3, as_args: bool = False):
             # 启用多线程监听消息
             def args(tag, *args, **kwargs):
                 while True:
+                    time.sleep(1)
                     for root, dirs, files in os.walk('./' + tag):
                         if files:
                             for name in files:
@@ -122,9 +125,6 @@ def consumer(tag: str, delay: int = 1, retry: int = 3, as_args: bool = False):
                                             except FileNotFoundError as fnfe:
                                                 # 消息已被消费或已被重命名
                                                 logger.warning('消息已被消费: %s', file_path)
-                        else:
-                            # 无消息则随机线程等待
-                            time.sleep(random.randint(0, 10))
 
             for tag in tags:
                 args(tag)

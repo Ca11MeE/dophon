@@ -1,3 +1,4 @@
+# coding: utf-8
 from setuptools import setup, find_packages
 
 '''
@@ -8,8 +9,8 @@ twine upload dist/dophon-1.0.6-py3.whl
 
 long_description = ''
 
-with open('README.md', 'r') as file:
-    long_description = str(file.read().encode(encoding='gbk'),encoding='utf8')
+with open('README.md', 'rb') as file:
+    long_description = str(file.read(), encoding='utf8')
 
 setup(
     name='dophon',

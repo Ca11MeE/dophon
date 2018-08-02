@@ -42,8 +42,19 @@ NOTSET = 0
 
 formatter=logging.Formatter(fmt=logging_config['format'], datefmt=logging_config['datefmt'])
 
+stdOutHandle=None
+
 if str(p_sys_type).upper() == 'WINDOWS':
     logging.basicConfig(**logging_config)
+    __foreGroundBLUE = 0x09
+    __foreGroundGREEN = 0x0a
+    __foreGroundRED = 0x0c
+    __foreGroundYELLOW = 0x0e
+    __stdInputHandle = -10
+    __stdOutputHandle = -11
+    __stdErrorHandle = -12
+
+    stdOutHandle = ctypes.windll.kernel32.GetStdHandle(__stdOutputHandle)
 else:
     logging._levelToName = {
         CRITICAL: '\033[7;35;40mCRITICAL',
@@ -55,16 +66,6 @@ else:
     }
     sh = logging.StreamHandler(stream=sys.stdout)
     sh.setFormatter(formatter)
-
-__foreGroundBLUE = 0x09
-__foreGroundGREEN = 0x0a
-__foreGroundRED = 0x0c
-__foreGroundYELLOW = 0x0e
-__stdInputHandle = -10
-__stdOutputHandle = -11
-__stdErrorHandle = -12
-
-stdOutHandle = ctypes.windll.kernel32.GetStdHandle(__stdOutputHandle)
 
 
 def setCmdColor(color, handle=stdOutHandle):
