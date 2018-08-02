@@ -139,14 +139,14 @@ from dophon import annotation
 from dophon.annotation import *
 ```
 
-### 6.1? ? ResponseBody
+### 6.1 @ResponseBody
 
 返回json格式数据
 ```python
 @ResponseBody()
 def ...
 ```
-### 6.2? ? ResponseTemplate
+### 6.2 @ResponseTemplate
 
 返回对应页面(默认路由目录下html文件)
 ```python
@@ -155,7 +155,7 @@ def ...
 ```
 ps:额外管理页面路径请在路由定义(dophon.blue_print())中配置template_folder,遵从linux系统cd路径语法
 
-### 6.3? ? AutoParam
+### 6.3 @AutoParam
 
 自动配置请求中的参数(分离形式)
 ```python
@@ -163,7 +163,7 @@ ps:额外管理页面路径请在路由定义(dophon.blue_print())中配置templ
 def ...
 ```
 
-### 6.4? ? FullParam
+### 6.4 @FullParam
 
 自动配置请求中的参数(集中形式)
 ```python
@@ -171,7 +171,7 @@ def ...
 def ...
 ```
 
-### 6.5? ? RequestMapping
+### 6.5 @RequestMapping
 
 简化版路由(同app.route())
 ```python
@@ -179,7 +179,7 @@ def ...
 def ...
 ```
 
-### 6.5? ? Autowired
+### 6.5 @Autowired
 
 参考<a href="#to5Autowired"><5.对象注入></a>
 ```python
