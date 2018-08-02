@@ -57,22 +57,38 @@ pydc_database = 'database' # 连接数据库名(可在后面跟连接参数)
 
 ## 4.路由
 
+快速定义:
+
+```python
+from dophon import boot
+
+app = boot.get_app()
+```
+
 <span id="to4routeOne">方式一:</span>
 
 ```python
 import dophon
-
+import DemoClass
 
 _DemoRou=None
-app=dophon.blue_print(inject_config={
-    'inj_obj_list': {
-        '_DemoRou': 'test'
-    },
-    'global_obj': globals()
-},  # 此处为自动注入参数配置(非必须,不需要请填入空字典)
-name='demo', # 此处为蓝图代号(必须,不能重复)
-import_name=__name__) # 此处为蓝图初始化名称(必须,无特定需求填写__name__)
+
+app=dophon.blue_print(
+    inject_config={
+        'inj_obj_list': {
+            '_DemoRou': DemoClass
+        },
+        'global_obj': globals()
+    },  # 此处为自动注入参数配置(非必须,不需要请填入空字典)
+    name='demo',  # 此处为蓝图代号(必须,不能重复)
+    import_name=__name__  # 此处为蓝图初始化名称(必须,无特定需求填写__name__)
+) 
 ```
+
+1. 方式一所定义的app为flask的Blueprint类型路由,同时自带了实例注入功能(inject_config参数)
+2. inject_config参数默认空,即不调用实例注入
+3. inject_config中的inj_obj_list的key必须在上文显式定义(主要为了读写方便)
+4. 其余参数同flask中的Blueprint
 
 方式二:
 ```python
@@ -81,7 +97,11 @@ from flask import Blueprint
 app=Blueprint('demo',__name__) # 具体参数参照flask.Blueprint
 ```
 
+1. 方式二为直接使用flask的Blueprint定义蓝图路由
+
 ## <span id = "to5Autowired">5.对象注入</span>
+
+### 5.1 配置方式注入
 
 方式一: 参考<a href="#to4routeOne"><4.路由.方式一></a>
 
@@ -124,7 +144,64 @@ def inject_method():
 
 inject_method()
 ```
-> ps:上列注入配置可通过引入外部对象进行管理
+> ps:上列注入配置可通过引入外部对象进行管理,即创建一个文件通过引入文件中变量实现配置的统一管理
+
+### 5.2 函数装饰器方式注入
+
+#### 5.2.1 实例管理器的定义
+注入前必须定义一个实例管理器
+
+```python
+from dophon.annotation import *
+
+class OwnBeanConfig(BeanConfig):
+    """
+    实例管理器必须继承BeanConfig)
+    
+    注意!!!
+        实例定义关键字必须唯一
+    """
+        
+    # 方式一
+    @bean()
+    def demo_obj_1(self):
+        """
+        此处返回管理关键字为demo_obj_1的DemoObj()实例
+        """
+        return DemoObj()
+        
+    # 方式二
+    @bean(name='Demo')
+    def demo_obj_2(self):
+        """
+        此处返回管理关键字为Demo的DemoObj()实例
+        """
+        return DemoObj()
+
+```
+
+* 实例管理器支持with语法
+
+```python
+with OwnBeanConfig() as config:
+    pass
+```
+
+* 也可以使用普通实例化的实例启动方式来启动实例管理器
+
+```python
+OwnBeanConfig()()  # 注意是两个括号
+```
+
+> ps:推荐使用BeanConfig子类作为实例批量管理
+
+#### 5.2.2 实例的获取
+
+```python
+from dophon.annotation import *
+
+bean=Bean('demo_obj_1')  # 此处获取管理关键字为demo_obj_1对应的实例
+```
 
 ## 6.其他注解
 
@@ -143,13 +220,39 @@ from dophon.annotation import *
 
 返回json格式数据
 ```python
+from dophon.annotation import *
+
 @ResponseBody()
-def ...
+def fun():
+    return 'result'
+    
+# response -> result
+
+@ResponseBody()
+def fun():
+    return {
+    'message':'result'
+    }
+    
+# response -> { 'message' : 'result' }
+
+@ResponseBody()
+def fun():
+    result={
+        'message':'result'
+        }
+    return result
+    
+# response -> { 'message' : 'result' }
+
 ```
 ### 6.2 @ResponseTemplate
 
 返回对应页面(默认路由目录下html文件)
 ```python
+
+from dophon.annotation import *
+
 @ResponseTemplate('index.html')
 def ...
 ```
@@ -158,31 +261,148 @@ ps:额外管理页面路径请在路由定义(dophon.blue_print())中配置templ
 ### 6.3 @AutoParam
 
 自动配置请求中的参数(分离形式)
+推荐指定装饰器中的kwarg_list参数的列表(也就是说形参的列表形式),否则会出现参数混乱(严重)
+
 ```python
-@AutoParam()
-def ...
+from dophon.annotation import *
+
+@AutoParam(kwarg_list=['param_1','param_2','param_3'])
+def fun(param_1,param_2,param_3):
+    print(param_1)
+    print(param_2)
+    print(param_3)
+
+# request -> (params){ 'param_1' : '1' , 'param_2' : '2' , 'param_3' : '3' }
+# console -> 1
+#            2
+#            3
+
 ```
+
+由于本装饰器存在参数混乱,推荐使用FullParam参数装饰器(下文)
 
 ### 6.4 @FullParam
 
-自动配置请求中的参数(集中形式)
+自动配置请求中的参数(集中形式),表现形式为dict
+赋值参数无名称要求,其中默认赋值参数列表中的第一个参数
 ```python
+from dophon.annotation import *
+
 @FullParam()
-def ...
+def fun(args):
+    print(args)
+
+# request -> (params){ 'param_1' : '1' , 'param_2' : '2' , 'param_3' : '3' }
+# console -> { 'param_1' : '1' , 'param_2' : '2' , 'param_3' : '3' }
 ```
 
 ### 6.5 @RequestMapping
 
 简化版路由(同app.route())
 ```python
-@RequestMapping()
-def ...
+from dophon.annotation import *
+from dophon import boot
+
+app=boot.get_app()
+
+@RequestMapping(app=app,'/test',['get'])
+def fun():
+    pass
+
 ```
 
 ### 6.5 @Autowired
 
 参考<a href="#to5Autowired"><5.对象注入></a>
 ```python
-@Autowired()
-def ...
+from dophon.annotation import *
+
+@AutoWired()
+def fun():
+    pass
+
+```
+
+## 7.日志模块(基于python中的logging模块)
+
+### 7.1 日志模块引用
+
+```python
+from dophon import logger
+
+logger.inject_logger(globals())
+
+```
+其中:
+    globals()为注入日志记录功能的变量域,可以为本地变量域,局部变量域,也可以为自定义变量管理域
+    
+### 7.2 日志模块的使用
+
+控制台带颜色输出(略丑)
+
+日志输出格式如下(暂不可自定义):
+
+```
+'%(levelname)s : (%(asctime)s) ==> ::: %(message)s'
+```
+
+例如:
+
+```
+INFO : (2018-08-02 15:34:11) ==> ::: 执行批量实例管理初始化
+```
+
+#### 7.2.1 debug:
+       
+#### 7.2.2 info:
+
+#### 7.2.3 warning:
+
+#### 7.2.4 error:
+
+#### 7.2.5 critical:
+
+
+## 8.消息队列
+
+1. 只是一个轻量级消息队列,承载能力中等
+2. 即使使用线程池处理消息,极为消耗cpu资源
+3. 该队列基于io作为消息持久化,高频消息容易导致io阻塞
+4. 消息消费默认有1-3秒延迟(本地)
+
+### 8.1 配置
+
+消息队列承载上限为30个话题(tag)
+可通过自定义配置配置上限
+
+
+<application.py>
+```python
+msg_queue_max_num = 30   # 消息队列线程池承载上限
+```
+
+### 8.2 生产者配置
+
+推荐使用json格式传递数据(便于消费者转义数据)
+
+```python
+from dophon.msg_queue import *
+
+@producer(tag='DEMO_TAG')
+def producer():
+    return 'aaa'
+
+```
+
+### 8.3 消费者配置
+
+方式一:
+
+```python
+from dophon.msg_queue import *
+
+@consumer(tag='DEMO_TAG')
+def consumer(args):
+    print(args)
+
 ```

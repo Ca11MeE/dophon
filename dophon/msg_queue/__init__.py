@@ -199,3 +199,14 @@ produce_msg2(8)
 produce_msg(9)
 produce_msg1(0)
 """
+
+@producer(tag='DEMO_TAG')
+def produce():
+    return 'aaa'
+
+@consumer(tag='DEMO_TAG',as_args=True)
+def consume(args):
+    print(args)
+
+produce()
+consume()

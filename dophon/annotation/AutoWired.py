@@ -224,4 +224,3 @@ class Bean:
             if not type_list:
                 raise KeyError('不存在该类型实例')
             return type_list[0]
-

@@ -1,6 +1,7 @@
 # coding: utf-8
 from dophon.annotation import AutoWired
 from dophon.annotation import res, req
+from dophon.annotation.AutoWired import *
 
 """
 注解集合(部分)
@@ -20,7 +21,10 @@ __all__ = [
     'AsResTemp',
     'AsArgs',
     'AsJson',
-    'AsFile'
+    'AsFile',
+    'BeanConfig',
+    'bean',
+    'Bean'
 ]
 
 AutoWired = AutoWired
@@ -34,6 +38,12 @@ AutoParam = AsArgs = req.auto_param
 FullParam = AsJson = req.full_param
 
 FileParam = AsFile = req.file_param
+
+BeanConfig = AutoWired.BeanConfig
+
+bean = AutoWired.bean
+
+Bean = AutoWired.Bean
 
 
 # 路径绑定装饰器

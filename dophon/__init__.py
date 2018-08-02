@@ -2,12 +2,13 @@
 from flask import Blueprint
 import logging
 
-name='dophon'
+name = 'dophon'
 
-def blue_print(inject_config:dict,name, import_name, static_folder=None,
-                 static_url_path=None, template_folder=None,
-                 url_prefix=None, subdomain=None, url_defaults=None,
-                 root_path=None):
+
+def blue_print(name, import_name, inject_config: dict = {}, static_folder=None,
+               static_url_path=None, template_folder=None,
+               url_prefix=None, subdomain=None, url_defaults=None,
+               root_path=None):
     """
     获取Flask蓝图,同时实现自动注入(可细粒度管理)
     :param inject_config:注入配置,类型为dict
@@ -22,18 +23,19 @@ def blue_print(inject_config:dict,name, import_name, static_folder=None,
     :param root_path:同Blueprint.root_path
     :return:
     """
-    blue_print_obj=Blueprint(name=name,import_name=import_name, static_folder=static_folder,
-                 static_url_path=static_url_path, template_folder=template_folder,
-                 url_prefix=url_prefix, subdomain=subdomain, url_defaults=url_defaults,
-                 root_path=root_path)
+    blue_print_obj = Blueprint(name=name, import_name=import_name, static_folder=static_folder,
+                               static_url_path=static_url_path, template_folder=template_folder,
+                               url_prefix=url_prefix, subdomain=subdomain, url_defaults=url_defaults,
+                               root_path=root_path)
     if inject_config:
-        autowire=__import__('dophon.annotation.AutoWired',fromlist=True)
-        outerwired=getattr(autowire,'OuterWired')
+        autowire = __import__('dophon.annotation.AutoWired', fromlist=True)
+        outerwired = getattr(autowire, 'OuterWired')
         outerwired(
             obj_obj=inject_config['inj_obj_list'],
             g=inject_config['global_obj']
         )(inject)()
     return blue_print_obj
+
 
 def inject():
     """
