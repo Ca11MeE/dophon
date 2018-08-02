@@ -117,7 +117,11 @@ def consumer(tag: str, delay: int = 1, retry: int = 3, as_args: bool = False):
                                                 str(random.randint(0, 999999999999)), 6)
                                             logger.debug('新文件名 %s', str(msg_mark))
                                             n_file_path = os.path.join(root, msg_mark)
-                                            os.rename(file_path, n_file_path)
+                                            try:
+                                                os.rename(file_path, n_file_path)
+                                            except FileNotFoundError as fnfe:
+                                                # 消息已被消费或已被重命名
+                                                logger.warning('消息已被消费: %s', file_path)
                         else:
                             # 无消息则随机线程等待
                             time.sleep(random.randint(0, 10))

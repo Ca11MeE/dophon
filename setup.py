@@ -13,7 +13,7 @@ with open('README.md', 'r') as file:
 
 setup(
     name='dophon',
-    version='1.1.0',
+    version='1.1.1',
     packages=find_packages(),
     url='https://github.com/Ca11MeE/dophon',
     license='Apache 2.0',
