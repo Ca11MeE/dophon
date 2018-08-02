@@ -9,6 +9,7 @@ from dophon import logger
 import inspect
 import re
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 
 __all__ = [
     'producer', 'consumer'
@@ -17,6 +18,8 @@ __all__ = [
 logger.inject_logger(globals())
 
 trace_manager = {}
+
+pool = ThreadPoolExecutor(max_workers=3)
 
 
 def full_0(string: str, num_of_zero: int) -> str:
@@ -28,8 +31,8 @@ def full_0(string: str, num_of_zero: int) -> str:
 def threadable():
     def method(f):
         def args(*args, **kwargs):
-            Thread(target=f, args=args, kwargs=kwargs).start()
-
+            # 采用线程池操作,减缓cpu压力
+            pool.submit(f,*args, **kwargs)
         return args
 
     return method
@@ -39,7 +42,6 @@ def join_threadable():
     def method(f):
         def args(*args, **kwargs):
             Thread(target=f, args=args, kwargs=kwargs).join()
-
         return args
 
     return method
@@ -77,44 +79,48 @@ def consumer(tag: str, delay: int = 1, retry: int = 3, as_args: bool = False):
             def args(tag, *args, **kwargs):
                 while True:
                     for root, dirs, files in os.walk('./' + tag):
-                        for name in files:
-                            retrys = 0
-                            while retrys < retry:
-                                try:
-                                    file_path = os.path.join(root, name)
-                                    with open(file_path, 'r') as file:
-                                        new_kwargs = json.load(file)
-                                        # 执行失败启动重试流程
-                                        if as_args:
-                                            f(args=new_kwargs)
-                                        else:
-                                            f(**new_kwargs)
-                                except TypeError as te:
-                                    logger.error('%s: %s', name, te)
-                                    trace_manager[tag] = {
-                                        'type': 'TypeError',
-                                        'msg': traceback.format_exc()
-                                    }
-                                except Exception as e:
-                                    logger.error('%s: %s', name, e)
-                                    trace_manager[tag] = {
-                                        'type': 'TypeError',
-                                        'msg': traceback.format_exc()
-                                    }
-                                else:
-                                    os.remove(file_path)
-                                    break
-                                finally:
-                                    retrys += 1
-                                    time.sleep(delay * (retrys + 1))
-                                    if retrys >= retry:
-                                        logger.error('超出重试次数,文件名 %s', file_path)
-                                        # 超出重试后重命名文件
-                                        msg_mark = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + full_0(
-                                            str(random.randint(0, 999999999999)), 6)
-                                        logger.debug('新文件名 %s', str(msg_mark))
-                                        n_file_path = os.path.join(root, msg_mark)
-                                        os.rename(file_path, n_file_path)
+                        if files:
+                            for name in files:
+                                retrys = 0
+                                while retrys < retry:
+                                    try:
+                                        file_path = os.path.join(root, name)
+                                        with open(file_path, 'r') as file:
+                                            new_kwargs = json.load(file)
+                                            # 执行失败启动重试流程
+                                            if as_args:
+                                                f(args=new_kwargs)
+                                            else:
+                                                f(**new_kwargs)
+                                    except TypeError as te:
+                                        logger.error('%s: %s', name, te)
+                                        trace_manager[tag] = {
+                                            'type': 'TypeError',
+                                            'msg': traceback.format_exc()
+                                        }
+                                    except Exception as e:
+                                        logger.error('%s: %s', name, e)
+                                        trace_manager[tag] = {
+                                            'type': 'TypeError',
+                                            'msg': traceback.format_exc()
+                                        }
+                                    else:
+                                        os.remove(file_path)
+                                        break
+                                    finally:
+                                        retrys += 1
+                                        time.sleep(delay)
+                                        if retrys >= retry:
+                                            logger.error('超出重试次数,文件名 %s', file_path)
+                                            # 超出重试后重命名文件
+                                            msg_mark = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + full_0(
+                                                str(random.randint(0, 999999999999)), 6)
+                                            logger.debug('新文件名 %s', str(msg_mark))
+                                            n_file_path = os.path.join(root, msg_mark)
+                                            os.rename(file_path, n_file_path)
+                        else:
+                            # 无消息则随机线程等待
+                            time.sleep(random.randint(0, 10))
 
             for tag in tags:
                 args(tag)
