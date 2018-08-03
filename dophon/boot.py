@@ -11,17 +11,18 @@ import sys
 import logging
 import os, re
 
+
 def read_self_prop():
     try:
         def_prop = __import__('dophon.def_prop.default_properties', fromlist=True)
         u_prop = __import__('application', fromlist=True)
         # 对比配置文件
         for name in dir(def_prop):
-            if re.match('__.*__',name):
+            if re.match('__.*__', name):
                 continue
             if name in dir(u_prop):
                 continue
-            setattr(u_prop,name,getattr(def_prop,name))
+            setattr(u_prop, name, getattr(def_prop, name))
         sys.modules['properties'] = u_prop
         sys.modules['dophon.properties'] = u_prop
     except Exception as e:
@@ -63,7 +64,7 @@ def map_apps(dir_path):
     while f_list:
         try:
             file = f_list.pop(0)
-            if re.match('__.*__',file):
+            if re.match('__.*__', file):
                 continue
             i = os.path.join(path, file)
             if os.path.isdir(i):
@@ -149,3 +150,47 @@ def bootstrap_app():
     global app
     b = __import__('flask_bootstrap')
     b.Bootstrap(app)
+
+
+def run_as_docker():
+    """
+    利用docker启动项目
+    :return:
+    """
+    logger.info('容器前期准备')
+    root = re.sub('\\\\', '/', properties.project_root)
+    import platform
+    p_version = platform.python_version()
+    work_dir = './' + os.path.basename(root)
+    port = properties.port
+    port_str = str(port)
+    # 生成依赖文件
+    logger.info('生成依赖文件')
+    os.system('pip freeze >pre_requirements.txt')
+    with open('./pre_requirements.txt', 'r') as file:
+        with open('./requirements.txt', 'w') as final_file:
+            for line in file.readlines():
+                for key in sys.modules.keys():
+                    if re.search('(_|__|\\.).+$', key):
+                        continue
+                    module_path = re.sub('(>=|==|=>|<=|=<|<|>|=).*\s+', '', line.lower())
+                    if re.search(module_path, key.lower()):
+                        final_file.write(line)
+                        continue
+    # 生成Dockerfile
+    logger.info('生成Dockerfile')
+    with open('./Dockerfile', 'w') as file:
+        file.write('FROM python:' + p_version + '\n')
+        file.write('ADD . ' + work_dir + '\n')
+        file.write('WORKDIR ' + work_dir + '\n')
+        file.write('RUN pip install -r requirements.txt' + '\n')
+        file.write('CMD ["python","' + work_dir + '/Bootstrap.py"]' + '\n')
+    os.system('cd '+ root)
+    logger.info('移除旧镜像')
+    os.system('docker rmi '+os.path.basename(root))
+    logger.info('建立镜像')
+    os.system('docker build -t ' + os.path.basename(root) + ' .')
+    logger.info('运行镜像')
+    os.system(
+        'docker run -p ' + port_str + ':' + port_str + ' -d --name ' + os.path.basename(root) + ' ' + os.path.basename(
+            root))

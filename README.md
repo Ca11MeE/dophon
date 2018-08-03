@@ -404,5 +404,24 @@ from dophon.msg_queue import *
 @consumer(tag='DEMO_TAG')
 def consumer(args):
     print(args)
+    
+consumer()
+
+# ERROR : (2018-08-02 21:29:15) ==> ::: 2018080221291454499310002: consume() argument after ** must be a mapping, not str
+
+```
+
+> 非json会报错,需在装饰器上打开as_arg
+
+```python
+from dophon.msg_queue import *
+
+@consumer(tag='DEMO_TAG',as_args=True)
+def consumer(args):
+    print(args)
+    
+consumer()
+
+# aaa
 
 ```

@@ -3,6 +3,9 @@ import threading
 
 import schedule
 s=schedule.Scheduler()
+
+boot.run_as_docker()
+
 def sche():
     s.every(1).seconds.do(print,(666,))
 
@@ -23,6 +26,6 @@ def run():
     boot.run_app_ssl()
 
 
-run()
+# run()
 
 

@@ -204,7 +204,7 @@ produce_msg1(0)
 def produce():
     return 'aaa'
 
-@consumer(tag='DEMO_TAG',as_args=True)
+@consumer(tag='DEMO_TAG')
 def consume(args):
     print(args)
 
