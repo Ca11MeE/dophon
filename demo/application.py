@@ -9,7 +9,7 @@ project_root=os.getcwd()
 
 # 此处为服务器配置
 host='0.0.0.0'
-port=8080
+port=443
 ssl_context='adhoc'
 
 # 此处为蓝图文件夹配置
