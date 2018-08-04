@@ -69,7 +69,7 @@ def full_param(kwarg_list=[]):
     return method
 
 
-def file_param(alias_name:str='files'):
+def file_param(alias_name: str = 'files', extra_param: str = 'args'):
     """
     文件参数装在装饰器
 
@@ -88,8 +88,13 @@ def file_param(alias_name:str='files'):
             if a_nums > 0:
                 logger.error('路由绑定参数数量异常')
                 raise Exception('路由绑定参数数量异常')
+            try:
+                extra_param_value=(request.form if request.form else request.json).to_dict()
+            except:
+                extra_param_value={}
             k_args = {
-                alias_name: request.files.to_dict()
+                alias_name: request.files.to_dict(),
+                extra_param: extra_param_value
             }
             return f(**k_args)
 
