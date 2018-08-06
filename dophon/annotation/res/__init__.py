@@ -31,6 +31,7 @@ def response_template(template: list):
     """
 
     def method(f):
+        @functools.wraps(f)
         def args(*args, **kwargs):
             page_param = f(*args, **kwargs)
             if isinstance(page_param, type({})):
