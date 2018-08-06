@@ -23,7 +23,8 @@ pool_conn_num = 5  # size of db connect pool
 pydc_host = 'localhost'
 pydc_port = 3306
 pydc_user = 'root'
-pydc_password = 'root'
+# pydc_password = 'root'
+pydc_password = 'wo4ce4kumima'
 pydc_database = 'zxyzt'
 
 # 消息队列线程池工人数

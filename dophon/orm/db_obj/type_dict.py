@@ -58,7 +58,8 @@ db_type_python_dict = {
     },
     # 日期类型
     'date': {
-        'type': datetime,
+        # 'type': datetime,
+        'type': str,
         'str_name': 'datetime',
         'min_length': 0,
         'max_length': 65535

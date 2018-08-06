@@ -47,13 +47,23 @@ class FieldsCallable(OrmObj):
         :return:
         """
         cache = {}
-        for f_name in getattr(self, '__field_callable_list') \
-                if (hasattr(self, '__field_callable_list') and len(
-            getattr(self, '__field_callable_list')) > 0) else self.__field_callable_list \
-                if self.__field_callable_list else getattr(self, '__default_arg_list') \
-                if hasattr(self, '__default_arg_list') else f_list:
+        if hasattr(self, '__field_callable_list') and len(getattr(self, '__field_callable_list')) > 0 :
+            fs_name=getattr(self, '__field_callable_list')
+        elif self.__field_callable_list:
+            fs_name=self.__field_callable_list
+        elif hasattr(self, '__default_arg_list'):
+            fs_name=getattr(self, '__default_arg_list')
+        else:
+            fs_name=f_list
+
+        for f_name in fs_name:
             if hasattr(self, f_name):
-                cache[f_name] = getattr(self, f_name)
+                if f_list:
+                    if f_name in f_list:
+                        cache[f_name] = getattr(self, f_name)
+                        continue
+                else:
+                    cache[f_name] = getattr(self, f_name)
             else:
                 print('警告:表(', getattr(self, 'table_map_key'), ')缺失字段(', f_name, '),表映射存在风险')
         return cache
@@ -136,7 +146,7 @@ class WhereAble(FieldsCallable):
         for key in args.keys():
             cache.append(str(key) + '=' + (str(
                 args[key]) if isinstance(args[key], int) or isinstance(args[key], float) else (
-                '{' + str(args[key]) + '}')))
+                    '{' + str(args[key]) + '}')))
         return re.sub('\{|\}', '\'', re.sub('\[|\]|\\\"|\\\'', '', re.sub(',', ' AND ', str(cache))))
 
     def where(self, fields: list = []) -> str:
@@ -146,7 +156,7 @@ class WhereAble(FieldsCallable):
         :return:
         """
         if len(fields) > 0 or (
-                    hasattr(self, '__field_callable_list') and len(getattr(self, '__field_callable_list')) > 0):
+                hasattr(self, '__field_callable_list') and len(getattr(self, '__field_callable_list')) > 0):
             args = getattr(self, 'get_fields')(fields)
         else:
             return ''
@@ -171,7 +181,7 @@ class SetAble(WhereAble):
         :return:
         """
         args = self.get_fields(fields)
-        return ' SET ' + self.where_cause(args)
+        return ' SET ' + re.sub('AND', ',', self.where_cause(args))
 
 
 class JoinAble(OrmObj):

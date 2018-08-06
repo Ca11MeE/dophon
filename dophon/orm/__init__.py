@@ -40,13 +40,38 @@ if '__main__' == __name__:
     # print(user.where())
     # print(user.values())
 
-    user.select()
-    user.user_name = '111'
-    user.select_one()
-    user.select_all()
+    # user.select()
+    # user.user_name = '111'
+    # user.select_one()
+    # user.select_all()
+    #
+    # user = manager.user()
+    # user.alias('u').select()
+    # user.user_name = '111'
+    # user.alias('us').select_one()
+    # user.alias('userr').select_all()
 
-    user = manager.user()
-    user.alias('u').select()
-    user.user_name = '111'
-    user.alias('us').select_one()
-    user.alias('userr').select_all()
+
+    # user.user_id='test_id'
+    # user.info_id='test_info_id'
+    # user.user_name='test_user_name'
+    # user.user_pwd='test_user_pwd'
+    # user.user_status=1
+    # user.create_time = datetime.datetime.now().strftime('%y-%m-%d')
+    # user.update_time = datetime.datetime.now().strftime('%y-%m-%d')
+    #
+    # print(user.insert())
+
+    # user.user_id = 'test_id'
+    # user.info_id = 'info_id'
+    # user.user_name = '柯李艺'
+    # user.user_pwd = '333'
+    # user.user_status = 123
+    # print(user.update(update=['user_name','user_pwd'],where=['user_id']))
+
+    user.user_id = 'test_id'
+    user.info_id = 'info_id'
+    user.user_name = 'user_name'
+    user.user_pwd = 'user_pwd'
+    user.user_status = 123
+    print(user.delete(where=['user_id']))

@@ -1,6 +1,7 @@
 from dophon.mysql import Pool, Connection
 from dophon import mysql
 from dophon import logger
+
 """
 查询语句结构映射
 
@@ -22,6 +23,7 @@ class Selelct:
     """
     查询结构类
     """
+
     def before_select(self, fields_list: list, has_where: bool) -> str:
         result = 'SELECT ' + \
                  getattr(self, 'fields')(fields_list) + \
@@ -29,7 +31,7 @@ class Selelct:
                  getattr(self, 'table_map_key') + \
                  (
                      (' AS ' + getattr(self, '__alias'))
-                     if getattr(self,'__alias') != getattr(self,'table_map_key') else ''
+                     if getattr(self, '__alias') != getattr(self, 'table_map_key') else ''
                  ) + \
                  (getattr(self, 'where')() if has_where else '')
         return result
@@ -43,7 +45,8 @@ class Selelct:
         sql = self.before_select(fields, has_where)
         logger.info('执行: %s', sql)
         result = []
-        cursor = pool.getConn().getConnect().cursor()
+        connection = pool.getConn().getConnect()
+        cursor = connection.cursor()
         cursor.execute(sql)
         if not sql.startswith('select') and not sql.startswith('SELECT'):
             data = [[cursor.rowcount]]
@@ -51,6 +54,7 @@ class Selelct:
         else:
             data = cursor.fetchall()
             description = cursor.description
+        connection.commit()
         result = mysql.sort_result(data, description, result)
         return result
 
@@ -65,9 +69,11 @@ class Selelct:
             result = self.select(fields=fields)
             if len(result) == 1:
                 return result
-            else:
+            elif len(result) > 1:
                 logger.error('过多结果集')
                 raise Exception('过多结果集')
+            else:
+                return None
         else:
             logger.error('无法预料的唯一结果集,找不到查询过滤条件')
             raise Exception('无法预料的唯一结果集,找不到查询过滤条件')
@@ -82,11 +88,113 @@ class Selelct:
             logger.warning('警告:存在查询过滤条件')
         return self.select(fields=fields, has_where=False)
 
-class Struct(Selelct):
+
+class Insert:
+    """
+    新增结构类
+    """
+
+    def before_insert(self):
+        result = 'INSERT INTO ' + \
+                 getattr(self, 'table_map_key') + ' ' + \
+                 getattr(self, 'values')()
+        # print(result)
+        return result
+
+    def insert(self) -> int:
+        """
+        新增结果集
+        :return: <int> 影响行数
+                [{'row_count': '0'}]
+        """
+        sql = self.before_insert()
+        logger.info('执行: %s', sql)
+        result = []
+        connection = pool.getConn().getConnect()
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        if not sql.startswith('select') and not sql.startswith('SELECT'):
+            data = [[cursor.rowcount]]
+            description = [['row_count']]
+        else:
+            data = cursor.fetchall()
+            description = cursor.description
+        connection.commit()
+        result = mysql.sort_result(data, description, result)[0]['row_count']
+        return int(result)
+
+
+class Update():
+    """
+    更新结构类
+    """
+
+    def before_update(self,update:list,where:list):
+        result = 'UPDATE ' + getattr(self, 'table_map_key') + \
+                 getattr(self, 'set')(update) + \
+                 getattr(self, 'where')(where)
+        # print(result)
+        return result
+
+    def update(self,update:list=[],where:list=[]) -> int:
+        """
+        更新结果集
+        :param update: 更新列参
+        :param where: 条件列参
+        :return: <int> 影响行数
+        """
+        sql=self.before_update(update,where)
+        logger.info('执行: %s', sql)
+        result = []
+        connection = pool.getConn().getConnect()
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        if not sql.startswith('select') and not sql.startswith('SELECT'):
+            data = [[cursor.rowcount]]
+            description = [['row_count']]
+        else:
+            data = cursor.fetchall()
+            description = cursor.description
+        connection.commit()
+        result = mysql.sort_result(data, description, result)[0]['row_count']
+        return int(result)
+
+
+class Delete():
+    """
+    删除结构类
+    """
+
+    def before_delete(self,where:list):
+        result='DELETE FROM '+getattr(self, 'table_map_key')+' '+getattr(self, 'where')(where)
+        # print(result)
+        return result
+
+    def delete(self,where:list=[]) -> int:
+        """
+        删除结果集
+
+        :param where: 条件列参
+        :return: <int> 影响行数
+        """
+        sql=self.before_delete(where)
+        logger.info('执行: %s', sql)
+        result = []
+        connection = pool.getConn().getConnect()
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        if not sql.startswith('select') and not sql.startswith('SELECT'):
+            data = [[cursor.rowcount]]
+            description = [['row_count']]
+        else:
+            data = cursor.fetchall()
+            description = cursor.description
+        connection.commit()
+        result = mysql.sort_result(data, description, result)[0]['row_count']
+        return int(result)
+
+
+class Struct(Selelct, Insert, Update, Delete):
     """
     查询语句结构类
     """
-
-
-
-

@@ -4,7 +4,6 @@ import logging
 
 name = 'dophon'
 
-
 def blue_print(name, import_name, inject_config: dict = {}, static_folder=None,
                static_url_path=None, template_folder=None,
                url_prefix=None, subdomain=None, url_defaults=None,
@@ -43,3 +42,9 @@ def inject():
     :return:
     """
     pass
+
+
+
+__all__=['BluePrint','blue_print']
+
+BluePrint=blue_print
