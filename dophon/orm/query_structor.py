@@ -28,12 +28,17 @@ class Selelct:
         result = 'SELECT ' + \
                  getattr(self, 'fields')(fields_list) + \
                  ' FROM ' + \
-                 getattr(self, 'table_map_key') + \
                  (
-                     (' AS ' + getattr(self, '__alias'))
-                     if getattr(self, '__alias') != getattr(self, 'table_map_key') else ''
-                 ) + \
+
+                     getattr(self, 'table_map_key') + \
+                     (
+                         (' AS ' + getattr(self, '__alias'))
+                         if getattr(self, '__alias') != getattr(self, 'table_map_key') else ''
+                     )
+                     if not getattr(self, '__join_list') else (getattr(self, 'exe_join')())) \
+                 + \
                  (getattr(self, 'where')() if has_where else '')
+        print(result)
         return result
 
     def select(self, fields: list = [], has_where: bool = True) -> list:
@@ -129,21 +134,21 @@ class Update():
     更新结构类
     """
 
-    def before_update(self,update:list,where:list):
+    def before_update(self, update: list, where: list):
         result = 'UPDATE ' + getattr(self, 'table_map_key') + \
                  getattr(self, 'set')(update) + \
                  getattr(self, 'where')(where)
         # print(result)
         return result
 
-    def update(self,update:list=[],where:list=[]) -> int:
+    def update(self, update: list = [], where: list = []) -> int:
         """
         更新结果集
         :param update: 更新列参
         :param where: 条件列参
         :return: <int> 影响行数
         """
-        sql=self.before_update(update,where)
+        sql = self.before_update(update, where)
         logger.info('执行: %s', sql)
         result = []
         connection = pool.getConn().getConnect()
@@ -165,19 +170,19 @@ class Delete():
     删除结构类
     """
 
-    def before_delete(self,where:list):
-        result='DELETE FROM '+getattr(self, 'table_map_key')+' '+getattr(self, 'where')(where)
+    def before_delete(self, where: list):
+        result = 'DELETE FROM ' + getattr(self, 'table_map_key') + ' ' + getattr(self, 'where')(where)
         # print(result)
         return result
 
-    def delete(self,where:list=[]) -> int:
+    def delete(self, where: list = []) -> int:
         """
         删除结果集
 
         :param where: 条件列参
         :return: <int> 影响行数
         """
-        sql=self.before_delete(where)
+        sql = self.before_delete(where)
         logger.info('执行: %s', sql)
         result = []
         connection = pool.getConn().getConnect()

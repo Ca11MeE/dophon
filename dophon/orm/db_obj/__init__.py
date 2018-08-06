@@ -21,7 +21,8 @@ def create_class(table_name: str, table_args: list):
     :param table_args: 表参数
     :return:
     """
-    class_obj = type(table_name, (SetAble, ValueAble, Struct,), {'__alias': table_name, 'table_map_key': table_name})
+    class_obj = type(table_name, (SetAble, JoinAble,ValueAble, Struct,),
+                     {'__alias': table_name, 'table_map_key': table_name})
     default_arg_list = []
     for table_arg in table_args:
         # 获取表字段名以及属性

@@ -4,7 +4,7 @@ import re
 功能特性类集合
 """
 
-__all__ = ['WhereAble', 'ValueAble', 'SetAble', 'OrmObj']
+__all__ = ['WhereAble', 'ValueAble', 'SetAble', 'OrmObj', 'JoinAble']
 
 
 class OrmObj(object):
@@ -47,14 +47,14 @@ class FieldsCallable(OrmObj):
         :return:
         """
         cache = {}
-        if hasattr(self, '__field_callable_list') and len(getattr(self, '__field_callable_list')) > 0 :
-            fs_name=getattr(self, '__field_callable_list')
+        if hasattr(self, '__field_callable_list') and len(getattr(self, '__field_callable_list')) > 0:
+            fs_name = getattr(self, '__field_callable_list')
         elif self.__field_callable_list:
-            fs_name=self.__field_callable_list
+            fs_name = self.__field_callable_list
         elif hasattr(self, '__default_arg_list'):
-            fs_name=getattr(self, '__default_arg_list')
+            fs_name = getattr(self, '__default_arg_list')
         else:
-            fs_name=f_list
+            fs_name = f_list
 
         for f_name in fs_name:
             if hasattr(self, f_name):
@@ -193,16 +193,23 @@ class JoinAble(OrmObj):
         """
         初始化关联列表
         """
-        self.__join_list = []
+        if not hasattr(self, '__join_list'):
+            setattr(self, '__join_list', [])
+            self.__join_list = []
 
-    def left_join(self, target: FieldsCallable):
+    def left_join(self, target):
         """
         左关联功能
         :param target: 关联实例
         :return: 自身实例
         """
-        self.__join_list.append(target)
-        return self
+        if isinstance(target, JoinAble):
+            setattr(self, '__join_list', [])
+            getattr(self, '__join_list').append(target)
+            return self
+            return self
+        else:
+            raise Exception('关联对象不支持!!!')
 
     def right_join(self, target):
         """
@@ -218,3 +225,21 @@ class JoinAble(OrmObj):
 
     def union(self):
         pass
+
+    def exe_join(self, on_left_field: list, on_right_field: list) -> str:
+        if not on_left_field or not on_right_field or len(on_left_field) != len(on_right_field):
+            raise Exception('关联参数异常')
+        for l_field_index in range(len(on_left_field)):
+            l_field = on_left_field[l_field_index]
+            print(l_field)
+            print(on_right_field[l_field_index])
+        result = [getattr(self, 'table_map_key') + (
+            (' AS ' + getattr(self, '__alias'))
+            if getattr(self, '__alias') != getattr(self, 'table_map_key') else ''
+        )]
+        for join_obj in getattr(self, '__join_list'):
+            result.append(getattr(join_obj, 'table_map_key') + (
+                (' AS ' + getattr(join_obj, '__alias'))
+                if getattr(join_obj, '__alias') != getattr(join_obj, 'table_map_key') else ''
+            ))
+        return ' LEFT JOIN '.join(result)
