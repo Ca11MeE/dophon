@@ -3,8 +3,10 @@ import logging
 import re
 
 import os
+import socket
 
 import sys
+
 
 def read_self_prop():
     try:
@@ -31,13 +33,34 @@ except Exception as e:
     logging.error('没有找到自定义配置:(application.py)')
     logging.error('引用默认配置')
 
-
 from dophon import logger, properties
 
 logger.inject_logger(globals())
 
 
-def run_as_docker():
+def IsOpen(ip, port):
+    """
+    检查端口是否被占用
+    :param ip:
+    :param port:
+    :return:
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((ip, int(port)))
+        s.shutdown(2)
+        logger.info('%d is open' % port)
+        raise Exception('端口被占用:' + port)
+    except:
+        logger.info('%d is down' % port)
+        return False
+
+
+def run_as_docker(
+        entity_file_name: str = None,
+        container_port: str = str(properties.port),
+        docker_port: str = str(properties.port)
+):
     """
     利用docker启动项目
     :return:
@@ -45,12 +68,10 @@ def run_as_docker():
     try:
         logger.info('容器前期准备')
         root = re.sub('\\\\', '/', properties.project_root)
-        base_name=os.path.basename(root)
+        base_name = os.path.basename(root)
         import platform
         p_version = platform.python_version()
         work_dir = './' + base_name
-        port = properties.port
-        port_str = str(port)
         # 生成依赖文件
         logger.info('生成依赖文件')
         os.system('pip freeze >pre_requirements.txt')
@@ -72,7 +93,7 @@ def run_as_docker():
             file.write('ADD . ' + work_dir + '/' + base_name + '\n')
             file.write('WORKDIR ' + work_dir + '\n')
             file.write('RUN pip install -r requirements.txt' + '\n')
-            file.write('CMD ["python","./Bootstrap.py"]' + '\n')
+            file.write('CMD ["python","./' + (entity_file_name if entity_file_name else 'Bootstrap.py') + '"]' + '\n')
             # file.write('CMD ["/bin/bash"]' + '\n')
         os.system('cd ' + root)
         logger.info('暂停已运行的实例')
@@ -81,11 +102,19 @@ def run_as_docker():
         os.system('docker rm ' + base_name)
         logger.info('移除旧镜像')
         os.system('docker rmi ' + base_name)
+        logger.info('检测配置合法性')
+        IsOpen('127.0.0.1', int(docker_port))
         logger.info('建立镜像')
-        build_id=os.system('docker build -t ' + base_name + ' .')
+        build_id = os.system('docker build -t ' + base_name + ' .')
         logger.info('运行镜像')
         os.system(
-            'docker run -p ' + port_str + ':' + port_str + ' -d --name ' + base_name + ' ' + os.path.basename(
+            'docker run -p ' + container_port
+            +
+            ':' +
+            docker_port +
+            ' -d --name ' +
+            base_name + ' ' +
+            os.path.basename(
                 root))
         logger.info('打印容器内部地址')
         os.system('docker inspect --format=\'{{.NetworkSettings.IPAddress}}\' ' + base_name)

@@ -130,6 +130,42 @@ def free_source():
     return method
 
 
+def fix_static(
+        fix_target: Flask = app,
+        static_floder: str = 'static'
+):
+    """
+    修正静态文件路径
+    :return:
+    """
+    if hasattr(fix_target, 'static_folder'):
+        if hasattr(properties, 'project_root'):
+            root_path = properties.project_root
+        else:
+            root_path = os.getcwd()
+        fix_target.static_folder = root_path + '/' + static_floder
+    else:
+        raise Exception('错误的修复对象')
+
+
+def fix_template(
+        fix_target: Flask = app,
+        template_folder: str = 'templates'
+):
+    """
+    修正页面模板文件路径
+    :return:
+    """
+    if hasattr(fix_target, 'template_folder'):
+        if hasattr(properties, 'project_root'):
+            root_path = properties.project_root
+        else:
+            root_path = os.getcwd()
+        fix_target.template_folder = root_path + '/' + template_folder
+    else:
+        raise Exception('错误的修复对象')
+
+
 @free_source()
 def run_app(host=properties.host, port=properties.port):
     # 开启多线程处理
@@ -150,4 +186,3 @@ def bootstrap_app():
     global app
     b = __import__('flask_bootstrap')
     b.Bootstrap(app)
-
