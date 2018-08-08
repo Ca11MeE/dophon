@@ -26,7 +26,7 @@ class Selelct:
 
     def before_select(self, fields_list: list, has_where: bool) -> str:
         result = 'SELECT ' + \
-                 getattr(self, 'fields')(fields_list) + \
+                 (getattr(self, 'fields')(fields_list) if fields_list else ' * ') + \
                  ' FROM ' + \
                  (
 
