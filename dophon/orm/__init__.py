@@ -89,7 +89,10 @@ if '__main__' == __name__:
     print('user1', '---', id(user1))
     user2 = user1.copy_to_obj(manager.user)
     print('user2', '---', id(user2))
+    print(user1('user_id'))
     user3 = user1.read_from_dict({
         'user_id': '111'
     })
     print('user3', '---', id(user3))
+    print(user1('user_id'))
+    print(user3('user_id'))

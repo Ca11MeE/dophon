@@ -16,6 +16,7 @@ class Parseable:
                 setattr(self, key, d[key])
             else:
                 raise Exception('无法转换为' + str(getattr(self, 'table_map_key')) + '类型')
+        return self
 
     def copy_to_obj(self, clz: OrmObj):
         res_obj = clz()
