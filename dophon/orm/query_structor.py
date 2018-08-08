@@ -35,10 +35,10 @@ class Selelct:
                          (' AS ' + getattr(self, '__alias'))
                          if getattr(self, '__alias') != getattr(self, 'table_map_key') else ''
                      )
-                     if not getattr(self, '__join_list') else (getattr(self, 'exe_join')())) \
+                     if not hasattr(self, '__join_list') else (getattr(self, 'exe_join')())
+                 ) \
                  + \
                  (getattr(self, 'where')() if has_where else '')
-        print(result)
         return result
 
     def select(self, fields: list = [], has_where: bool = True) -> list:

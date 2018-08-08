@@ -21,7 +21,11 @@ def create_class(table_name: str, table_args: list):
     :param table_args: 表参数
     :return:
     """
-    class_obj = type(table_name, (SetAble, JoinAble,ValueAble, Struct,),
+    class_obj = type(table_name, (
+        SetAble,
+        JoinAble, # 暂时不加,存在缺陷
+        ValueAble,
+        Struct,),
                      {'__alias': table_name, 'table_map_key': table_name})
     default_arg_list = []
     for table_arg in table_args:

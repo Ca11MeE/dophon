@@ -144,7 +144,13 @@ class WhereAble(FieldsCallable):
         """
         cache = []
         for key in args.keys():
-            cache.append(str(key) + '=' + (str(
+            self_table_alias = \
+                (getattr(self, '__alias')  + '.' if getattr(self, '__alias') != getattr(self, 'table_map_key') else '')
+            cache.append(
+                self_table_alias+
+                str(key) +
+                '=' +
+                (str(
                 args[key]) if isinstance(args[key], int) or isinstance(args[key], float) else (
                     '{' + str(args[key]) + '}')))
         return re.sub('\{|\}', '\'', re.sub('\[|\]|\\\"|\\\'', '', re.sub(',', ' AND ', str(cache))))
@@ -197,28 +203,33 @@ class JoinAble(OrmObj):
             setattr(self, '__join_list', [])
             self.__join_list = []
 
-    def left_join(self, target):
+    def left_join(self, target, on_left_field: list, on_right_field: list):
         """
         左关联功能
         :param target: 关联实例
         :return: 自身实例
         """
+        if not on_left_field or not on_right_field or len(on_left_field) > len(on_right_field):
+            raise Exception('关联参数异常')
         if isinstance(target, JoinAble):
             setattr(self, '__join_list', [])
-            getattr(self, '__join_list').append(target)
-            return self
+            getattr(self, '__join_list').append({
+                'target': target,
+                'left_field': on_left_field,
+                'right_field': on_right_field
+            })
             return self
         else:
             raise Exception('关联对象不支持!!!')
 
-    def right_join(self, target):
+    def right_join(self, target, on_left_field: list, on_right_field: list):
         """
         右关联功能
         :param target: 关联实例
         :return: 自身实例
         """
         if isinstance(target, JoinAble):
-            target.left_join(self)
+            target.left_join(self, on_left_field, on_right_field)
             return self
         else:
             raise Exception('关联对象不支持!!!')
@@ -226,20 +237,33 @@ class JoinAble(OrmObj):
     def union(self):
         pass
 
-    def exe_join(self, on_left_field: list, on_right_field: list) -> str:
-        if not on_left_field or not on_right_field or len(on_left_field) != len(on_right_field):
-            raise Exception('关联参数异常')
-        for l_field_index in range(len(on_left_field)):
-            l_field = on_left_field[l_field_index]
-            print(l_field)
-            print(on_right_field[l_field_index])
-        result = [getattr(self, 'table_map_key') + (
-            (' AS ' + getattr(self, '__alias'))
-            if getattr(self, '__alias') != getattr(self, 'table_map_key') else ''
-        )]
+    def exe_join(self) -> str:
+        self_table_alias = \
+            getattr(self, '__alias') if getattr(self, '__alias') != getattr(self, 'table_map_key') else ''
+
+        result = [
+            getattr(self, 'table_map_key') +
+            (' AS ' if getattr(self, '__alias') != getattr(self, 'table_map_key') else '')
+            + self_table_alias
+        ]
         for join_obj in getattr(self, '__join_list'):
-            result.append(getattr(join_obj, 'table_map_key') + (
-                (' AS ' + getattr(join_obj, '__alias'))
-                if getattr(join_obj, '__alias') != getattr(join_obj, 'table_map_key') else ''
-            ))
-        return ' LEFT JOIN '.join(result)
+            # 获取关联对象
+            obj = join_obj['target']
+            join_obj_table_alias = \
+                getattr(obj, '__alias') if getattr(obj, '__alias') != getattr(obj, 'table_map_key') else ''
+            result.append(getattr(obj, 'table_map_key') +
+                          (' AS ' if getattr(obj, '__alias') != getattr(obj, 'table_map_key') else '')
+                                                                                                  + join_obj_table_alias)
+            # 获取关联键
+            left_field = join_obj['left_field']
+            right_field = join_obj['right_field']
+            # 以关联左键为准
+            on_fields_pair_sep = ' AND '
+            on_fields_pair = []
+            for index in range(len(left_field)):
+                l_field = left_field[index]
+                on_fields_pair.append(
+                    self_table_alias + '.' + l_field +
+                    ' = '
+                    + join_obj_table_alias + '.' + right_field[index])
+        return ' LEFT JOIN '.join(result) + ' ON ' + on_fields_pair_sep.join(on_fields_pair)

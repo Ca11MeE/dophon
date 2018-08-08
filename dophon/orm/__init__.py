@@ -78,8 +78,9 @@ if '__main__' == __name__:
 
     user1=manager.user()
     user2=manager.user()
-    user1.user_name='柯李艺'
-    user1.left_join(user2)
-    user1.alias('u1').left_join(user2.alias('u2'))
-    print(user1.exe_join(['user_id'],['user_id']))
-    user1.select()
+    print(user1.select())
+    user1.user_name='early'
+    user1.left_join(user2,['user_id'],['user_id'])
+    user1.alias('u1').left_join(user2.alias('u2'),['user_id'],['user_id'])
+    # print(user1.exe_join())
+    print(user1.select())
