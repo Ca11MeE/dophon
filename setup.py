@@ -14,7 +14,7 @@ with open('README.md', 'rb') as file:
 
 setup(
     name='dophon',
-    version='1.1.2',
+    version='1.1.3',
     packages=find_packages(),
     url='https://github.com/Ca11MeE/dophon',
     license='Apache 2.0',
