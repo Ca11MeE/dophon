@@ -7,6 +7,8 @@ date:2018-06-01
 """
 project_root=os.getcwd()
 
+ip_count=True
+
 # 此处为服务器配置
 host='0.0.0.0'
 port=80

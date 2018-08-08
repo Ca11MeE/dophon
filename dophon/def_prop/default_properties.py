@@ -9,6 +9,9 @@ date:2018-06-01
 
 project_root = os.getcwd()
 
+# 此为开启ip防火墙模式(1秒不超过50次请求,60秒解冻)
+ip_count=False
+
 # 此处为服务器配置
 host = '127.0.0.1'
 port = 443

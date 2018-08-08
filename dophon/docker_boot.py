@@ -6,6 +6,10 @@ import os
 import socket
 
 import sys
+import threading
+
+import time
+from urllib import request
 
 
 def read_self_prop():
@@ -48,13 +52,75 @@ def IsOpen(ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         s.connect((ip, int(port)))
-        s.shutdown(2)
-        logger.info('%d is open' % port)
-        raise Exception('端口被占用:' + port)
+        logger.error('端口被占用:' + port)
+        s.close()
+        return True
     except:
-        logger.info('%d is down' % port)
         return False
 
+
+def listen(code):
+    """
+    监听命令状态码
+    :param code: os.system()命令返回码
+    :return: 当不正常执行会抛出错误,谨慎使用!!!
+    """
+    if code >> 8 is 0:
+        pass
+    else:
+        raise Exception('命令执行错误!')
+
+
+def listen_container_status(docker_port, loop_count: int = 3, wait_sec: int = 10):
+    """
+    检测容器端口存活
+    :return:
+    """
+    # 默认检测三次
+    curr_count = 1
+    while int(curr_count) <= int(loop_count):
+        # 默认间隔10秒
+        time.sleep(wait_sec)
+        if IsOpen(get_docker_address(), int(docker_port)):
+            raise Exception('端口映射异常')
+        else:
+            # 报错证明端口正常占用
+            # 发起请求
+            res=request.urlopen('http://'+get_docker_address()+':'+docker_port)
+            if not res.read():
+                raise Exception('服务启动异常')
+        curr_count += 1
+
+
+def get_docker_address():
+    """
+    获取容器载体ip
+    :return:
+    """
+    result = os.popen('ipconfig').readlines()
+    result_lines = []
+    r_l_copy = []
+    while result:
+        line = result[0]
+        if re.search('^.*(d|D)(o|O)(c|C)(k|K)(e|E)(r|R).*$', line):
+            result_lines = result.copy()
+            break
+        else:
+            result.pop(0)
+    for line in result_lines:
+        line = re.sub('\s*', '', line)
+        if line and re.search('([0-9]+\.)+[0-9]+$', line) and re.search('(i|I)(p|P)', line):
+            r_l_copy.append(
+                re.search('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)', line).group(0)
+            )
+    return r_l_copy.pop(0)
+
+def attach_container(base_name:str):
+    """
+    进入容器
+    :return:
+    """
+    os.system('docker attach ' + base_name)
 
 def run_as_docker(
         entity_file_name: str = None,
@@ -103,9 +169,11 @@ def run_as_docker(
         logger.info('移除旧镜像')
         os.system('docker rmi ' + base_name)
         logger.info('检测配置合法性')
-        IsOpen('127.0.0.1', int(docker_port))
+        if IsOpen('127.0.0.1', int(docker_port)):
+            # 端口被占用
+            logger.warn('映射端口被占用!!')
         logger.info('建立镜像')
-        build_id = os.system('docker build -t ' + base_name + ' .')
+        listen(os.system('docker build -t ' + base_name + ' .'))
         logger.info('运行镜像')
         os.system(
             'docker run -p ' + container_port
@@ -118,10 +186,12 @@ def run_as_docker(
                 root))
         logger.info('打印容器内部地址')
         os.system('docker inspect --format=\'{{.NetworkSettings.IPAddress}}\' ' + base_name)
+        logger.info('打印容器载体地址')
+        print(get_docker_address())
+        logger.info('启动检测容器端口')
+        threading.Thread(target=listen_container_status, args=(docker_port,)).start()
         logger.info('进入镜像')
-        os.system(
-            'docker attach ' + base_name)
-
+        # threading.Thread(target=attach_container,args=(base_name,)).start()
+        attach_container(base_name)
     except Exception as e:
-        logger.error(build_id)
-        print(e)
+        logger.error(e)
