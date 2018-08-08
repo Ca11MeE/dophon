@@ -1,7 +1,6 @@
 from dophon.mysql import Connection
 from dophon import mysql
 import types
-import re
 from dophon.orm.db_obj.type_dict import db_type_python_dict
 from dophon.orm.db_obj.type_dict import set_check
 from dophon.orm.db_obj.function_class import *
@@ -23,9 +22,10 @@ def create_class(table_name: str, table_args: list):
     """
     class_obj = type(table_name, (
         SetAble,
-        JoinAble, # 暂时不加,存在缺陷
+        JoinAble,
         ValueAble,
-        Struct,),
+        Struct,
+        Parseable),
                      {'__alias': table_name, 'table_map_key': table_name})
     default_arg_list = []
     for table_arg in table_args:

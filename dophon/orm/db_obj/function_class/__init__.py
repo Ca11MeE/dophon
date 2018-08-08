@@ -1,10 +1,11 @@
 import re
+from dophon.orm.db_obj.function_class.func_tools import Parseable
 
 """
 功能特性类集合
 """
 
-__all__ = ['WhereAble', 'ValueAble', 'SetAble', 'OrmObj', 'JoinAble']
+__all__ = ['WhereAble', 'ValueAble', 'SetAble', 'OrmObj', 'JoinAble', 'Parseable']
 
 
 class OrmObj(object):
@@ -145,14 +146,14 @@ class WhereAble(FieldsCallable):
         cache = []
         for key in args.keys():
             self_table_alias = \
-                (getattr(self, '__alias')  + '.' if getattr(self, '__alias') != getattr(self, 'table_map_key') else '')
+                (getattr(self, '__alias') + '.' if getattr(self, '__alias') != getattr(self, 'table_map_key') else '')
             cache.append(
-                self_table_alias+
+                self_table_alias +
                 str(key) +
                 '=' +
                 (str(
-                args[key]) if isinstance(args[key], int) or isinstance(args[key], float) else (
-                    '{' + str(args[key]) + '}')))
+                    args[key]) if isinstance(args[key], int) or isinstance(args[key], float) else (
+                        '{' + str(args[key]) + '}')))
         return re.sub('\{|\}', '\'', re.sub('\[|\]|\\\"|\\\'', '', re.sub(',', ' AND ', str(cache))))
 
     def where(self, fields: list = []) -> str:
@@ -253,7 +254,7 @@ class JoinAble(OrmObj):
                 getattr(obj, '__alias') if getattr(obj, '__alias') != getattr(obj, 'table_map_key') else ''
             result.append(getattr(obj, 'table_map_key') +
                           (' AS ' if getattr(obj, '__alias') != getattr(obj, 'table_map_key') else '')
-                                                                                                  + join_obj_table_alias)
+                          + join_obj_table_alias)
             # 获取关联键
             left_field = join_obj['left_field']
             right_field = join_obj['right_field']

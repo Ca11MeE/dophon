@@ -75,12 +75,21 @@ if '__main__' == __name__:
     # user.user_pwd = 'user_pwd'
     # user.user_status = 123
     # print(user.delete(where=['user_id']))
+    #
+    # user1=manager.user()
+    # user2=manager.user()
+    # print(user1.select())
+    # user1.user_name='early'
+    # user1.left_join(user2,['user_id'],['user_id'])
+    # user1.alias('u1').left_join(user2.alias('u2'),['user_id'],['user_id'])
+    # # print(user1.exe_join())
+    # print(user1.select())
 
-    user1=manager.user()
-    user2=manager.user()
-    print(user1.select())
-    user1.user_name='early'
-    user1.left_join(user2,['user_id'],['user_id'])
-    user1.alias('u1').left_join(user2.alias('u2'),['user_id'],['user_id'])
-    # print(user1.exe_join())
-    print(user1.select())
+    user1 = manager.user()
+    print('user1', '---', id(user1))
+    user2 = user1.copy_to_obj(manager.user)
+    print('user2', '---', id(user2))
+    user3 = user1.read_from_dict({
+        'user_id': '111'
+    })
+    print('user3', '---', id(user3))
