@@ -222,20 +222,28 @@ def set_check(data_type):
         def arg(*args, **kwargs):
             value = args[1] if len(args) > 1 else kwargs['value']
             if check_data(value, data_type):
-                result = f(*args, **kwargs)
-                return result
+                # 数据类型校验通过
+                pass
             else:
-                err_msg = '数据类型校验不通过( data = ' + \
-                          value + \
-                          ' , data_type = ' + \
-                          str(type(value)) + \
-                          ' , db_type = ' + \
-                          data_type + \
-                          ' )'
-                logger.error(err_msg)
-                raise Exception(
-                    err_msg
-                )
+                try:
+                    # 尝试强制转换
+                    db_type_python_dict[re.sub('([^a-zA-Z])','',data_type)]['type'](
+                        value
+                    )
+                except:
+                    err_msg = '数据类型校验不通过( data = ' + \
+                              value + \
+                              ' , data_type = ' + \
+                              str(type(value)) + \
+                              ' , db_type = ' + \
+                              data_type + \
+                              ' )'
+                    logger.error(err_msg)
+                    raise Exception(
+                        err_msg
+                    )
+            result = f(*args, **kwargs)
+            return result
 
         return arg
 

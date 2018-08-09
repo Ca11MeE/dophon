@@ -1,5 +1,4 @@
 import re
-from dophon.orm.db_obj.function_class.func_tools import Parseable
 
 """
 功能特性类集合
@@ -268,3 +267,27 @@ class JoinAble(OrmObj):
                     ' = '
                     + join_obj_table_alias + '.' + right_field[index])
         return ' LEFT JOIN '.join(result) + ' ON ' + on_fields_pair_sep.join(on_fields_pair)
+
+
+class Parseable(OrmObj):
+
+    def read_from_dict(self, d: dict):
+        """
+        读取字典生成orm对象
+        :param d:
+        :return:
+        """
+        for key in d.keys():
+            if hasattr(self, key):
+                setattr(self, key, d[key])
+            else:
+                raise Exception('无法转换为' + str(getattr(self, 'table_map_key')) + '类型')
+        return self
+
+    def copy_to_obj(self, clz: OrmObj):
+        res_obj = clz()
+        for name in dir(self):
+            if re.search('^_.*', name):
+                continue
+            if name not in dir(res_obj):
+                raise Exception('无法复制的类型')

@@ -62,12 +62,12 @@ if '__main__' == __name__:
     #
     # print(user.insert())
     #
-    # user.user_id = 'test_id'
-    # user.info_id = 'info_id'
-    # user.user_name = '柯李艺'
-    # user.user_pwd = '333'
-    # user.user_status = 123
-    # print(user.update(update=['user_name','user_pwd'],where=['user_id']))
+    user.user_id = 'test_id'
+    user.info_id = 'info_id'
+    user.user_name = '柯李艺'
+    user.user_pwd = '333'
+    user.user_status = 123
+    print(user.update(update=['user_name','user_pwd'],where=['user_id']))
     #
     # user.user_id = 'test_id'
     # user.info_id = 'info_id'
@@ -85,14 +85,14 @@ if '__main__' == __name__:
     # # print(user1.exe_join())
     # print(user1.select())
 
-    user1 = manager.user()
-    print('user1', '---', id(user1))
-    user2 = user1.copy_to_obj(manager.user)
-    print('user2', '---', id(user2))
-    print(user1('user_id'))
-    user3 = user1.read_from_dict({
-        'user_id': '111'
-    })
-    print('user3', '---', id(user3))
-    print(user1('user_id'))
-    print(user3('user_id'))
+    # user1 = manager.user()
+    # print('user1', '---', id(user1))
+    # user2 = user1.copy_to_obj(manager.user)
+    # print('user2', '---', id(user2))
+    # print(user1('user_id'))
+    # user3 = user1.read_from_dict({
+    #     'user_id': '111'
+    # })
+    # print('user3', '---', id(user3))
+    # print(user1('user_id'))
+    # print(user3('user_id'))
