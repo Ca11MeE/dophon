@@ -1,20 +1,28 @@
 # coding: utf-8
+import pypandoc as pypandoc
 from setuptools import setup, find_packages
 
 '''
 发布命令:
 python setup.py bdist_wheel
-twine upload dist/dophon-1.0.6-py3.whl
+twine upload dist/  <dophon.whl>
 '''
 
 long_description = ''
 
-with open('README.md', 'r',encoding='utf8') as file:
-    long_description = long_description.join(file.readlines())
+try:
+    long_description = pypandoc.convert('README.md', 'rst')
+    long_description = long_description.replace("\r","") # THAT $%^$*($ ONE
+except OSError:
+    print("Pandoc not found. Long_description conversion failure.")
+    import io
+    # pandoc is not installed, fallback to using raw contents
+    with io.open('README.md', encoding="utf-8") as f:
+        long_description = f.read()
 
 setup(
     name='dophon',
-    version='1.1.4',
+    version='1.1.5',
     packages=find_packages(),
     url='https://github.com/Ca11MeE/dophon',
     license='Apache 2.0',
