@@ -1,4 +1,12 @@
 # coding: utf-8
+"""
+初始化协程模块(必须,不然导致系统死锁)
+"""
+import traceback
+
+from gevent import monkey
+
+monkey.patch_all()
 
 """
 配置管理
@@ -43,30 +51,39 @@ from dophon import logger
 
 logger.inject_logger(globals())
 
-from flask import Flask, request,abort
+from flask import Flask, request, abort
 from dophon import mysql
 from dophon.mysql import Pool
 from dophon import properties
 
-app_name = properties.service_name if hasattr(properties, 'service_name') else __name__
-# 定义WEB容器(同时防止json以ascii解码返回)
-app = Flask(app_name)
-app.config['JSON_AS_ASCII'] = False
 
-# ip计数缓存
-ip_count = {}
-ipcount_lock = Lock()
-if os.path.exists(os.getcwd()+'/ip_count'):
-    with open('ip_count', 'r') as ip_count_file:
-        file_text = ip_count_file.read()
-        if file_text:
-            ip_count = eval(file_text)
-else:
-    with open('ip_count', 'w') as ip_count_file:
-        json.dump({},ip_count_file)
+def boot_init():
+    """
+    初始化启动
+    :return:
+    """
+    global app_name, app, ip_count, ipcount_lock, ip_refuse_list
+    app_name = properties.service_name if hasattr(properties, 'service_name') else __name__
+    # 定义WEB容器(同时防止json以ascii解码返回)
+    app = Flask(app_name)
+    app.config['JSON_AS_ASCII'] = False
 
-# IP黑名单
-ip_refuse_list = {}
+    # ip计数缓存
+    ip_count = {}
+    ipcount_lock = Lock()
+    if os.path.exists(os.getcwd() + '/ip_count'):
+        with open('ip_count', 'r') as ip_count_file:
+            file_text = ip_count_file.read()
+            if file_text:
+                ip_count = eval(file_text)
+    else:
+        with open('ip_count', 'w') as ip_count_file:
+            json.dump({}, ip_count_file)
+    # IP黑名单
+    ip_refuse_list = {}
+
+
+boot_init()
 
 
 def before_request():
@@ -84,7 +101,7 @@ def before_request():
             # 可以清除白名单
             ip_refuse_list.pop(ip)
             # 清除访问记录
-            ip_count[ip]['req_timestemp']=[now_timestemp]
+            ip_count[ip]['req_timestemp'] = [now_timestemp]
         else:
             # 未到解禁时间
             return abort(400)
@@ -98,12 +115,12 @@ def before_request():
         '''
         if (int(now_timestemp) - int(req_timestemp[0])) > 1 \
                 and \
-                (int(now_timestemp) - int(req_timestemp[len(req_timestemp)-1])) < 1:
+                (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
             # 检测3秒内请求数
             if len(req_timestemp) > 50:
                 # 默认三秒内请求不超过300
                 # 超出策略则添加到黑名单
-                ip_refuse_list[ip]=now_timestemp
+                ip_refuse_list[ip] = now_timestemp
             else:
                 # 不超出策略则清空请求时间戳缓存
                 ip_item['req_timestemp'] = [now_timestemp]
@@ -249,14 +266,36 @@ def fix_template(
 
 @free_source()
 def run_app(host=properties.host, port=properties.port):
-    # 开启多线程处理
-    app.run(host=host, port=port, threaded=True)
+    if properties.server_gevented:
+        from gevent.pywsgi import WSGIServer
+        WSGIServer((host, port), app).serve_forever()
+    else:
+        # 开启多线程处理
+        app.run(host=host, port=port, threaded=properties.server_threaded)
 
 
 @free_source()
 def run_app_ssl(host=properties.host, port=properties.port, ssl_context=properties.ssl_context):
-    # 开启多线程处理
-    app.run(host=host, port=port, ssl_context=ssl_context, threaded=True)
+    if properties.server_gevented:
+        from gevent.pywsgi import WSGIServer
+        ssl_args = {
+            'certfile': ssl_context[0],
+            'keyfile': ssl_context[1],
+        }
+        WSGIServer((host, port), app, **ssl_args).serve_forever()
+    else:
+        # 开启多线程处理
+        app.run(host=host, port=port, ssl_context=ssl_context, threaded=properties.server_threaded)
+
+
+def bootstrap_app():
+    """
+    bootstrap样式页面初始化
+    :return:
+    """
+    global app
+    b = __import__('flask_bootstrap')
+    b.Bootstrap(app)
 
 
 from dophon.annotation import *
@@ -282,11 +321,75 @@ def view_ip_refuse():
     return ip_refuse_list
 
 
-def bootstrap_app():
+@app.errorhandler(500)
+def handle_500(e):
     """
-    bootstrap样式页面初始化
+    处理业务代码异常页面
+    :param e:
     :return:
     """
-    global app
-    b = __import__('flask_bootstrap')
-    b.Bootstrap(app)
+    exc_type, exc_value, exc_tb = sys.exc_info()
+    tc = traceback.format_tb(exc_tb)
+    if properties.debug_trace:
+        trace_detail = '<h4>Details</h4>'
+        trace_detail += '<table style="width:100%;" cellspacing="0" cellpadding="4">'
+        for tc_item in tc:
+            if tc_item.find(os.getcwd()) < 0:
+                continue
+            trace_detail += '<tr>'
+            tc_item_info_list = tc_item.split(',', 2)
+            # for tc_item_info_list_item in tc_item_info_list:
+            #     trace_detail += '<td>' + tc_item_info_list_item + '</td>'
+            trace_detail += '<td style="border: 1px solid gray;">' + re.sub('(^.+(\\\|/))|"', '',
+                                                                            tc_item_info_list[0]) + '</td>'
+            trace_detail += '<td style="border: 1px solid gray;">' + tc_item_info_list[1] + '</td>'
+            trace_code_detail = re.sub('^\s+', '', tc_item_info_list[2]).split(' ', 1)
+            trace_detail += '<td style="border: 1px solid gray;">' + ' => '.join([
+                trace_code_detail[0],
+                re.sub('\s+', ' => ', trace_code_detail[1], 1),
+            ]) + '</td>'
+            trace_detail += '<tr>'
+        trace_detail += '</table>'
+    else:
+        trace_detail = ''
+    return '<h1>Wrong!!</h1>' + \
+           '<h2>error info:' + str(e) + '</h2>' + \
+           '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+           trace_detail
+
+
+@app.errorhandler(404)
+def handle_404(e):
+    """
+    处理路径匹配异常
+    :return:
+    """
+    return '<h1>Wrong!!</h1>' + \
+           '<h2>error info:' + str(e) + '</h2>' + \
+           '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+           'request path:' + request.path
+
+
+@app.errorhandler(405)
+def handle_405(e):
+    """
+    处理请求方法异常
+    :return:
+    """
+    return '<h1>Wrong!!</h1>' + \
+           '<h2>error info:' + str(e) + '</h2>' + \
+           '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+           'request method:' + request.method
+
+
+@app.errorhandler(400)
+def handle_400(e):
+    """
+    处理异常请求
+    :return:
+    """
+    return '<h1>Wrong!!</h1>' + \
+           '<h2>error info:' + str(e) + '</h2>' + \
+           '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+           'request form:' + request.form + \
+           'request body:' + request.json if request.is_json else ''

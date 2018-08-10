@@ -24,3 +24,7 @@ def test():
 @ResponseTemplate(template=['index.html'])
 def index():
     return {}
+
+@RequestMapping(app,'/exc/500',['get','post'])
+def demo_exception():
+    1/0

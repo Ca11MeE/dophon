@@ -10,6 +10,12 @@ date:2018-06-01
 
 project_root = os.getcwd()
 
+# 服务器相关配置
+server_threaded = False # 服务器多线程开关
+server_gevented = False # 服务器gevent协程处理(会覆盖多线程开关)
+
+debug_trace=False # 调试跟踪记录
+
 # 此为开启ip防火墙模式(1秒不超过50次请求,60秒解冻)
 ip_count=False
 
