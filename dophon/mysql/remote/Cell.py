@@ -16,6 +16,8 @@ date:2018-06-01
 demo:
 remote_cell = remote.getCell('ShopGoodsMapper.xml', remote_path='http://127.0.0.1:8400/member/export/xml/ShopGoodsMapper.xml')
 obj1 = getDbObj(remote_cell.getPath(), debug=True)
+或者
+obj1 = getDbObj(remote_cell, debug=True)
 
 注意！！！
 read_only设置远程xml文件是否为只读，注意防止与自动增量更新冲突
@@ -25,7 +27,7 @@ read_only设置远程xml文件是否为只读，注意防止与自动增量更�
 logger.inject_logger(globals())
 
 
-class cell():
+class Cell():
     def __init__(self, file_name='', remote_path='', read_only=False):
         self._file_name = file_name
         self._remote_path = remote_path
@@ -111,4 +113,4 @@ def sort_path(path_str):
 
 # 工厂模式获取实例
 def get_cell(file_name, remote_path, read_only):
-    return cell(file_name=file_name, remote_path=remote_path, read_only=read_only)
+    return Cell(file_name=file_name, remote_path=remote_path, read_only=read_only)

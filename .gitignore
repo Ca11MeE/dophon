@@ -1,5 +1,8 @@
-test*.py
+test.py
 /venv/
 /dist/
 /build/
 /dophon.egg-info/
+__pycache__/
+/.idea/
+*.pyc

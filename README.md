@@ -427,20 +427,170 @@ consumer()
 
 ```
 
+### 8.4 统一管理消费者
+
+```python
+from dophon.msg_queue import *
+
+class TestConsumer(Consumer):
+
+    @consumer(tag='test_msg_tag|test_msg_tag2', as_args=False, delay=1)
+    def consume_msg(msg, timestamp, tag):
+        print(msg)
+        print(timestamp)
+        print(tag)
+
+# 实例化衍生类启动消费者
+TestConsumer()
+
+```
+
 ## 9.数据库交互
+
+### 9.0 配置相关
 
 ### 9.1 结果集映射方式
 
 结果集:sql执行脚本的一个集合,由于在实际开发中查询居多,简称结果集
 
-> 1. 通过xml文件规范若干结果集组成
-> 2. 通过代码获取xml文件其中某一个结果集(以id区分)
-> 3. 支持动态参数传入(#{}形式)以及骨架参数传入(${形式})
-> 4. 支持单条查询,列表查询,队列查询(结果集id与参数列表的列表形式和字典形式)
-> 5. 支持结果集文件热更新
-> 6. 支持远程维护结果集文件
+> 通过xml文件规范若干结果集组成
+```xml
+<!--test.xml-->
+<select id="findAll">
+    SELECT
+    *
+    FROM
+    table
+</select>
+```
+
+> 通过代码关联xml文件,初始化结果集
+```python
+from dophon.mysql import *
+
+_cursor=db_obj('/test.xml',auto_fix=True)
+
+# 根路径为配置文件路径
+# 文件路径必须以/开头
+
+```
+
+> 通过代码获取xml文件其中某一个结果集(以id区分)
+```python
+result= _cursor.exe_sql(methodName='findAll')
+```
+> 支持动态参数传入(#{}形式)以及骨架参数传入(${形式})
+
+动态参数传入:
+```xml
+<select id="findAllById">
+    SELECT
+    *
+    FROM
+    table
+    WHERE
+    id=#{id}
+</select>
+```
+
+```python
+result= _cursor.exe_sql(methodName='findAll',args={'id':'12345678'})
+```
+
+骨架参数传入:
+```xml
+<select id="findAllByTableName">
+    SELECT
+    *
+    FROM
+    ${table_name}
+</select>
+```
+
+```python
+result= _cursor.exe_sql(methodName='findAll',args={'id':'12345678'})
+```
+
+> 支持单条查询,列表查询,队列查询(结果集id与参数列表的列表形式和字典形式)
+
+单条查询:
+```python
+result= _cursor.exe_sql_single(methodName='findAll',args={'id':'12345678'})
+
+
+# result<dict>
+
+```
+
+列表查询:
+```python
+result= _cursor.exe_sql(methodName='findAll',args={'id':'12345678'})
+
+# result<list>
+
+```
+
+队列查询(不稳定):
+
+1.列表形式:
+```python
+result= _cursor.exe_sql_queue(
+    method_queue=['test1','test2'],
+    args_queue=[
+        {'id':'123456','name':'tom'},
+        {}
+    ]
+)
+
+# result<dict>
+# {
+#   method_name:exec_result
+# }
+
+```
+2.字典形式:
+```python
+result= _cursor.exe_sql_obj_queue(
+    queue_obj={
+        'test1':{
+            'id':'123456'
+        },
+        'test2':{}
+    }
+)
+
+# result<dict>
+# {
+#   method_name:exec_result
+# }
+
+```
+
+> 支持结果集文件热更新
+
+```python
+update_round(_cursor,1)
+
+# update_round(<cursor>,second:int)
+
+```
+
+> 支持远程维护结果集文件
+
+```python
+remote_cell = remote.getCell('test.xml', remote_path='http://127.0.0.1:8400/member/export/xml/test.xml')
+_cursor = db_obj(remote_cell.getPath(), debug=True)
+或者
+_cursor = db_obj(remote_cell, debug=True)
+```
 
 ### 9.2 表模型映射方式
 
+暂时支持单条事务操作
+
 > 1. 通过初始化模型管理器获取数据库表映射骨架
-> 2. 通过实例化
+> 2. 通过实例化映射骨架获取表操作缓存实例(操作实例)
+> 3. 通过对操作实例赋值进行对对应表模拟操作
+> 4. 通过对操作实例结构化操作对数据库对应表结构进行数据落地操作
+
+## 10.容器启动

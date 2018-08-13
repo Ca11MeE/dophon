@@ -12,7 +12,7 @@ import traceback
 from dophon.msg_queue.SizeableTPE import SizeableThreadPoolExecutor
 
 __all__ = [
-    'producer', 'consumer'
+    'producer', 'consumer','Consumer'
 ]
 
 logger.inject_logger(globals())

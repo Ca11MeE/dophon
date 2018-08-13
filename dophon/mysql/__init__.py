@@ -1,12 +1,12 @@
 # coding: utf-8
 import dophon.reader as reader
 from dophon.mysql import Pool, Connection, PageHelper
+from dophon.mysql.remote.Cell import Cell
 import threading
 import re
 from dophon.mysql import binlog
 from dophon.mysql.binlog import Schued
 from dophon import properties
-import sys
 from dophon import logger
 
 """
@@ -41,10 +41,12 @@ project_path = properties.project_root
 
 logger.inject_logger(globals())
 
-obj_manager={}
+obj_manager = {}
+
 
 class BlockingThreadError(Exception):
     pass
+
 
 class curObj:
     _page = False
@@ -193,7 +195,7 @@ class curObj:
         """
         self._page = False
 
-    def exe_sql_obj_queue(self, queue_obj={}):
+    def exe_sql_obj_queue(self, queue_obj={}) -> dict:
         # 批量执行语句(整体版)
         """
         queue_obj中key为方法名,value为参数
@@ -205,12 +207,12 @@ class curObj:
         if queue_obj:
             methods = list(queue_obj.keys())
             args = list(queue_obj.values())
-            self.exe_sql_queue(method_queue=methods, args_queue=args)
+            return self.exe_sql_queue(method_queue=methods, args_queue=args)
         else:
             logger.error('queue_obj参数不正确')
             raise Exception('queue_obj参数不正确')
 
-    def exe_sql_queue(self, method_queue=[], args_queue=[]):
+    def exe_sql_queue(self, method_queue=[], args_queue=[]) -> dict:
         # 批量执行语句(拆分版)
         """
         method_queue中存放顺序执行的sql方法名[str]
@@ -218,6 +220,7 @@ class curObj:
         若其中包含select无条件参数语句,请用空元组()占位
         """
         self.lock.acquire(blocking=True)
+        result = {}
         # 参数检查
         if not method_queue:
             logger.error('语句方法为空')
@@ -241,10 +244,24 @@ class curObj:
                 _sql = self.get_sql(methodName=method, args=args, pageInfo=None)
                 # 执行sql语句
                 self._cursor.execute(_sql)
+                '''
+                尝试执行语句成功后会解析结果集
+                '''
+                if re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', _sql):
+                    data = self._cursor.fetchall()
+                    description = self._cursor.description
+                else:
+                    data = [[self._cursor.rowcount]]
+                    description = [['row_count']]
+                current_result = sort_result(data, description, result)
                 # 调试模式打印语句
                 if self._debug:
                     print_debug(methodName=method, args=args, sql=_sql, result=self._cursor.rowcount)
                     # 事务提交(pymysql要求除查询外所有语句必须手动提交)
+                if method in result:
+                    result[method + str(len(result))] =current_result
+                else:
+                    result[method]=current_result
         except Exception as e:
             logger.error(str(e) + '\n')
             self._db.rollback()
@@ -257,6 +274,7 @@ class curObj:
             self.lock.release()
             # 关闭连接
             self.close()
+            return result
 
     def exe_sql(self, methodName='', pageInfo=None, args=()) -> list:
         """
@@ -400,7 +418,8 @@ class curObj:
     """
     细粒度sql语句执行组
     """
-    def execute(self,method_name:str, pageInfo=None, args=()):
+
+    def execute(self, method_name: str, pageInfo=None, args=()):
         if self.lock.locked():
             raise BlockingThreadError('还有事务尚未提交!!!')
         self.lock.acquire(blocking=True)
@@ -413,6 +432,7 @@ class curObj:
     def rollback(self):
         self._db.rollback()
         self.lock.release()
+
 
 def sort_result(data: list, description: tuple, result: list) -> list:
     """
@@ -438,7 +458,7 @@ def sort_result(data: list, description: tuple, result: list) -> list:
     return result
 
 
-def getDbObj(path: str, debug: bool = False, auto_fix: bool = False):
+def getDbObj(path, debug: bool = False, auto_fix: bool = False):
     """
     获取数据表实例
     :param path: xml文件路径
@@ -457,19 +477,24 @@ def getDbObj(path: str, debug: bool = False, auto_fix: bool = False):
         else:
             # 初始5个连接
             pool.initPool(5, Connection.Connection)
-    if auto_fix:
-        pattern = re.sub(r'\\', r'\\\\', re.sub('/', '\\/', project_path))
-        if not re.search(pattern, path):
-            r_path = str(project_path) + str(path)
+    if isinstance(path,str):
+        if auto_fix:
+            pattern = re.sub(r'\\', r'\\\\', re.sub('/', '\\/', project_path))
+            if not re.search(pattern, path):
+                r_path = str(project_path) + str(path)
+            else:
+                r_path = str(path)
         else:
-            r_path = str(path)
+            r_path = path
+    elif isinstance(path,Cell):
+        r_path = path.getPath()
     else:
-        r_path = path
+        raise TypeError('结果集路径类型错误')
     # 数据语句对象改为单例模式获取
     if r_path in obj_manager:
         return obj_manager[r_path]
-    singleton_obj=curObj(pool, r_path, True, debug)
-    obj_manager[r_path]=singleton_obj
+    singleton_obj = curObj(pool, r_path, True, debug)
+    obj_manager[r_path] = singleton_obj
     return singleton_obj
 
 
