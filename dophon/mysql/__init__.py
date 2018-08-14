@@ -472,27 +472,26 @@ def sort_result(data: list, description: tuple, result: list) -> list:
                 value = None
                 if type(val) is not type(None):
                     value = str(val)
-                class_obj = c_prop(class_obj, colName, value, use_setter=False)
+                class_obj=c_prop(class_obj,colName,value,use_setter=False)
             result.append(class_obj())
     return result
 
-
-def c_prop(clz: type, prop_name: str, prop_value=None, use_setter: bool = True, use_getter: bool = True):
+def c_prop(clz:type,prop_name:str,prop_value=None,use_setter:bool=True,use_getter:bool=True):
     """
     生成类内属性方法
     :return:
     """
-    in_setter = None
-    in_getter = None
+    in_setter=None
+    in_getter=None
     setattr(
         clz,
         '_' + prop_name,
         prop_value,
     )
     if use_setter:
-        in_setter = c_prop_setter(prop_name)
+        in_setter=c_prop_setter(prop_name)
     if use_getter:
-        in_getter = c_prop_getter(prop_name)
+        in_getter=c_prop_getter(prop_name)
     setattr(
         clz,
         prop_name,
@@ -501,8 +500,7 @@ def c_prop(clz: type, prop_name: str, prop_value=None, use_setter: bool = True, 
 
     return clz
 
-
-def c_prop_setter(prop_name: str) -> classmethod:
+def c_prop_setter(prop_name:str) -> classmethod:
     """
     生成setter方法
     :return:
@@ -518,7 +516,7 @@ def c_prop_setter(prop_name: str) -> classmethod:
     return setter_method
 
 
-def c_prop_getter(prop_name: str) -> classmethod:
+def c_prop_getter(prop_name:str) -> classmethod:
     """
     生成getter方法
     :return:
