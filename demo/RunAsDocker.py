@@ -1,4 +1,4 @@
 # coding: utf-8"
 from dophon import docker_boot
 
-docker_boot.run_as_docker(attach_cmd=True)
+docker_boot.run_as_docker()

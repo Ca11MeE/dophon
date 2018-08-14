@@ -94,7 +94,7 @@ def listen_container_status(docker_port, loop_count: int = 3, wait_sec: int = 10
             if not res.read():
                 raise Exception('服务启动异常')
         curr_count += 1
-
+    logger.info('容器启动成功,请在命令行输入docker ps查看')
 
 def get_docker_address():
     """
@@ -191,7 +191,7 @@ def run_as_docker(
             base_name + ' ' +
             os.path.basename(
                 root))
-        logger.info('打印容器内部地址')
+        logger.info('打印容器内部地址(空地址代表启动失败)')
         os.system('docker inspect --format=\'{{.NetworkSettings.IPAddress}}\' ' + base_name)
         logger.info('打印容器载体地址')
         print(get_docker_address())
