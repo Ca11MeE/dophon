@@ -1,7 +1,8 @@
 # coding: utf-8
 from urllib import request
-import uuid, os, dophon.mysql as mysql, time, stat
-import dophon.mysql.binlog.Schued as schued
+import uuid, os, time, stat
+from dophon import mysql
+from dophon.mysql.binlog import Schued as schued
 from dophon import logger
 
 """

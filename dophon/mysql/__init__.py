@@ -1,4 +1,6 @@
 # coding: utf-8
+import types
+
 import dophon.reader as reader
 from dophon.mysql import Pool, Connection, PageHelper
 from dophon.mysql.remote.Cell import Cell
@@ -42,6 +44,11 @@ project_path = properties.project_root
 logger.inject_logger(globals())
 
 obj_manager = {}
+
+DICT = dict
+OBJECT = object
+# 定义返回类型(默认字典类型)
+result_type = DICT
 
 
 class BlockingThreadError(Exception):
@@ -243,7 +250,7 @@ class curObj:
                 """
                 _sql = self.get_sql(methodName=method, args=args, pageInfo=None)
                 # 执行sql语句
-                self._cursor.execute(_sql)
+                exc_result = self._cursor.execute(_sql)
                 '''
                 尝试执行语句成功后会解析结果集
                 '''
@@ -253,17 +260,17 @@ class curObj:
                 else:
                     data = [[self._cursor.rowcount]]
                     description = [['row_count']]
-                current_result = sort_result(data, description, result)
+                current_result = sort_result(data, description, [])
                 # 调试模式打印语句
                 if self._debug:
                     print_debug(methodName=method, args=args, sql=_sql, result=self._cursor.rowcount)
                     # 事务提交(pymysql要求除查询外所有语句必须手动提交)
                 if method in result:
-                    result[method + str(len(result))] =current_result
+                    result[method + str(len(result))] = current_result
                 else:
-                    result[method]=current_result
+                    result[method] = current_result
         except Exception as e:
-            logger.error(str(e) + '\n')
+            logger.error(str(e))
             self._db.rollback()
             logger.error('事务回滚' + str(method_queue))
             raise e
@@ -445,17 +452,86 @@ def sort_result(data: list, description: tuple, result: list) -> list:
     for index in range(len(data)):
         item = data[index]
         r_item = {}
-        for i in range(len(item)):
-            colName = description[i][0]
-            val = item[i]
-            value = 'none'
-            if type(val) is not type(None):
-                value = str(val)
-            # 组装data
-            r_item[colName] = value
-        # 组装结果集
-        result.append(r_item)
+        if result_type is DICT:
+            for i in range(len(item)):
+                colName = description[i][0]
+                val = item[i]
+                value = 'none'
+                if type(val) is not type(None):
+                    value = str(val)
+                # 组装data
+                r_item[colName] = value
+            # 组装结果集
+            result.append(r_item)
+        elif result_type is OBJECT:
+            class_obj = type(str(id(data)), (), {})
+            # 组装返回临时类
+            for i in range(len(item)):
+                colName = description[i][0]
+                val = item[i]
+                value = None
+                if type(val) is not type(None):
+                    value = str(val)
+                class_obj = c_prop(class_obj, colName, value, use_setter=False)
+            result.append(class_obj())
     return result
+
+
+def c_prop(clz: type, prop_name: str, prop_value=None, use_setter: bool = True, use_getter: bool = True):
+    """
+    生成类内属性方法
+    :return:
+    """
+    in_setter = None
+    in_getter = None
+    setattr(
+        clz,
+        '_' + prop_name,
+        prop_value,
+    )
+    if use_setter:
+        in_setter = c_prop_setter(prop_name)
+    if use_getter:
+        in_getter = c_prop_getter(prop_name)
+    setattr(
+        clz,
+        prop_name,
+        property(in_getter, in_setter)
+    )
+
+    return clz
+
+
+def c_prop_setter(prop_name: str) -> classmethod:
+    """
+    生成setter方法
+    :return:
+    """
+    setter_template = compile(
+        'def setter_' + prop_name + '(self,value):' +
+        '\n\tself._' + prop_name + ' = value' +
+        '',
+        'exec'
+    )
+    setter_function_code = [c for c in setter_template.co_consts if isinstance(c, types.CodeType)][0]
+    setter_method = types.FunctionType(setter_function_code, {})
+    return setter_method
+
+
+def c_prop_getter(prop_name: str) -> classmethod:
+    """
+    生成getter方法
+    :return:
+    """
+    getter_template = compile(
+        'def getter_' + prop_name + '(self):' +
+        '\n\treturn self._' + prop_name,
+        '',
+        'exec'
+    )
+    getter_function_code = [c for c in getter_template.co_consts if isinstance(c, types.CodeType)][0]
+    getter_method = types.FunctionType(getter_function_code, {})
+    return getter_method
 
 
 def getDbObj(path, debug: bool = False, auto_fix: bool = False):
@@ -477,7 +553,7 @@ def getDbObj(path, debug: bool = False, auto_fix: bool = False):
         else:
             # 初始5个连接
             pool.initPool(5, Connection.Connection)
-    if isinstance(path,str):
+    if isinstance(path, str):
         if auto_fix:
             pattern = re.sub(r'\\', r'\\\\', re.sub('/', '\\/', project_path))
             if not re.search(pattern, path):
@@ -486,7 +562,7 @@ def getDbObj(path, debug: bool = False, auto_fix: bool = False):
                 r_path = str(path)
         else:
             r_path = path
-    elif isinstance(path,Cell):
+    elif isinstance(path, Cell):
         r_path = path.getPath()
     else:
         raise TypeError('结果集路径类型错误')

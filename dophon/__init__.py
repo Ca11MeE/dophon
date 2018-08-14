@@ -45,6 +45,6 @@ def inject():
 
 
 
-__all__=['BluePrint','blue_print']
+__all__=['BluePrint','blue_print','mysql']
 
 BluePrint=blue_print
