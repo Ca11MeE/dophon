@@ -125,7 +125,8 @@ def attach_container(base_name:str):
 def run_as_docker(
         entity_file_name: str = None,
         container_port: str = str(properties.port),
-        docker_port: str = str(properties.port)
+        docker_port: str = str(properties.port),
+        attach_cmd:bool=False
 ):
     """
     利用docker启动项目
@@ -190,8 +191,10 @@ def run_as_docker(
         print(get_docker_address())
         logger.info('启动检测容器端口')
         threading.Thread(target=listen_container_status, args=(docker_port,)).start()
-        logger.info('进入镜像')
-        # threading.Thread(target=attach_container,args=(base_name,)).start()
-        attach_container(base_name)
+        if attach_cmd:
+            logger.info('进入镜像')
+            # threading.Thread(target=attach_container,args=(base_name,)).start()
+            attach_container(base_name)
+        logger.info('容器启动完毕')
     except Exception as e:
         logger.error(e)
