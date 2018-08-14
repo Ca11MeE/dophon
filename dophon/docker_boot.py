@@ -76,6 +76,8 @@ def listen_container_status(docker_port, loop_count: int = 3, wait_sec: int = 10
     检测容器端口存活
     :return:
     """
+    # 一分钟后检测
+    time.sleep(60)
     # 默认检测三次
     curr_count = 1
     while int(curr_count) <= int(loop_count):
@@ -86,7 +88,9 @@ def listen_container_status(docker_port, loop_count: int = 3, wait_sec: int = 10
         else:
             # 报错证明端口正常占用
             # 发起请求
-            res=request.urlopen('http://'+get_docker_address()+':'+docker_port)
+            url='http://' + get_docker_address() + ':' + docker_port
+            logger.info('容器存活性检查:'+url)
+            res = request.urlopen(url)
             if not res.read():
                 raise Exception('服务启动异常')
         curr_count += 1
@@ -115,17 +119,20 @@ def get_docker_address():
             )
     return r_l_copy.pop(0)
 
-def attach_container(base_name:str):
+
+def attach_container(base_name: str):
     """
     进入容器
     :return:
     """
     os.system('docker attach ' + base_name)
 
+
 def run_as_docker(
         entity_file_name: str = None,
         container_port: str = str(properties.port),
-        docker_port: str = str(properties.port)
+        docker_port: str = str(properties.port),
+        attach_cmd: bool = False
 ):
     """
     利用docker启动项目
@@ -190,8 +197,10 @@ def run_as_docker(
         print(get_docker_address())
         logger.info('启动检测容器端口')
         threading.Thread(target=listen_container_status, args=(docker_port,)).start()
-        logger.info('进入镜像')
-        # threading.Thread(target=attach_container,args=(base_name,)).start()
-        attach_container(base_name)
+        if attach_cmd:
+            logger.info('进入镜像')
+            # threading.Thread(target=attach_container,args=(base_name,)).start()
+            attach_container(base_name)
+        logger.info('容器启动完毕')
     except Exception as e:
         logger.error(e)

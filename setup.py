@@ -22,7 +22,7 @@ except OSError:
 
 setup(
     name='dophon',
-    version='1.1.6',
+    version='1.1.7',
     packages=find_packages(),
     url='https://github.com/Ca11MeE/dophon',
     license='Apache 2.0',
@@ -35,7 +35,8 @@ setup(
         'pyOpenSSL>=18.0.0',
         'schedule>=0.5.0',
         'urllib3>=1.23',
-        'Flask_Bootstrap>=3.3.7.1'
+        'Flask_Bootstrap>=3.3.7.1',
+        'gevent>=1.3.5'
     ],
     long_description=long_description
 )
