@@ -27,15 +27,15 @@ if '__main__' == __name__:
 ## 3.配置文件参数
 
 
-> dophon.properties.__init__.py
->
-> """<div/>
-> 配置集合<div/>
-> author:CallMeE<div/>
-> date:2018-06-01<div/>
-> """
-
 ```python
+# dophon.properties.__init__.py
+
+"""<div/>
+配置集合<div/>
+author:CallMeE<div/>
+date:2018-06-01<div/>
+"""
+
 # 定义工程根目录(必须)
 project_root=os.getcwd()
 
@@ -44,7 +44,7 @@ host = '127.0.0.1'  # 服务器监听地址(全ip监听为0.0.0.0),默认监听�
 port = 443 # 服务器监听端口
 ssl_context = 'adhoc' # ssl证书路径(默认本地证书)
 
-# 此处为蓝图文件夹配置
+# 此处为路由文件夹配置
 blueprint_path = ['/routes'] # route model dir path(路由文件夹名称)
 
 # 此处为数据库配置
@@ -81,8 +81,8 @@ app=dophon.blue_print(
         },
         'global_obj': globals()
     },  # 此处为自动注入参数配置(非必须,不需要请填入空字典)
-    name='demo',  # 此处为蓝图代号(必须,不能重复)
-    import_name=__name__  # 此处为蓝图初始化名称(必须,无特定需求填写__name__)
+    name='demo',  # 此处为路由代号(必须,不能重复)
+    import_name=__name__  # 此处为路由初始化名称(必须,无特定需求填写__name__)
 ) 
 ```
 
@@ -98,7 +98,7 @@ from flask import Blueprint
 app=Blueprint('demo',__name__) # 具体参数参照flask.Blueprint
 ```
 
-1. 方式二为直接使用flask的Blueprint定义蓝图路由
+1. 方式二为直接使用flask的Blueprint定义路由
 
 ## <span id = "to5Autowired">5.对象注入</span>
 
@@ -202,6 +202,10 @@ OwnBeanConfig()()  # 注意是两个括号
 from dophon.annotation import *
 
 bean=Bean('demo_obj_1')  # 此处获取管理关键字为demo_obj_1对应的实例
+
+# 或者使用类来定位实例
+bean=Bean(DemoObj)  # 多个同类实例会抛出语义错误
+
 ```
 
 ## 6.其他注解

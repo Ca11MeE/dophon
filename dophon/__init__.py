@@ -9,7 +9,7 @@ def blue_print(name, import_name, inject_config: dict = {}, static_folder=None,
                url_prefix=None, subdomain=None, url_defaults=None,
                root_path=None):
     """
-    获取Flask蓝图,同时实现自动注入(可细粒度管理)
+    获取Flask路由,同时实现自动注入(可细粒度管理)
     :param inject_config:注入配置,类型为dict
     :param name:同Blueprint.name
     :param import_name:同Blueprint.import_name

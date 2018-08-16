@@ -18,7 +18,7 @@ host='0.0.0.0'
 port=80
 ssl_context='adhoc'
 
-# 此处为蓝图文件夹配置
+# 此处为路由文件夹配置
 blueprint_path = ['/routes']
 pool_conn_num=5
 

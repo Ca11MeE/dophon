@@ -56,6 +56,29 @@ from dophon import mysql
 from dophon.mysql import Pool
 from dophon import properties
 
+def load_banner():
+    """
+    加载banner文件
+    :return:
+    """
+    file_root=properties.project_root
+    file_path=file_root+os.path.sep+'banner.txt'
+    if os.path.exists(file_path):
+        with open(file_path,encoding='utf8') as banner:
+            for line in banner.readlines():
+                sys.stdout.write(line)
+
+def load_footer():
+    """
+    加载footer文件
+    :return:
+    """
+    file_root = properties.project_root
+    file_path = file_root + os.path.sep + 'footer.txt'
+    if os.path.exists(file_path):
+        with open(file_path, encoding='utf8') as banner:
+            for line in banner.readlines():
+                sys.stdout.write(line)
 
 def boot_init():
     """
@@ -63,6 +86,7 @@ def boot_init():
     :return:
     """
     global app_name, app, ip_count, ipcount_lock, ip_refuse_list
+    load_banner()
     app_name = properties.service_name if hasattr(properties, 'service_name') else __name__
     # 定义WEB容器(同时防止json以ascii解码返回)
     app = Flask(app_name)
@@ -109,10 +133,10 @@ def before_request():
         ip_item = ip_count[ip]
         ip_item['req_count'] += 1
         req_timestemp = ip_item['req_timestemp']
-        '''
+        """
         判断逻辑:
             当前请求时间是最近的,连续的1秒内
-        '''
+        """
         if (int(now_timestemp) - int(req_timestemp[0])) > 1 \
                 and \
                 (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
@@ -147,15 +171,15 @@ def persist_ip_count():
         ipcount_lock.release()
 
 
-# 处理各模块中的自动注入以及组装各蓝图
-# dir_path中为蓝图模块路径,例如需要引入的蓝图都在routes文件夹中,则传入参数'/routes'
+# 处理各模块中的自动注入以及组装各路由
+# dir_path中为路由模块路径,例如需要引入的路由都在routes文件夹中,则传入参数'/routes'
 def map_apps(dir_path):
     path = os.getcwd() + dir_path
     if not os.path.exists(path):
-        logger.error('蓝图文件夹不存在,创建蓝图文件夹')
+        logger.error('路由文件夹不存在,创建路由文件夹')
         os.mkdir(path)
     f_list = os.listdir(path)
-    logger.info('蓝图文件夹: %s', dir_path)
+    logger.info('路由文件夹: %s', dir_path)
     while f_list:
         try:
             file = f_list.pop(0)
@@ -163,7 +187,7 @@ def map_apps(dir_path):
                 continue
             i = os.path.join(path, file)
             if os.path.isdir(i):
-                logger.info('加载蓝图模块: %s', file)
+                logger.info('加载路由模块: %s', file)
                 continue
             f_model = __import__(re.sub('/', '', dir_path) + '.' + re.sub('\.py', '', file), fromlist=True)
             filter_method = f_model.app.before_request(before_request)
@@ -179,7 +203,7 @@ logger.info('加载数据库模块')
 connection_pool = mysql.pool = Pool.Pool()
 # print('加载完毕')
 
-logger.info('蓝图初始化')
+logger.info('路由初始化')
 for path in properties.blueprint_path:
     map_apps(path)
 
@@ -211,6 +235,7 @@ def free_source():
     def method(f):
         def args(*arg, **kwarg):
             logger.info('启动服务器')
+            load_footer()
             f(*arg, **kwarg)
             """
             释放所有资源

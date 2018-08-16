@@ -12,7 +12,7 @@ ps:默认为单例模式,利用模块局内变量域管理实例,减少内存冗
 author:CallMeE
 date:2018-06-01
 
-实现自动注入功能需在蓝图模块(也可以在其他位置)中定义方法(inject_obj)并添加下列两个注解之一
+实现自动注入功能需在路由模块(也可以在其他位置)中定义方法(inject_obj)并添加下列两个注解之一
 DEMO;
 # 注入对象
 @AutoWired.InnerWired([ShopGoodsController.ShopGoodsController],a_w_list=['_SGCobj'],g=globals())
