@@ -58,11 +58,11 @@ from dophon import properties
 
 def load_banner():
     """
-    加载banner文件
+    加载header-banner文件
     :return:
     """
     file_root=properties.project_root
-    file_path=file_root+os.path.sep+'banner.txt'
+    file_path=file_root+os.path.sep+'header.txt'
     if os.path.exists(file_path):
         with open(file_path,encoding='utf8') as banner:
             for line in banner.readlines():
@@ -70,7 +70,7 @@ def load_banner():
 
 def load_footer():
     """
-    加载footer文件
+    加载footer-banner文件
     :return:
     """
     file_root = properties.project_root
