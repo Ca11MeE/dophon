@@ -24,7 +24,7 @@ host = '127.0.0.1'
 port = 443
 ssl_context = 'adhoc'
 
-# 此处为路由文件夹配置
+# 此处为蓝图文件夹配置
 blueprint_path = ['/routes']  # route model dir path
 pool_conn_num = 5  # size of db connect pool
 
@@ -38,6 +38,15 @@ pydc_database = 'zxyzt'
 
 # 消息队列线程池工人数
 msg_queue_max_num=30
+
+
+# 此处为日志配置
+logger_config={
+    # 'filename': 'app.log',
+    # 'level': 'logging.DEBUG',
+    'format': '%(levelname)s : <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
+    'datefmt': '%Y-%m-%d %H:%M:%S'
+}
 
 
 def get_properties(prop_path=None):

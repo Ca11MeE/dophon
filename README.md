@@ -345,7 +345,7 @@ logger.inject_logger(globals())
 
 控制台带颜色输出(略丑)
 
-日志输出格式如下(暂不可自定义):
+日志输出格式如下:
 
 ```
 '%(levelname)s : (%(asctime)s) ==> ::: %(message)s'
@@ -357,8 +357,36 @@ logger.inject_logger(globals())
 INFO : (2018-08-02 15:34:11) ==> ::: 执行批量实例管理初始化
 ```
 
+#### 7.2.0 自定义日志配置:
+
+格式代码如下:
+
+> %(levelno)s：打印日志级别的数值<br/>
+%(levelname)s：打印日志级别的名称<br/>
+%(pathname)s：打印当前执行程序的路径，其实就是sys.argv[0]<br/>
+%(filename)s：打印当前执行程序名<br/>
+%(funcName)s：打印日志的当前函数<br/>
+%(lineno)d：打印日志的当前行号<br/>
+%(asctime)s：打印日志的时间<br/>
+%(thread)d：打印线程ID<br/>
+%(threadName)s：打印线程名称<br/>
+%(process)d：打印进程ID<br/>
+%(message)s：打印日志信息<br/>
+
+通过自定义配置文件(application.py)定义日志配置:
+
+```python
+# 此处为日志配置
+logger_config={
+    # 'filename': 'app.log',
+    # 'level': 'logging.DEBUG',
+    'format': '%(levelname)s : <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
+    'datefmt': '%Y-%m-%d %H:%M:%S'
+}
+```
+
 #### 7.2.1 debug:
-       
+
 #### 7.2.2 info:
 
 #### 7.2.3 warning:
@@ -366,6 +394,7 @@ INFO : (2018-08-02 15:34:11) ==> ::: 执行批量实例管理初始化
 #### 7.2.4 error:
 
 #### 7.2.5 critical:
+
 
 
 ## 8.消息队列

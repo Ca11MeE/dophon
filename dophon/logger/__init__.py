@@ -1,13 +1,19 @@
+# encoding:utf-8
 import ctypes
 import logging
 import os
 import re
 import sys
 import platform
+from dophon import properties
 
 p_sys_type = platform.system()
 
-logging_config = {
+logging_config = \
+    properties.logger_config \
+    if properties.logger_config \
+    else \
+    {
     # 'filename': 'app.log',
     # 'level': 'logging.DEBUG',
     'format': '%(levelname)s : (%(asctime)s) ==> ::: %(message)s',
