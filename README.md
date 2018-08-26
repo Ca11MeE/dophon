@@ -70,7 +70,7 @@ from dophon import boot
 app = boot.get_app()
 ```
 
-<span id="to4routeOne">方式一:</span>
+方式一:
 
 ```python
 import dophon
@@ -104,11 +104,11 @@ app=Blueprint('demo',__name__) # 具体参数参照flask.Blueprint
 
 1. 方式二为直接使用flask的Blueprint定义路由
 
-## <span id = "to5Autowired">5.对象注入</span>
+## 5.对象注入
 
 ### 5.1 配置方式注入
 
-方式一: 参考<a href="#to4routeOne"><4.路由.方式一></a>
+方式一: 参考<4.路由.方式一>
 
 方式二:
 
@@ -322,7 +322,7 @@ def fun():
 
 ### 6.5 @Autowired
 
-参考<a href="#to5Autowired"><5.对象注入></a>
+参考<5.对象注入>
 ```python
 from dophon.annotation import *
 
@@ -365,17 +365,17 @@ INFO : (2018-08-02 15:34:11) ==> ::: 执行批量实例管理初始化
 
 格式代码如下:
 
-> %(levelno)s：打印日志级别的数值<br/>
-%(levelname)s：打印日志级别的名称<br/>
-%(pathname)s：打印当前执行程序的路径，其实就是sys.argv[0]<br/>
-%(filename)s：打印当前执行程序名<br/>
-%(funcName)s：打印日志的当前函数<br/>
-%(lineno)d：打印日志的当前行号<br/>
-%(asctime)s：打印日志的时间<br/>
-%(thread)d：打印线程ID<br/>
-%(threadName)s：打印线程名称<br/>
-%(process)d：打印进程ID<br/>
-%(message)s：打印日志信息<br/>
+- %(levelno)s：打印日志级别的数值<br/>
+- %(levelname)s：打印日志级别的名称<br/>
+- %(pathname)s：打印当前执行程序的路径，其实就是sys.argv[0]<br/>
+- %(filename)s：打印当前执行程序名<br/>
+- %(funcName)s：打印日志的当前函数<br/>
+- %(lineno)d：打印日志的当前行号<br/>
+- %(asctime)s：打印日志的时间<br/>
+- %(thread)d：打印线程ID<br/>
+- %(threadName)s：打印线程名称<br/>
+- %(process)d：打印进程ID<br/>
+- %(message)s：打印日志信息<br/>
 
 通过自定义配置文件(application.py)定义日志配置:
 
@@ -410,7 +410,7 @@ logger_config={
 
 ### 8.1 配置
 
-消息队列承载上限为30个话题(tag)
+消息队列单机承载上限为推荐30-50个话题(tag)
 可通过自定义配置配置上限
 
 
@@ -442,7 +442,6 @@ from dophon.msg_queue import *
 @consumer(tag='DEMO_TAG')
 def consumer(args):
     print(args)
-    
 consumer()
 
 # ERROR : (2018-08-02 21:29:15) ==> ::: 2018080221291454499310002: consume() argument after ** must be a mapping, not str
@@ -457,7 +456,6 @@ from dophon.msg_queue import *
 @consumer(tag='DEMO_TAG',as_args=True)
 def consumer(args):
     print(args)
-    
 consumer()
 
 # aaa
@@ -502,6 +500,7 @@ TestConsumer()
 ```
 
 > 通过代码关联xml文件,初始化结果集
+
 ```python
 from dophon.mysql import *
 
@@ -513,6 +512,7 @@ _cursor=db_obj('/test.xml',auto_fix=True)
 ```
 
 > 通过代码获取xml文件其中某一个结果集(以id区分)
+
 ```python
 result= _cursor.exe_sql(methodName='findAll')
 ```
@@ -632,10 +632,13 @@ from dophon import orm
 manager = orm.init_orm_manager(['user'])
 ```
 > 通过实例化映射骨架获取表操作缓存实例(操作实例)
+
 ```python
 user = manager.user()
 ```
 > 通过对操作实例赋值进行对对应表模拟操作
+
+
 ```python
 print('打印对象变量域')
 for attr in dir(user):
@@ -664,6 +667,7 @@ print("user.alias('user_table').get_field_list():", user.alias('user_table').get
 
 ```
 > 通过对操作实例结构化操作对数据库对应表结构进行数据落地操作
+
 ```python
 print(user.where())
 print(user.values())
