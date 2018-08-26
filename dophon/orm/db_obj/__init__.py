@@ -25,7 +25,8 @@ def create_class(table_name: str, table_args: list):
         JoinAble,
         ValueAble,
         Struct,
-        Parseable),
+        Parseable,
+        Flushable),
                      {'__alias': table_name, 'table_map_key': table_name})
     default_arg_list = []
     for table_arg in table_args:

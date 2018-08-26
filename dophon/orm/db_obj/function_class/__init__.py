@@ -4,7 +4,7 @@ import re
 功能特性类集合
 """
 
-__all__ = ['WhereAble', 'ValueAble', 'SetAble', 'OrmObj', 'JoinAble', 'Parseable']
+__all__ = ['WhereAble', 'ValueAble', 'SetAble', 'OrmObj', 'JoinAble', 'Parseable', 'Flushable']
 
 
 class OrmObj(object):
@@ -28,6 +28,14 @@ class FieldsCallable(OrmObj):
         if not hasattr(self, '__field_callable_list'):
             setattr(self, '__field_callable_list', [])
             self.__field_callable_list = []
+
+    def f_c_l_flush(self):
+        """
+        清洗内置数据集合
+        :return:
+        """
+        setattr(self, '__field_callable_list', [])
+        setattr(self, '_FieldsCallable__field_callable_list', [])
 
     def append(self, field_name: str):
         """
@@ -136,7 +144,7 @@ class WhereAble(FieldsCallable):
         """
         FieldsCallable.__init__(self)
 
-    def where_cause(self, args: dict) -> str:
+    def where_cause(self, args: dict, be_alias: bool = True) -> str:
         """
         将字典转换为sql条件语句
         :param args: 字典(条件字典)
@@ -145,7 +153,9 @@ class WhereAble(FieldsCallable):
         cache = []
         for key in args.keys():
             self_table_alias = \
-                (getattr(self, '__alias') + '.' if getattr(self, '__alias') != getattr(self, 'table_map_key') else '')
+                (getattr(self, '__alias') + '.'
+                 if be_alias and getattr(self, '__alias') != getattr(self, 'table_map_key')
+                 else '')
             cache.append(
                 self_table_alias +
                 str(key) +
@@ -155,7 +165,7 @@ class WhereAble(FieldsCallable):
                         '{' + str(args[key]) + '}')))
         return re.sub('\{|\}', '\'', re.sub('\[|\]|\\\"|\\\'', '', re.sub(',', ' AND ', str(cache))))
 
-    def where(self, fields: list = []) -> str:
+    def where(self, fields: list = [], be_alias: bool = True) -> str:
         """
         获取条件执行语句
         :param fields:条件列表
@@ -166,7 +176,7 @@ class WhereAble(FieldsCallable):
             args = getattr(self, 'get_fields')(fields)
         else:
             return ''
-        return ' WHERE ' + getattr(self, 'where_cause')(args)
+        return ' WHERE ' + getattr(self, 'where_cause')(args, be_alias)
 
 
 class SetAble(WhereAble):
@@ -291,3 +301,22 @@ class Parseable(OrmObj):
                 continue
             if name not in dir(res_obj):
                 raise Exception('无法复制的类型')
+
+
+class Flushable(OrmObj):
+
+    def flush(self):
+        """
+        清洗对象内部数据
+        :return:
+        """
+        # 清洗参数列表缓存
+        self.f_c_l_flush()
+        for name in dir(self):
+            if name.startswith('__') and name.endswith('__'):
+                continue
+            if name.startswith('_') \
+                    and not name.startswith('__') \
+                    and not re.search('[A-Z]', name) \
+                    and getattr(self, name):
+                setattr(self, name, 'none')

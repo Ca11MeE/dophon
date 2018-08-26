@@ -1,3 +1,5 @@
+import os,sys
+
 from dophon.orm import db_obj
 
 
@@ -14,6 +16,44 @@ if '__main__' == __name__:
     manager = init_orm_manager(['user'])
     print('获取orm管理器中对应表映射对象')
     user = manager.user()
+
+    user.user_id='111'
+    print(user.user_id)
+    user.flush()
+    print(user.user_id)
+    user.user_id='111'
+    print(user.user_id)
+    user.flush()
+    print(user.user_id)
+    user.user_id='111'
+    print(user.user_id)
+    user.flush()
+    print(user.user_id)
+    user.user_id='111'
+    print(user.user_id)
+    user.flush()
+    print(user.user_id)
+    user.user_id='111'
+    print(user.user_id)
+    user.flush()
+    print(user.user_id)
+
+
+
+    user.user_id='111'
+    print(user.user_id)
+    user.flush()
+    print(user.user_id)
+    user.user_id='111'
+    print(user.user_id)
+    user.flush()
+    print(user.user_id)
+    user.user_id='111'
+    print(user.user_id)
+    user.flush()
+    print(user.user_id)
+
+
     print('打印对象变量域')
     for attr in dir(user):
         print(attr, ":", eval("user." + attr))
@@ -90,9 +130,11 @@ if '__main__' == __name__:
     user2 = user1.copy_to_obj(manager.user)
     print('user2', '---', id(user2))
     print(user1('user_id'))
+    print(user1.user_id)
     user3 = user1.read_from_dict({
         'user_id': '111'
     })
     print('user3', '---', id(user3))
     print(user1('user_id'))
+    print(user1.user_id)
     print(user3('user_id'))

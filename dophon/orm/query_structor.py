@@ -117,16 +117,21 @@ class Insert:
         result = []
         connection = pool.getConn().getConnect()
         cursor = connection.cursor()
-        cursor.execute(sql)
-        if not sql.startswith('select') and not sql.startswith('SELECT'):
-            data = [[cursor.rowcount]]
-            description = [['row_count']]
-        else:
-            data = cursor.fetchall()
-            description = cursor.description
-        connection.commit()
-        result = mysql.sort_result(data, description, result)[0]['row_count']
-        return int(result)
+        try:
+            cursor.execute(sql)
+            if not sql.startswith('select') and not sql.startswith('SELECT'):
+                data = [[cursor.rowcount]]
+                description = [['row_count']]
+            else:
+                data = cursor.fetchall()
+                description = cursor.description
+            connection.commit()
+            result = mysql.sort_result(data, description, result)[0]['row_count']
+            return int(result)
+        except Exception as e:
+            logger.error('%s', e)
+            connection.rollback()
+            return 0
 
 
 class Update():
@@ -136,6 +141,10 @@ class Update():
 
     def before_update(self, update: list, where: list):
         result = 'UPDATE ' + getattr(self, 'table_map_key') + \
+                 (
+                     (' AS ' + getattr(self, '__alias'))
+                     if getattr(self, '__alias') != getattr(self, 'table_map_key') else ''
+                 ) + \
                  getattr(self, 'set')(update) + \
                  getattr(self, 'where')(where)
         # print(result)
@@ -153,16 +162,21 @@ class Update():
         result = []
         connection = pool.getConn().getConnect()
         cursor = connection.cursor()
-        cursor.execute(sql)
-        if not sql.startswith('select') and not sql.startswith('SELECT'):
-            data = [[cursor.rowcount]]
-            description = [['row_count']]
-        else:
-            data = cursor.fetchall()
-            description = cursor.description
-        connection.commit()
-        result = mysql.sort_result(data, description, result)[0]['row_count']
-        return int(result)
+        try:
+            cursor.execute(sql)
+            if not sql.startswith('select') and not sql.startswith('SELECT'):
+                data = [[cursor.rowcount]]
+                description = [['row_count']]
+            else:
+                data = cursor.fetchall()
+                description = cursor.description
+            connection.commit()
+            result = mysql.sort_result(data, description, result)[0]['row_count']
+            return int(result)
+        except Exception as e:
+            logger.error('%s', e)
+            connection.rollback()
+            return 0
 
 
 class Delete():
@@ -171,7 +185,8 @@ class Delete():
     """
 
     def before_delete(self, where: list):
-        result = 'DELETE FROM ' + getattr(self, 'table_map_key') + ' ' + getattr(self, 'where')(where)
+        result = 'DELETE FROM ' + getattr(self, 'table_map_key') + \
+                 ' ' + getattr(self, 'where')(where, be_alias=False)
         # print(result)
         return result
 
@@ -187,16 +202,21 @@ class Delete():
         result = []
         connection = pool.getConn().getConnect()
         cursor = connection.cursor()
-        cursor.execute(sql)
-        if not sql.startswith('select') and not sql.startswith('SELECT'):
-            data = [[cursor.rowcount]]
-            description = [['row_count']]
-        else:
-            data = cursor.fetchall()
-            description = cursor.description
-        connection.commit()
-        result = mysql.sort_result(data, description, result)[0]['row_count']
-        return int(result)
+        try:
+            cursor.execute(sql)
+            if not sql.startswith('select') and not sql.startswith('SELECT'):
+                data = [[cursor.rowcount]]
+                description = [['row_count']]
+            else:
+                data = cursor.fetchall()
+                description = cursor.description
+            connection.commit()
+            result = mysql.sort_result(data, description, result)[0]['row_count']
+            return int(result)
+        except Exception as e:
+            logger.error('%s', e)
+            connection.rollback()
+            return 0
 
 
 class Struct(Selelct, Insert, Update, Delete):
