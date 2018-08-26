@@ -4,7 +4,7 @@
 有任何疑问或建议欢迎联系
 请发送邮件至 ---> ealohu@163.com
 
-[CookBook](dophon.blog):[框架文档(点击跳转)](dophon.blog)
+[CookBook](https://github.com/Ca11MeE/dophon):[框架文档(点击跳转)](https://github.com/Ca11MeE/dophon)
 
 
 ---
