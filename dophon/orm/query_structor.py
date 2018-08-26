@@ -83,14 +83,14 @@ class Selelct:
             logger.error('无法预料的唯一结果集,找不到查询过滤条件')
             raise Exception('无法预料的唯一结果集,找不到查询过滤条件')
 
-    def select_all(self, fields: list = []) -> list:
+    def select_all(self, fields: list = [], ignore_fields_warning: bool = True) -> list:
         """
         同select
         :param fields:
         :return:
         """
-        if hasattr(self, '__field_callable_list') and len(getattr(self, '__field_callable_list')) > 0:
-            logger.warning('警告:存在查询过滤条件')
+        if not ignore_fields_warning and hasattr(self, '__field_callable_list') and len(getattr(self, '__field_callable_list')) > 0:
+            logger.warning('警告:存在查询过滤条件 %s ', str(getattr(self, '__field_callable_list')))
         return self.select(fields=fields, has_where=False)
 
 
