@@ -1,8 +1,11 @@
 # coding: utf-8
 from flask import Blueprint
-import logging
+from gevent import monkey
+
+monkey.patch_all()
 
 name = 'dophon'
+
 
 def blue_print(name, import_name, inject_config: dict = {}, static_folder=None,
                static_url_path=None, template_folder=None,
@@ -44,7 +47,18 @@ def inject():
     pass
 
 
+def dophon_boot(f):
+    """
+    装饰器形式启动
+    :return:
+    """
 
-__all__=['BluePrint','blue_print','mysql']
+    def arg(*args, **kwargs):
+        kwargs['boot'] = __import__('dophon.boot',fromlist=True)
+        return f(*args, **kwargs)
+    return arg
 
-BluePrint=blue_print
+
+__all__ = ['BluePrint', 'blue_print', 'mysql','dophon_boot']
+
+BluePrint = blue_print
