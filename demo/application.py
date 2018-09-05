@@ -8,6 +8,8 @@ date:2018-06-01
 """
 project_root = os.getcwd()
 
+server_gevented = True
+
 debug_trace = True
 
 ip_count = True
