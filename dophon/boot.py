@@ -61,6 +61,7 @@ def load_banner():
         with open(file_path,encoding='utf8') as banner:
             for line in banner.readlines():
                 sys.stdout.write(line)
+    sys.stdout.flush()
 
 def load_footer():
     """
@@ -73,6 +74,7 @@ def load_footer():
         with open(file_path, encoding='utf8') as banner:
             for line in banner.readlines():
                 sys.stdout.write(line)
+    sys.stdout.flush()
 
 def boot_init():
     """
