@@ -1,26 +1,25 @@
 # coding: utf-8"
 import os
+
 """
 配置集合
 author:CallMeE
 date:2018-06-01
 """
-project_root=os.getcwd()
+project_root = os.getcwd()
 
-server_gevented=True
+debug_trace = True
 
-debug_trace=True
-
-ip_count=True
+ip_count = True
 
 # 此处为服务器配置
-host='0.0.0.0'
-port=80
-ssl_context='adhoc'
+host = '0.0.0.0'
+port = 80
+ssl_context = 'adhoc'
 
 # 此处为路由文件夹配置
 blueprint_path = ['/routes']
-pool_conn_num=5
+pool_conn_num = 5
 
 # 此处为数据库配置
 # pydc_host = 'bdm238721578.my3w.com'
@@ -28,13 +27,13 @@ pool_conn_num=5
 # pydc_password = 'ealohu31841'
 # pydc_database = 'bdm238721578_db'
 pydc_host = 'cdb-nzo3mn4f.gz.tencentcdb.com'
-pydc_port=10005
+pydc_port = 10005
 pydc_user = 'root'
 pydc_password = 'ealohu31841'
 pydc_database = 'agymall_db'
 
 # 此处为日志配置
-logger_config={
+logger_config = {
     # 'filename': 'app.log',
     # 'level': 'logging.DEBUG',
     'format': '%(levelname)s : <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',

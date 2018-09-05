@@ -1,9 +1,7 @@
 # encoding: utf-8
-"""
-初始化协程模块(必须,不然导致系统死锁)
-"""
 import traceback
-
+from gevent import monkey
+monkey.patch_all()
 """
 配置管理
 启动前尝试获得自定义配置(application.py)
@@ -16,7 +14,6 @@ import logging
 import os, re, json
 from datetime import datetime
 from threading import *
-
 
 def read_self_prop():
     try:
@@ -52,9 +49,6 @@ from dophon import mysql
 from dophon.mysql import Pool
 from dophon import properties
 
-if properties.server_gevented:
-    from gevent import monkey
-    monkey.patch_all()
 
 def load_banner():
     """
@@ -84,6 +78,9 @@ def boot_init():
     """
     初始化启动
     :return:
+    """
+    """
+    初始化协程模块(必须,不然导致系统死锁)
     """
     global app_name, app, ip_count, ipcount_lock, ip_refuse_list
     load_banner()

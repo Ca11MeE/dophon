@@ -1,8 +1,5 @@
 # coding: utf-8
 from flask import Blueprint
-from gevent import monkey
-
-monkey.patch_all()
 
 name = 'dophon'
 
@@ -52,18 +49,16 @@ def dophon_boot(f):
     装饰器形式启动
     :return:
     """
-
     def arg(*args, **kwargs):
-        try:
-            kwargs['boot'] = __import__('dophon.boot',fromlist=True)
-        except Exception as e:
-            from gevent import monkey
-            monkey.patch_all()
-            kwargs['boot'] = __import__('dophon.boot', fromlist=True)
+        from gevent import monkey
+        monkey.patch_all()
+        boot = __import__('dophon.boot', fromlist=True)
+        kwargs['boot'] = boot
         return f(*args, **kwargs)
+
     return arg
 
 
-__all__ = ['BluePrint', 'blue_print', 'mysql','dophon_boot']
+__all__ = ['BluePrint', 'blue_print', 'mysql']
 
 BluePrint = blue_print

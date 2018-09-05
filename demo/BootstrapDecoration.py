@@ -1,6 +1,7 @@
-from dophon import *
+import dophon
 
-@dophon_boot
+
+@dophon.dophon_boot
 def run(boot):
     boot.run_app()
 
