@@ -54,7 +54,12 @@ def dophon_boot(f):
     """
 
     def arg(*args, **kwargs):
-        kwargs['boot'] = __import__('dophon.boot',fromlist=True)
+        try:
+            kwargs['boot'] = __import__('dophon.boot',fromlist=True)
+        except Exception as e:
+            from gevent import monkey
+            monkey.patch_all()
+            kwargs['boot'] = __import__('dophon.boot', fromlist=True)
         return f(*args, **kwargs)
     return arg
 

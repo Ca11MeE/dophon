@@ -4,10 +4,6 @@
 """
 import traceback
 
-from gevent import monkey
-
-monkey.patch_all()
-
 """
 配置管理
 启动前尝试获得自定义配置(application.py)
@@ -55,6 +51,10 @@ from flask import Flask, request, abort
 from dophon import mysql
 from dophon.mysql import Pool
 from dophon import properties
+
+if properties.server_gevented:
+    from gevent import monkey
+    monkey.patch_all()
 
 def load_banner():
     """
