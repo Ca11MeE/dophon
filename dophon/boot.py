@@ -1,5 +1,8 @@
 # encoding: utf-8
 import traceback
+"""
+初始化协程模块(必须,不然导致系统死锁)
+"""
 from gevent import monkey
 monkey.patch_all()
 """
@@ -80,9 +83,6 @@ def boot_init():
     """
     初始化启动
     :return:
-    """
-    """
-    初始化协程模块(必须,不然导致系统死锁)
     """
     global app_name, app, ip_count, ipcount_lock, ip_refuse_list
     load_banner()

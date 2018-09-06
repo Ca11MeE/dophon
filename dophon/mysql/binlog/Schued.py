@@ -33,5 +33,10 @@ def run():
         time.sleep(1)
 
 
-logger.info('xml自动更新调度启动')
-Thread(target=run).start()
+def start_sech():
+    """
+    启动xml更新
+    :return:
+    """
+    logger.info('xml自动更新调度启动')
+    Thread(target=run).start()
