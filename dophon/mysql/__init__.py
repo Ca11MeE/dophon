@@ -632,3 +632,6 @@ where = whereCause
 __all__ = [
     'db_obj', 'update_round', 'where'
 ]
+
+if properties.pydc_remote_sech:
+    Schued.start_sech()
