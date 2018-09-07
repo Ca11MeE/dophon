@@ -1,5 +1,11 @@
-<select id="page_select">
-  SELECT
-  * from
-  mw_member
-</select>
+<mapper>
+  <select id="page_select">
+    SELECT
+    * from
+    mw_member
+  </select>
+
+  <delete id="page_unselect">
+    delete from mw_member where id = '1'
+  </delete>
+</mapper>

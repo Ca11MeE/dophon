@@ -12,3 +12,11 @@ class TestController:
         })
         print(result)
         return result
+
+    def test_page_unselect(self):
+        result=self.cursor.pageable_exe_sql(methodName='page_unselect',pageInfo={
+            'num': 1,
+            'size': 3
+        })
+        print(result)
+        return result

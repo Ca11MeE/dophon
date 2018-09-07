@@ -673,24 +673,28 @@ def whereCause(args: dict) -> str:
 class PageObj(curObj):
 
     def pageable_exe_sql(self, methodName: str = '', pageInfo: dict = None, args=()) -> dict:
-        # 获取无分页语句
-        un_page_sql = self.get_sql(methodName=methodName, pageInfo=None, args=args)
-        un_page_sql = re.sub('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+(f|F)(r|R)(o|O)(m|M)',
-                             'SELECT COUNT(*) FROM',
-                             un_page_sql)
-        conn = pool.getConn()
-        connect = conn.getConnect()
-        cursor = connect.cursor()
-        cursor.execute(un_page_sql)
-        count_items = cursor.fetchall()[0][0]
-        connect.commit()
-        pool.closeConn(conn)
         result_list = self.exe_sql(methodName=methodName, pageInfo=pageInfo, args=args)
-        result = PageHelper.fix_page_info(pageInfo)
-        import math
-        result['total_page'] = math.ceil(count_items / result['page_size'])
-        result['list'] = result_list
-        return result
+        if pageInfo:
+            # 获取无分页语句
+            un_page_sql = self.get_sql(methodName=methodName, pageInfo=None, args=args)
+            if re.match('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+', un_page_sql):
+                # sql语句判断(非查询不作分页信息处理)
+                un_page_sql = re.sub('^\\s*(s|S)(e|E)(l|L)(e|E)(c|C)(t|T)\\s+.+(f|F)(r|R)(o|O)(m|M)',
+                                     'SELECT COUNT(*) FROM',
+                                     un_page_sql)
+                conn = pool.getConn()
+                connect = conn.getConnect()
+                cursor = connect.cursor()
+                cursor.execute(un_page_sql)
+                count_items = cursor.fetchall()[0][0]
+                connect.commit()
+                pool.closeConn(conn)
+                result = PageHelper.fix_page_info(pageInfo)
+                import math
+                result['total_page'] = math.ceil(count_items / result['page_size'])
+                result['list'] = result_list
+                return result
+        return result_list
 
 
 db_obj = getDbObj

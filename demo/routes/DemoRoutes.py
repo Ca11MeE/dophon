@@ -46,3 +46,9 @@ def bean_2():
 def test_page_select():
     result = _DemoRou.test_page_select()
     return result
+
+@RequestMapping(app,'/test/page/unselect',['get'])
+@ResponseBody()
+def test_page_unselect():
+    result = _DemoRou.test_page_unselect()
+    return result
