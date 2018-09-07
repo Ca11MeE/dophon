@@ -40,3 +40,9 @@ def bean_2():
     b=Bean('call_beans')
     b.call()
     pass
+
+@RequestMapping(app,'/test/page/select',['get'])
+@ResponseBody()
+def test_page_select():
+    result = _DemoRou.test_page_select()
+    return result

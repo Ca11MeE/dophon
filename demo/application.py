@@ -28,11 +28,11 @@ pool_conn_num = 5
 # pydc_user = 'bdm238721578'
 # pydc_password = 'ealohu31841'
 # pydc_database = 'bdm238721578_db'
-pydc_host = 'cdb-nzo3mn4f.gz.tencentcdb.com'
-pydc_port = 10005
+pydc_host = 'localhost'
+pydc_port = 3306
 pydc_user = 'root'
-pydc_password = 'ealohu31841'
-pydc_database = 'agymall_db'
+pydc_password = 'wo4ce4kumima'
+pydc_database = 'mw2017_db'
 
 # 此处为日志配置
 logger_config = {

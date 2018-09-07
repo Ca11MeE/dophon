@@ -39,9 +39,10 @@ pydc_xmlupdate_sech = False
 msg_queue_max_num = 30
 
 # 此处为日志配置
-logger_config = {
-    # 'filename': 'app.log',
-    # 'level': 'logging.DEBUG',
-    'format': '%(levelname)s : <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
-    'datefmt': '%Y-%m-%d %H:%M:%S'
-}
+if debug_trace:
+    logger_config = {
+        # 'filename': 'app.log',
+        # 'level': 'logging.DEBUG',
+        'format': '%(levelname)s : <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
+        'datefmt': '%Y-%m-%d %H:%M:%S'
+    }

@@ -1,6 +1,7 @@
 # coding: utf-8
 import re
 from dophon import logger
+import functools
 
 """
 sql分页工具(自带正则寻值)
@@ -36,10 +37,51 @@ def pkg_page_info(page_num=1, page_size=1, page_model=[]):
 
 
 # 解包分页信息
-def depkg_page_info(page_info):
+def depkg_page_info(page_info: dict):
     for key in page_info:
         if re.match('.*[nN][uU][mM].*', string=key):
             _page_num = page_info[key]
         if re.match('.*[sS][iI][zZ][eE].*', string=key):
             _page_size = page_info[key]
     return 'limit ' + str((int(_page_num) - 1) * int(_page_size)) + ',' + str(_page_size)
+
+
+def fix_page_info(page_info: dict):
+    """
+    修正分页信息
+    :param page_info:
+    :return:
+    """
+    for key in page_info:
+        if re.match('.*[nN][uU][mM].*', string=key):
+            _page_num = page_info[key]
+        if re.match('.*[sS][iI][zZ][eE].*', string=key):
+            _page_size = page_info[key]
+    return {'page_num': _page_num, 'page_size': _page_size}
+
+
+# 分页装饰器
+def pkg_pageobj(f):
+    """
+    封装结果集为分页信息结果集 -> Pages
+    :param f:
+    :return:
+    """
+
+    def f_args(*args, **kwargs):
+        # 执行查询
+        result = f(*args, **kwargs)
+        # 结果校验
+        if isinstance(result, list):
+            # 分页信息检查
+            if 'pageInfo' in kwargs and kwargs['pageInfo']:
+                page_obj = fix_page_info(kwargs['pageInfo'])
+                page_obj['list'] = result
+                return page_obj
+            else:
+                logger.error('不存在分页信息')
+                return result
+        else:
+            logger.error('结果不符合分页策略')
+
+    return f_args
