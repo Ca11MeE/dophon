@@ -67,7 +67,7 @@ def pkg_pageobj(f):
     :param f:
     :return:
     """
-
+    print(f)
     def f_args(*args, **kwargs):
         # 执行查询
         result = f(*args, **kwargs)

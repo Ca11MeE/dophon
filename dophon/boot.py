@@ -114,48 +114,49 @@ def before_request():
     定义拦截器
     :return:
     """
-    ipcount_lock.locked()
-    ip = request.remote_addr
-    now_timestemp = datetime.now().timestamp()
-    # 检测是否为黑名单
-    if ip in ip_refuse_list:
-        # 默认禁用一分钟
-        if (int(now_timestemp) - int(ip_refuse_list[ip])) > 60:
-            # 可以清除白名单
-            ip_refuse_list.pop(ip)
-            # 清除访问记录
-            ip_count[ip]['req_timestemp'] = [now_timestemp]
-        else:
-            # 未到解禁时间
-            return abort(400)
-    if ip in ip_count:
-        ip_item = ip_count[ip]
-        ip_item['req_count'] += 1
-        req_timestemp = ip_item['req_timestemp']
-        """
-        判断逻辑:
-            当前请求时间是最近的,连续的1秒内
-        """
-        if (int(now_timestemp) - int(req_timestemp[0])) > 1 \
-                and \
-                (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
-            # 检测3秒内请求数
-            if len(req_timestemp) > 50:
-                # 默认三秒内请求不超过300
-                # 超出策略则添加到黑名单
-                ip_refuse_list[ip] = now_timestemp
+    if properties.ip_count:
+        ipcount_lock.locked()
+        ip = request.remote_addr
+        now_timestemp = datetime.now().timestamp()
+        # 检测是否为黑名单
+        if ip in ip_refuse_list:
+            # 默认禁用一分钟
+            if (int(now_timestemp) - int(ip_refuse_list[ip])) > 60:
+                # 可以清除白名单
+                ip_refuse_list.pop(ip)
+                # 清除访问记录
+                ip_count[ip]['req_timestemp'] = [now_timestemp]
             else:
-                # 不超出策略则清空请求时间戳缓存
-                ip_item['req_timestemp'] = [now_timestemp]
+                # 未到解禁时间
+                return abort(400)
+        if ip in ip_count:
+            ip_item = ip_count[ip]
+            ip_item['req_count'] += 1
+            req_timestemp = ip_item['req_timestemp']
+            """
+            判断逻辑:
+                当前请求时间是最近的,连续的1秒内
+            """
+            if (int(now_timestemp) - int(req_timestemp[0])) > 1 \
+                    and \
+                    (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
+                # 检测3秒内请求数
+                if len(req_timestemp) > 50:
+                    # 默认三秒内请求不超过300
+                    # 超出策略则添加到黑名单
+                    ip_refuse_list[ip] = now_timestemp
+                else:
+                    # 不超出策略则清空请求时间戳缓存
+                    ip_item['req_timestemp'] = [now_timestemp]
+            else:
+                ip_item['req_timestemp'].append(now_timestemp)
         else:
-            ip_item['req_timestemp'].append(now_timestemp)
-    else:
-        ip_item = {
-            'req_count': 1,
-            'req_timestemp': [now_timestemp]
-        }
-    Thread(target=persist_ip_count).start()
-    ip_count[ip] = ip_item
+            ip_item = {
+                'req_count': 1,
+                'req_timestemp': [now_timestemp]
+            }
+        Thread(target=persist_ip_count).start()
+        ip_count[ip] = ip_item
 
 
 def persist_ip_count():

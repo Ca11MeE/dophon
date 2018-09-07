@@ -12,7 +12,7 @@ server_gevented = True
 
 debug_trace = True
 
-ip_count = True
+ip_count = False
 
 # 此处为服务器配置
 host = '0.0.0.0'
