@@ -140,9 +140,9 @@ class curObj:
             raise Exception('没有该方法!method:' + str(methodName))
         _sql = self._sqls[methodName]
         # 判断是否分页(总开关)
-        # 开启之后该实例所有语句都认为是 需要分页
-        # 慎用!!!!
         if self._page:
+            # 开启之后该实例所有语句都认为是 需要分页
+            # 慎用!!!!
             # 分页
             _sql = _sql + 'limit ' + str((self._pageNum - 1) * self._pageSize) + ',' + str(self._pageSize)
         if pageInfo:

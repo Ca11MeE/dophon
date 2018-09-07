@@ -28,3 +28,15 @@ def index():
 @RequestMapping(app,'/exc/500',['get','post'])
 def demo_exception():
     1/0
+
+@RequestMapping(app,'/get/bean/1',['get'])
+def bean_1():
+    b=Bean('call_beans')
+    b.call()
+    pass
+
+@RequestMapping(app,'/get/bean/2',['get'])
+def bean_2():
+    b=Bean('call_beans')
+    b.call()
+    pass

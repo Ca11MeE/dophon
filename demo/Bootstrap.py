@@ -15,6 +15,23 @@ def start():
         time.sleep(1)
 
 
+from dophon.annotation import *
+
+class BeanConfigs(BeanConfig):
+
+    @bean()
+    def call_beans(self):
+        return bean_class()
+
+
+class bean_class():
+    def call(self):
+        print('call')
+
+with BeanConfigs() as b:
+    pass
+
+
 # 启动服务器
 def run():
     import threading
