@@ -633,5 +633,5 @@ __all__ = [
     'db_obj', 'update_round', 'where'
 ]
 
-if properties.pydc_remote_sech:
+if properties.pydc_xmlupdate_sech:
     Schued.start_sech()

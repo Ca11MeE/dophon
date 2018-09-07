@@ -34,7 +34,7 @@ pydc_port = 3306
 pydc_user = 'root'
 pydc_password = 'root'
 pydc_database = 'db'
-pydc_remote_sech = False
+pydc_xmlupdate_sech = False
 
 # 消息队列线程池工人数
 msg_queue_max_num=30
