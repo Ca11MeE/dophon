@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from gevent import monkey
+
+monkey.patch_all()
 from multiprocessing import Process, freeze_support
 import time, socket, random
 from flask import request, make_response
@@ -28,10 +31,17 @@ def outer_entity(boot):
     boot.run_app()
 
 
-def run_clusters(clusters: int, **kwargs):
+def run_clusters(clusters: int, outer_port: bool = False, start_port:int=8800):
+    """
+    运行集群式服务器
+    :param clusters: 集群个数
+    :param outer_port: 是否开启外部端口映射(映射端口为用户配置文件中配置的端口)
+    :param start_port: 集群起始监听端口
+    :return:
+    """
     from dophon import boot
     for i in range(clusters):
-        current_port = kwargs['port'] + i
+        current_port = start_port + i
         create_cluster_cell(boot=boot, port=current_port)
         ports.append(current_port)
     while len(ports) != clusters:
@@ -42,9 +52,9 @@ def run_clusters(clusters: int, **kwargs):
         if check_socket(int(port)):
             continue
     print('集群端口: %s ' % ports)
-
-    print('启动外部端口监听')
-    outer_entity(boot)
+    if outer_port:
+        print('启动外部端口监听')
+        outer_entity(boot)
 
 
 def create_cluster_cell(boot, port):
