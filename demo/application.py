@@ -16,7 +16,7 @@ ip_count = False
 
 # 此处为服务器配置
 host = '0.0.0.0'
-port = 80
+port = 9000
 ssl_context = 'adhoc'
 
 # 此处为路由文件夹配置

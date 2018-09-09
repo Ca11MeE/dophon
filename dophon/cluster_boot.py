@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from multiprocessing import Process, freeze_support
 import time, socket, random
-from flask import request,make_response
+from flask import request, make_response
 from urllib3 import PoolManager
 
 ports = []  # 记录监听端口
@@ -17,8 +17,10 @@ def main_freeze():
 
 def redirect_request():
     print(request.path)
-    res = pool.request(request.method, '127.0.0.1:' + str(random.choice(ports)) + request.path, fields=request.form)
+    res = pool.request(request.method, '127.0.0.1:' + str(random.choice(ports)) + request.path,
+                       fields=request.json if request.is_json else request.form)
     return make_response(res.data)
+
 
 def outer_entity(boot):
     # 重写路由信息(修改为重定向路径)
@@ -26,13 +28,12 @@ def outer_entity(boot):
     boot.run_app()
 
 
-def run_clusters(clusters: int, *args, **kwargs):
+def run_clusters(clusters: int, **kwargs):
     from dophon import boot
-    kwargs['host'] = '127.0.0.1'
     for i in range(clusters):
-        kwargs['port'] += i
-        create_cluster_cell(boot, *args, **kwargs)
-        ports.append(kwargs['port'])
+        current_port = kwargs['port'] + i
+        create_cluster_cell(boot=boot, port=current_port)
+        ports.append(current_port)
     while len(ports) != clusters:
         time.sleep(5)
 
@@ -46,13 +47,12 @@ def run_clusters(clusters: int, *args, **kwargs):
     outer_entity(boot)
 
 
-def create_cluster_cell(boot, *args, **kwargs):
-    if 'ssl_context' in kwargs:
-        # https启动
-        proc = Process(target=boot.run_app_ssl, args=args, kwargs=kwargs)
-    else:
-        # http协议
-        proc = Process(target=boot.run_app, args=args, kwargs=kwargs)
+def create_cluster_cell(boot, port):
+    # http协议
+    proc = Process(target=boot.run_app, kwargs={
+        'host': '127.0.0.1',
+        'port': port
+    })
     proc.start()
 
 
