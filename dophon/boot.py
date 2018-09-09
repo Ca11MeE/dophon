@@ -1,9 +1,11 @@
-# encoding: utf-8
-import traceback
+# coding=utf-8
+import traceback, functools
+
 """
 初始化协程模块(必须,不然导致系统死锁)
 """
 from gevent import monkey
+
 monkey.patch_all()
 """
 配置管理
@@ -17,6 +19,7 @@ import logging
 import os, re, json
 from datetime import datetime
 from threading import *
+
 
 def read_self_prop():
     try:
@@ -35,6 +38,7 @@ def read_self_prop():
         logging.error(e)
         sys.modules['properties'] = def_prop
         sys.modules['dophon.properties'] = def_prop
+        raise e
 
 
 try:
@@ -58,13 +62,14 @@ def load_banner():
     加载header-banner文件
     :return:
     """
-    file_root=properties.project_root
-    file_path=file_root+os.path.sep+'header.txt'
+    file_root = properties.project_root
+    file_path = file_root + os.path.sep + 'header.txt'
     if os.path.exists(file_path):
-        with open(file_path,encoding='utf8') as banner:
+        with open(file_path, encoding='utf8') as banner:
             for line in banner.readlines():
                 sys.stdout.write(line)
     sys.stdout.flush()
+
 
 def load_footer():
     """
@@ -78,6 +83,7 @@ def load_footer():
             for line in banner.readlines():
                 sys.stdout.write(line)
     sys.stdout.flush()
+
 
 def boot_init():
     """
@@ -139,7 +145,7 @@ def before_request():
             """
             if (int(now_timestemp) - int(req_timestemp[0])) > 1 \
                     and \
-                    (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
+                            (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
                 # 检测3秒内请求数
                 if len(req_timestemp) > 50:
                     # 默认三秒内请求不超过300
@@ -214,6 +220,7 @@ def get_app() -> Flask:
 
 def free_source():
     def method(f):
+        @functools.wraps(f)
         def args(*arg, **kwarg):
             logger.info('启动服务器')
             load_footer()
@@ -272,6 +279,7 @@ def fix_template(
 
 @free_source()
 def run_app(host=properties.host, port=properties.port):
+    logger.info('监听地址: %s : %s' % (host, port))
     if properties.server_gevented:
         from gevent.pywsgi import WSGIServer
         WSGIServer((host, port), app).serve_forever()
@@ -282,6 +290,7 @@ def run_app(host=properties.host, port=properties.port):
 
 @free_source()
 def run_app_ssl(host=properties.host, port=properties.port, ssl_context=properties.ssl_context):
+    logger.info('监听地址: %s : %s' % (host, port))
     if properties.server_gevented:
         from gevent.pywsgi import WSGIServer
         ssl_args = {

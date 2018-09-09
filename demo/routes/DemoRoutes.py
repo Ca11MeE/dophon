@@ -18,6 +18,7 @@ template_folder='../templates')
 @RequestMapping(app=app,path='/',methods=['get'])
 @ResponseBody()
 def test():
+    print(id(app))
     return {'hahahah':'测试成功'}
 
 @RequestMapping(app=app,path='/index',methods=['get'])
