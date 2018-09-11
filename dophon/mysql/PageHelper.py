@@ -43,7 +43,9 @@ def depkg_page_info(page_info: dict):
             _page_num = page_info[key]
         if re.match('.*[sS][iI][zZ][eE].*', string=key):
             _page_size = page_info[key]
-    return 'limit ' + str((int(_page_num) - 1) * int(_page_size)) + ',' + str(_page_size)
+        return 'limit ' + str(
+            0 if (int(_page_num) - 1) * int(_page_size) < 0 else (int(_page_num) - 1) * int(_page_size)) + ',' + str(
+            _page_size)
 
 
 def fix_page_info(page_info: dict):
