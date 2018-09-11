@@ -11,7 +11,7 @@ p_sys_type = platform.system()
 
 logging_config = \
     properties.logger_config \
-    if properties.logger_config \
+    if hasattr(properties,'logger_config') and properties.logger_config \
     else \
     {
     # 'filename': 'app.log',

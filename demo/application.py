@@ -16,7 +16,7 @@ ip_count = False
 
 # 此处为服务器配置
 host = '0.0.0.0'
-port = 80
+port = 9000
 ssl_context = 'adhoc'
 
 # 此处为路由文件夹配置
@@ -31,8 +31,8 @@ pool_conn_num = 5
 pydc_host = 'localhost'
 pydc_port = 3306
 pydc_user = 'root'
-pydc_password = 'wo4ce4kumima'
-pydc_database = 'mw2017_db'
+pydc_password = 'root'
+pydc_database = 'zxyzt'
 
 # 此处为日志配置
 logger_config = {
