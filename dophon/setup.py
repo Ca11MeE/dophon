@@ -22,7 +22,7 @@ except OSError:
 
 setup(
     name='dophon',
-    version='1.1.9',
+    version='1.2.3',
     packages=find_packages(),
     url='https://github.com/Ca11MeE/dophon',
     license='Apache 2.0',
@@ -32,11 +32,10 @@ setup(
     install_requires=[
         'flask>=1.0.2',
         'PyMySQL>=0.9.0',
-        'pyOpenSSL>=18.0.0',
-        'schedule>=0.5.0',
         'urllib3>=1.23',
         'Flask_Bootstrap>=3.3.7.1',
         'gevent>=1.3.5'
+        'schedule>=0.5.0',
     ],
     long_description=long_description
 )
