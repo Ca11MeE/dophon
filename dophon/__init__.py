@@ -59,11 +59,6 @@ def dophon_boot(f):
 
     return arg
 
-
-from dophon import module_struct
-
-db = module_struct.db
-
-__all__ = ['BluePrint', 'blue_print', 'db']
+__all__ = ['BluePrint', 'blue_print']
 
 BluePrint = blue_print
