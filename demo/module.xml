@@ -1,0 +1,8 @@
+<dophon>
+  <modules>
+    <module>
+      <pre-name>dophon</pre-name>
+      <name>db</name>
+    </module>
+  </modules>
+</dophon>

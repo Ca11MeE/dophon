@@ -1,4 +1,4 @@
-from dophon.mysql import *
+from dophon.db.mysql import *
 
 
 class TestController:

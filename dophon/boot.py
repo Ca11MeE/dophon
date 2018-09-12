@@ -12,8 +12,6 @@ monkey.patch_all()
 启动前尝试获得自定义配置(application.py)
 无法获取则使用默认配置
 """
-import ctypes
-import inspect
 import sys
 import logging
 import os, re, json
@@ -51,10 +49,17 @@ from dophon import logger
 
 logger.inject_logger(globals())
 
+from dophon import pre_boot
+
+pre_boot.check_modules()
+
 from flask import Flask, request, abort
-from dophon import mysql
-from dophon.mysql import Pool
 from dophon import properties
+
+try:
+    mysql = __import__('dophon.db.mysql')
+except:
+    mysql = None
 
 
 def load_banner():
@@ -145,7 +150,7 @@ def before_request():
             """
             if (int(now_timestemp) - int(req_timestemp[0])) > 1 \
                     and \
-                            (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
+                    (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
                 # 检测3秒内请求数
                 if len(req_timestemp) > 50:
                     # 默认三秒内请求不超过300
@@ -205,10 +210,6 @@ def map_apps(dir_path):
             pass
 
 
-logger.info('加载数据库模块')
-connection_pool = mysql.pool = Pool.Pool()
-# print('加载完毕')
-
 logger.info('路由初始化')
 for path in properties.blueprint_path:
     map_apps(path)
@@ -231,8 +232,8 @@ def free_source():
             """
             logger.info('服务器关闭')
             logger.info('释放资源')
-            # 释放连接池资源
-            connection_pool.free_pool()
+            if mysql:
+                mysql.free_pool()
             logger.info('释放连接池')
             logger.info('再次按下Ctrl+C退出')
 

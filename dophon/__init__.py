@@ -59,6 +59,6 @@ def dophon_boot(f):
     return arg
 
 
-__all__ = ['BluePrint', 'blue_print', 'mysql']
+__all__ = ['BluePrint', 'blue_print']
 
 BluePrint = blue_print
