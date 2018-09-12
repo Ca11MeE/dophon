@@ -153,38 +153,52 @@ class curObj:
             _sql = _sql + PageHelper.depkg_page_info(pageInfo)
         # 判断是否骨架拼接
         if args:
-            # 检查骨架实参传入类型,并作不同处理
-            if type(args) is type(()):
-                if re.match(r'(\#|\$)\{.*\}', _sql):
-                    logger.error('骨架与参数不匹配')
-                    raise Exception('骨架与参数不匹配')
-                _sql = _sql % args[:]
-            elif type(args) is type({}):
-                for key in args.keys():
-                    reg_str = r'(\#|\$)\{' + str(key) + '\}'
-                    if not re.search(reg_str, _sql):
-                        '''
-                        此处有几种情况:
-                        1.语句骨架不存在该key的空位(多余参数)
-                        2.骨架参数与骨架不对应(多余空位)
-                        '''
-                        pass
-                    else:
-                        _sql = re.sub('\#\{' + str(key) + '\}', '\'' + str(args[key]) + '\'',
-                                      re.sub('\$\{' + str(key) + '\}', str(args[key]), _sql))
-                # 多余空位检查
-                if re.search('(\#|\$)\{' + str(key) + '\}', _sql):
-                    logger.error('存在无法配对的骨架参数')
-                    raise Exception('存在无法配对的骨架参数')
-            else:
-                try:
-                    _sql = _sql % args[:]
-                except Exception as e:
-                    logger.error(e + '\n')
-                    raise e
+            _sql = self.translate_sql_bond(_sql, args)
         # 去除注释与空格,换行等
         __sql = re.sub('\\s+', ' ', re.sub('<!--.*-->', ' ', _sql))
         return __sql
+
+    def translate_sql_bond(self, _sql: str, args):
+        result_sql = _sql
+        # 检查骨架实参传入类型,并作不同处理
+        if type(args) is type(()):
+            if re.match(r'(\#|\$|\!|\@|\?)\{.*\}', _sql):
+                logger.error('骨架与参数不匹配')
+                raise Exception('骨架与参数不匹配')
+            result_sql = _sql % args[:]
+        elif type(args) is type({}):
+            for key in args.keys():
+                reg_str = r'(\#|\$|\!|\@|\?)\{' + str(key) + '\}'
+                if not re.search(reg_str, _sql):
+                    '''
+                    此处有几种情况:
+                    1.语句骨架不存在该key的空位(多余参数)
+                    2.骨架参数与骨架不对应(多余空位)
+                    '''
+                    pass
+                else:
+                    # 转义骨架参数
+                    result_sql = re.sub('\$\{' + str(key) + '\}', str(args[key]), _sql)
+                    # 转义字符参数
+                    result_sql = re.sub('\#\{' + str(key) + '\}', '\'' + str(args[key]) + '\'', result_sql)
+                    # 转义近似参数
+                    # 左近似
+                    result_sql = re.sub('\!\{' + str(key) + '\}', '\'%' + str(args[key]) + '\'', result_sql)
+                    # 右近似
+                    result_sql = re.sub('\@\{' + str(key) + '\}', '\'' + str(args[key]) + '%\'', result_sql)
+                    # 全近似
+                    result_sql = re.sub('\?\{' + str(key) + '\}', '\'%' + str(args[key]) + '%\'', result_sql)
+            # 多余空位检查
+            if re.search('(\#|\$|\!|\@|\?)\{' + str(key) + '\}', result_sql):
+                logger.error('存在无法配对的骨架参数')
+                raise Exception('存在无法配对的骨架参数')
+        else:
+            try:
+                result_sql = _sql % args[:]
+            except Exception as e:
+                logger.error(e + '\n')
+                raise e
+        return result_sql
 
     def set_page(self, pageNum: str, pageSize: str):
         """

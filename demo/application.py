@@ -31,8 +31,10 @@ pool_conn_num = 5
 pydc_host = 'localhost'
 pydc_port = 3306
 pydc_user = 'root'
-pydc_password = 'root'
-pydc_database = 'zxyzt'
+# pydc_password = 'root'
+pydc_password = 'wo4ce4kumima'
+# pydc_database = 'zxyzt'
+pydc_database = 'mw2017_db'
 
 # 此处为日志配置
 logger_config = {

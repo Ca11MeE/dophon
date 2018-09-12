@@ -8,4 +8,26 @@
   <delete id="page_unselect">
     delete from mw_member where id = '1'
   </delete>
+
+  <select id="left_like">
+    SELECT
+    * from
+    mw_member
+    WHERE
+    name LIKE !{name}
+  </select>
+  <select id="right_like">
+    SELECT
+    * from
+    mw_member
+    WHERE
+    name LIKE @{name}
+  </select>
+  <select id="full_like">
+    SELECT
+    * from
+    mw_member
+    WHERE
+    name LIKE ?{name}
+  </select>
 </mapper>
