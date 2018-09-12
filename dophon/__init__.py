@@ -49,6 +49,7 @@ def dophon_boot(f):
     装饰器形式启动
     :return:
     """
+
     def arg(*args, **kwargs):
         from gevent import monkey
         monkey.patch_all()
@@ -59,6 +60,10 @@ def dophon_boot(f):
     return arg
 
 
-__all__ = ['BluePrint', 'blue_print']
+from dophon import module_struct
+
+db = module_struct.db
+
+__all__ = ['BluePrint', 'blue_print', 'db']
 
 BluePrint = blue_print
