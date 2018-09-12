@@ -9,7 +9,7 @@ twine upload dist/  <dophon.whl>
 
 setup(
     name='dophon_db',
-    version='1.0.0',
+    version='1.0.1',
     packages=find_packages(),
     url='https://github.com/Ca11MeE/dophon',
     license='Apache 2.0',
