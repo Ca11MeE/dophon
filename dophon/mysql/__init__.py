@@ -3,6 +3,7 @@ import types
 
 import dophon.reader as reader
 from dophon.mysql import Pool, Connection, PageHelper
+from dophon.mysql.sql_util import escape
 from dophon.mysql.remote.Cell import Cell
 import threading
 import re
@@ -159,6 +160,12 @@ class curObj:
         return __sql
 
     def translate_sql_bond(self, _sql: str, args):
+        """
+        转义sql结果集骨架
+        :param _sql: 结果集原始骨架
+        :param args: 骨架参数集合
+        :return: 转义后的sql语句
+        """
         result_sql = _sql
         # 检查骨架实参传入类型,并作不同处理
         if type(args) is type(()):
@@ -177,17 +184,19 @@ class curObj:
                     '''
                     pass
                 else:
+                    # 转义参数值,防止sql注入
+                    e_value = escape(args[key])
                     # 转义骨架参数
-                    result_sql = re.sub('\$\{' + str(key) + '\}', str(args[key]), _sql)
+                    result_sql = re.sub('\$\{' + str(key) + '\}', str(e_value), _sql)
                     # 转义字符参数
-                    result_sql = re.sub('\#\{' + str(key) + '\}', '\'' + str(args[key]) + '\'', result_sql)
+                    result_sql = re.sub('\#\{' + str(key) + '\}', '\'' + str(e_value) + '\'', result_sql)
                     # 转义近似参数
                     # 左近似
-                    result_sql = re.sub('\!\{' + str(key) + '\}', '\'%' + str(args[key]) + '\'', result_sql)
+                    result_sql = re.sub('\!\{' + str(key) + '\}', '\'%' + str(e_value) + '\'', result_sql)
                     # 右近似
-                    result_sql = re.sub('\@\{' + str(key) + '\}', '\'' + str(args[key]) + '%\'', result_sql)
+                    result_sql = re.sub('\@\{' + str(key) + '\}', '\'' + str(e_value) + '%\'', result_sql)
                     # 全近似
-                    result_sql = re.sub('\?\{' + str(key) + '\}', '\'%' + str(args[key]) + '%\'', result_sql)
+                    result_sql = re.sub('\?\{' + str(key) + '\}', '\'%' + str(e_value) + '%\'', result_sql)
             # 多余空位检查
             if re.search('(\#|\$|\!|\@|\?)\{' + str(key) + '\}', result_sql):
                 logger.error('存在无法配对的骨架参数')
