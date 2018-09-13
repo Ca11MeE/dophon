@@ -22,7 +22,7 @@ except OSError:
 
 setup(
     name='dophon',
-    version='1.2.4',
+    version='1.2.5',
     packages=find_packages(),
     url='https://github.com/Ca11MeE/dophon',
     license='Apache 2.0',

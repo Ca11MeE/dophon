@@ -56,6 +56,14 @@ def full_param(kwarg_list=[]):
                     else:
                         r_kwarg[kwarg_list[0]] = request.json
                     return f(*r_arg, **r_kwarg)
+                elif 'GET' == str(request.method):
+                    r_arg = ()
+                    r_kwarg = {}
+                    if not kwarg_list:
+                        r_arg = (request.args.to_dict(),)
+                    else:
+                        r_kwarg[kwarg_list[0]] = request.args.to_dict()
+                    return f(*r_arg, **r_kwarg)
                 else:
                     logger.error('json统一参数不支持该请求方法!!')
                     return abort(400)

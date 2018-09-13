@@ -38,6 +38,8 @@ pydc_xmlupdate_sech = False
 
 # 消息队列线程池工人数
 msg_queue_max_num=30
+# 消息队列调试标识
+msg_queue_debug = False
 
 
 # 此处为日志配置

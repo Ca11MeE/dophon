@@ -13,7 +13,7 @@ import traceback
 from dophon.msg_queue.SizeableTPE import SizeableThreadPoolExecutor
 
 __all__ = [
-    'producer', 'consumer','Consumer'
+    'producer', 'consumer', 'Consumer'
 ]
 
 logger.inject_logger(globals())
@@ -24,6 +24,11 @@ max_workers = properties.msg_queue_max_num
 
 # pool = ThreadPoolExecutor(max_workers=max_workers)
 pool = SizeableThreadPoolExecutor(max_workers=max_workers)
+
+# 消息池(初步为本地缓存目录)
+msg_pool = os.path.expanduser('~') + '/.dophon_msg_pool/'
+if not os.path.exists(msg_pool):
+    os.mkdir(msg_pool)
 
 
 def full_0(string: str, num_of_zero: int) -> str:
@@ -64,9 +69,9 @@ def producer(tag, delay: int = 0):
                 # 发送消息
                 msg_mark = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + full_0(
                     str(random.randint(0, 999999999999)), 6)
-                if not os.path.exists('./' + tag):
-                    os.mkdir(tag)
-                with open('./' + tag + '/' + msg_mark, 'w') as file:
+                if not os.path.exists(msg_pool + tag):
+                    os.mkdir(msg_pool + tag)
+                with open(msg_pool + tag + '/' + msg_mark, 'w') as file:
                     json.dump(result, file, ensure_ascii=False)
             except:
                 raise Exception('无法识别的消息类型')
@@ -80,9 +85,9 @@ def producer(tag, delay: int = 0):
                     # 发送消息
                     msg_mark = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + full_0(
                         str(random.randint(0, 999999999999)), 6)
-                    if not os.path.exists('./' + inner_tag):
-                        os.mkdir(inner_tag)
-                    with open('./' + inner_tag + '/' + msg_mark, 'w') as file:
+                    if not os.path.exists(msg_pool + inner_tag):
+                        os.mkdir(msg_pool + inner_tag)
+                    with open(msg_pool + inner_tag + '/' + msg_mark, 'w') as file:
                         json.dump(result, file, ensure_ascii=False)
                 except:
                     raise Exception('无法识别的消息类型')
@@ -105,7 +110,7 @@ def consumer(tag: str, delay: int = 1, retry: int = 3, as_args: bool = False):
             def args(tag, *args, **kwargs):
                 while True:
                     time.sleep(1)
-                    for root, dirs, files in os.walk('./' + tag):
+                    for root, dirs, files in os.walk(msg_pool + tag):
                         if files:
                             for name in files:
                                 retrys = 0
@@ -155,7 +160,7 @@ def consumer(tag: str, delay: int = 1, retry: int = 3, as_args: bool = False):
             for tag in tags:
                 args(tag)
 
-        if len(tags) > 1:
+        if len(tags) > 1 and properties.msg_queue_debug:
             print('监听多个标签', tags)
 
         return queue_args
