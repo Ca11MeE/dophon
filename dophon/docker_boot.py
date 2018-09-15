@@ -73,7 +73,7 @@ def listen(code):
         raise Exception('命令执行错误!')
 
 
-def listen_container_status(docker_port, loop_count: int = 3, wait_sec: int = 10):
+def listen_container_status(container_port, loop_count: int = 3, wait_sec: int = 10):
     """
     检测容器端口存活
     :return:
@@ -85,12 +85,12 @@ def listen_container_status(docker_port, loop_count: int = 3, wait_sec: int = 10
     while int(curr_count) <= int(loop_count):
         # 默认间隔10秒
         time.sleep(wait_sec)
-        if IsOpen(get_docker_address(), int(docker_port)):
+        if IsOpen(get_docker_address(), int(container_port)):
             raise Exception('端口映射异常')
         else:
             # 报错证明端口正常占用
             # 发起请求
-            url='http://' + get_docker_address() + ':' + docker_port
+            url='http://' + get_docker_address() + ':' + container_port
             logger.info('容器存活性检查:' + url)
             res = request.urlopen(url)
             if not res.read():
@@ -138,6 +138,10 @@ def run_as_docker(
 ):
     """
     利用docker启动项目
+    :param entity_file_name: 入口文件名(包括后缀)
+    :param container_port: 容器暴露端口
+    :param docker_port: 容器内部端口 -> 集群模式下的暴露端口,一般为配置文件定义的端口
+    :param attach_cmd: 是否进入容器内部sh
     :return:
     """
     try:
@@ -198,7 +202,7 @@ def run_as_docker(
         logger.info('打印容器载体地址')
         print(get_docker_address())
         logger.info('启动检测容器端口')
-        threading.Thread(target=listen_container_status, args=(docker_port,)).start()
+        threading.Thread(target=listen_container_status, args=(container_port,)).start()
         if attach_cmd:
             logger.info('进入镜像')
             # threading.Thread(target=attach_container,args=(base_name,)).start()
