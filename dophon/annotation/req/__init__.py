@@ -48,13 +48,13 @@ def full_param(kwarg_list=[]):
         @functools.wraps(f)
         def args(*args, **kwargs):
             try:
-                if 'POST' == str(request.method) and 'application/json' == request.content_type:
+                if 'POST' == str(request.method):
                     r_arg = ()
                     r_kwarg = {}
                     if not kwarg_list:
-                        r_arg = (request.json,)
+                        r_arg = (request.json if request.is_json else request.form.to_dict(),)
                     else:
-                        r_kwarg[kwarg_list[0]] = request.json
+                        r_kwarg[kwarg_list[0]] = request.json if request.is_json else request.form.to_dict()
                     return f(*r_arg, **r_kwarg)
                 elif 'GET' == str(request.method):
                     r_arg = ()
