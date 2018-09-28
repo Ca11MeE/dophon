@@ -34,6 +34,7 @@ pydc_user = 'root'
 pydc_password = 'root'
 pydc_database = 'db'
 pydc_xmlupdate_sech = False
+db_pool_exe_time = False
 
 # 消息队列线程池工人数
 msg_queue_max_num = 30

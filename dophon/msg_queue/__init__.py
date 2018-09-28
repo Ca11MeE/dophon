@@ -183,8 +183,8 @@ class Consumer:
             if not re.match('__.+__', name) and \
                     callable(item) and \
                     re.match('consumer.<locals>.method.<locals>.*', getattr(getattr(item, '__func__'), '__qualname__')):
-                for nn in dir(inspect.getfullargspec(item)):
-                    print(nn, '--', getattr(inspect.getfullargspec(item), nn))
+                # for nn in dir(inspect.getfullargspec(item)):
+                #     print(nn, '--', getattr(inspect.getfullargspec(item), nn))
                 fields = inspect.getfullargspec(item).args
                 # 清除自对象参数
                 staticmethod(item(*fields))

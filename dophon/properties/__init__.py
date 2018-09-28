@@ -1,58 +1,39 @@
 # coding: utf-8"
+
+"""
+配置管理
+启动前尝试获得自定义配置(application.py)
+无法获取则使用默认配置
+"""
 import sys
-import os
-
-"""
-配置集合
-author:CallMeE
-date:2018-06-01
-"""
-
-project_root = os.getcwd()
-
-# 服务器相关配置
-server_threaded = False # 服务器多线程开关
-server_gevented = False # 服务器gevent协程处理(会覆盖多线程开关)
-
-debug_trace=False # 调试跟踪记录
-
-# 此为开启ip防火墙模式(1秒不超过50次请求,60秒解冻)
-ip_count=False
-
-# 此处为服务器配置
-host = '127.0.0.1'
-port = 443
-ssl_context = 'adhoc'
-
-# 此处为蓝图文件夹配置
-blueprint_path = ['/routes']  # route model dir path
-pool_conn_num = 5  # size of db connect pool
-
-# 此处为数据库配置
-pydc_host = 'localhost'
-pydc_port = 3306
-pydc_user = 'root'
-pydc_password = 'root'
-pydc_database = 'db'
-pydc_xmlupdate_sech = False
-
-# 消息队列线程池工人数
-msg_queue_max_num=30
-# 消息队列调试标识
-msg_queue_debug = False
+import logging
+import os, re, json
+from datetime import datetime
+from threading import *
 
 
-# 此处为日志配置
-if debug_trace :
-    logger_config={
-        # 'filename': 'app.log',
-        # 'level': 'logging.DEBUG',
-        'format': '%(levelname)s : <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
-        'datefmt': '%Y-%m-%d %H:%M:%S'
-    }
+def read_self_prop():
+    try:
+        def_prop = __import__('dophon.def_prop.default_properties', fromlist=True)
+        u_prop = __import__('application', fromlist=True)
+        # 对比配置文件
+        for name in dir(def_prop):
+            if re.match('__.*__', name):
+                continue
+            if name in dir(u_prop):
+                continue
+            setattr(u_prop, name, getattr(def_prop, name))
+        sys.modules['properties'] = u_prop
+        sys.modules['dophon.properties'] = u_prop
+    except Exception as e:
+        logging.error(e)
+        sys.modules['properties'] = def_prop
+        sys.modules['dophon.properties'] = def_prop
+        raise e
 
 
-def get_properties(prop_path=None):
-    if prop_path:
-        sys.modules['properties'] = __import__(prop_path, fromlist=True)
-
+try:
+    read_self_prop()
+except Exception as e:
+    logging.error('没有找到自定义配置:(application.py)')
+    logging.error('引用默认配置')
