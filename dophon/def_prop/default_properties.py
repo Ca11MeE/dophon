@@ -25,9 +25,9 @@ ssl_context = 'adhoc'
 
 # 此处为路由文件夹配置
 blueprint_path = ['/routes']  # route model dir path
-pool_conn_num = 5  # size of db connect pool
 
 # 此处为数据库配置
+pool_conn_num = 5  # size of db connect pool
 pydc_host = 'localhost'
 pydc_port = 3306
 pydc_user = 'root'
