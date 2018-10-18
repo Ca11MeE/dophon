@@ -1,27 +1,31 @@
 from dophon.msg_queue import MsgCenter
+from dophon import logger
 
-center = MsgCenter.MsgCenter()
+logger.inject_logger(globals())
+
+center = MsgCenter.get_center()
 
 
 def producer(tag, delay: int = 0):
-    # 预注册消息通道
-    center.write_p_book(tag)
-
     def method(f):
         def single_tag(*args, **kwargs) -> dict:
+            center.write_p_book(tag)
             # 执行被装饰方法,检查返回值
             result = f(*args, **kwargs)
             center.do_send(result, tag, delay)
 
         def multi_tag(*args, **kwargs) -> dict:
             for inner_tag in tag:
+                center.write_p_book(inner_tag)
                 # 执行被装饰方法,检查返回值
-                result = f(*args, **kwargs) + inner_tag
-                center.do_send(result, tag, delay)
+                result = f(*args, **kwargs)
+                center.do_send(result, inner_tag, delay)
 
-        if isinstance(tag, str):
-            return single_tag
-        if isinstance(tag, list):
-            return multi_tag
+        def unsupport_tag(*args, **kwargs) -> dict:
+            logger.warning('不支持的标签类型! %s' % (args, kwargs))
+
+        return single_tag if isinstance(tag, str) \
+            else multi_tag if isinstance(tag, list) \
+            else unsupport_tag
 
     return method

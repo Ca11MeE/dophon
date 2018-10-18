@@ -6,6 +6,17 @@ from threading import Thread
 import functools
 
 
+def singleton(cls):
+    instances = {}
+
+    def get_instance(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+
+    return get_instance
+
+
 def full_0(string: str, num_of_zero: int) -> str:
     if len(string) < num_of_zero:
         string = string.rjust(num_of_zero, '0')
