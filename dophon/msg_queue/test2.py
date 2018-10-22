@@ -56,7 +56,7 @@ def produce2():
 def produce3():
     return 'ccc'
 
-@producer(tag='DEMO_TAGi')
+@producer(tag=['DEMO_TAGi'])
 def produce4():
     return 'ddd'
 

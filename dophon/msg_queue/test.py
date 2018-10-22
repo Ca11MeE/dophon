@@ -57,6 +57,11 @@ def produce3():
     return 'ccc'
 
 
+@producer(tag=['DEMO_TAGi'])
+def produce4():
+    return 'ddd'
+
+
 @consumer(tag=['DEMO_TAGa', 'DEMO_TAGb', 'DEMO_TAGc'], as_args=True)
 def consume1(args):
     print(args)
@@ -76,6 +81,7 @@ if '__main__' == __name__:
     produce1()
     produce2()
     produce3()
+    # produce4()
     consume1()
     consume2()
     consume3()

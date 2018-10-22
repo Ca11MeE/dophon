@@ -8,34 +8,12 @@ import datetime
 import random
 import json
 import time
-import traceback
-
-from dophon.msg_queue.SizeableTPE import SizeableThreadPoolExecutor
-from dophon import properties
 from dophon.msg_queue.utils import *
 from threading import Timer
 from dophon import logger
+import re
 
 logger.inject_logger(globals())
-
-max_workers = properties.msg_queue_max_num
-
-# pool = ThreadPoolExecutor(max_workers=max_workers)
-pool = SizeableThreadPoolExecutor(max_workers=max_workers)
-
-trace_manager = {}
-
-
-def threadable():
-    def method(f):
-        def args(*args, **kwargs):
-            pool.update_worker_size()
-            # 采用线程池操作,减缓cpu压力
-            pool.submit(f, *args, **kwargs)
-
-        return args
-
-    return method
 
 
 @singleton
@@ -90,9 +68,10 @@ class MsgCenter():
 
     # 启用多线程监听消息
     @threadable()
-    def do_get(self, p_name):
-        if p_name:
-            self._p_tunnel_cursor[p_name].query_msg(1)
+    def do_get(self, p_name, delay: int):
+        if p_name and p_name in self._p_tunnel_cursor:
+            print('监听：', p_name)
+            self._p_tunnel_cursor[p_name].query_msg(delay)
 
 
 class MsgTunnel():
@@ -126,6 +105,7 @@ class MsgTunnel():
         :param tag:
         :return:
         """
+        self.__k_queue.clear()
         for root, dirs, files in os.walk(msg_pool + tag):
             for name in files:
                 file_path = os.path.join(root, name)
@@ -148,10 +128,18 @@ class MsgTunnel():
         """
         while True:
             time.sleep(delay)
-            # 获取信息
-            msg_k = self.__k_queue.pop()
-            msg_obj = self.__queue[msg_k]
-            print(msg_obj['msg'])
+            if self.__k_queue:
+                # 获取信息
+                msg_k = self.__k_queue.pop(0)
+                msg_obj = self.__queue.pop(msg_k)
+                __r_file_path = re.sub('\\\\', '/', msg_obj['file_path'])
+                print(msg_obj['msg'])
+                try:
+                    # 消息消费成功
+                    # 清除消息
+                    os.remove(__r_file_path)
+                except Exception as e:
+                    print(e)
             # for root, dirs, files in os.walk(msg_pool + tag):
             #     if files:
             #         for name in files:
@@ -202,3 +190,4 @@ class MsgTunnel():
             #                         except FileNotFoundError as fnfe:
             #                             # 消息已被消费或已被重命名
             #                             logger.warning('消息已被消费: %s', file_path, '::::', fnfe)
+            self.insert_msg(self._p_name)

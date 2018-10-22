@@ -5,6 +5,9 @@ import os
 from threading import Thread
 import functools
 
+from dophon import properties
+from dophon.msg_queue.SizeableTPE import SizeableThreadPoolExecutor
+
 
 def singleton(cls):
     instances = {}
@@ -33,5 +36,25 @@ if not os.path.exists(msg_pool):
 def join_threadable(f):
     def method(*args, **kwargs):
         Thread(target=f, args=args, kwargs=kwargs).start()
+
+    return method
+
+
+max_workers = properties.msg_queue_max_num
+
+# pool = ThreadPoolExecutor(max_workers=max_workers)
+pool = SizeableThreadPoolExecutor(max_workers=max_workers)
+
+trace_manager = {}
+
+
+def threadable():
+    def method(f):
+        def args(*args, **kwargs):
+            pool.update_worker_size()
+            # 采用线程池操作,减缓cpu压力
+            pool.submit(f, *args, **kwargs)
+
+        return args
 
     return method

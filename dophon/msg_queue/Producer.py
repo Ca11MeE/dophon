@@ -24,8 +24,10 @@ def producer(tag, delay: int = 0):
         def unsupport_tag(*args, **kwargs) -> dict:
             logger.warning('不支持的标签类型! %s' % (args, kwargs))
 
-        return single_tag if isinstance(tag, str) \
+        r_method=single_tag if isinstance(tag, str) \
             else multi_tag if isinstance(tag, list) \
             else unsupport_tag
+
+        return r_method
 
     return method

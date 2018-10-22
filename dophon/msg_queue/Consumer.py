@@ -1,6 +1,7 @@
 from dophon import logger
-from dophon import properties
+import time
 from dophon.msg_queue import MsgCenter
+from dophon.msg_queue.utils import *
 
 center = MsgCenter.get_center()
 
@@ -12,8 +13,9 @@ def consumer(tag: str, delay: int = 0, retry: int = 3, as_args: bool = False):
 
     def method(f):
         def queue_args(*args, **kwargs):
+            @threadable()
             def args(tt, *args, **kwargs):
-                center.do_get(tt)
+                center.do_get(tt,delay)
 
             for t in tags:
                 # 执行消息中心信息监听
