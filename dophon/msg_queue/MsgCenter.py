@@ -12,23 +12,37 @@ from dophon.msg_queue.utils import *
 from threading import Timer
 from dophon import logger
 import re
+from socketserver import BaseRequestHandler, ThreadingTCPServer
+from socket import socket
 
 logger.inject_logger(globals())
 
 
 @singleton
-def get_center(debug: bool = False):
-    return MsgCenter(debug)
+def get_center(debug: bool = False, remote_center: bool = False):
+    ins_obj = MsgCenter(debug, remote_center)
+    if remote_center:
+        print('开启远程消息中心')
+    return ins_obj
 
 
-class MsgCenter():
+class MsgCenter(ThreadingTCPServer):
     _p_name_l = []
     _p_tunnel_cursor = {}
 
-    def __init__(self, debug: bool):
+    def __init__(self, debug: bool, remote_center: bool = False):
         logger.info('初始化消息中心')
         if debug:
             self.listen_p_book()
+        # 记录远程中心标识
+        self._remote_flag = remote_center
+        if remote_center:
+            super(MsgCenter, self).__init__(('127.0.0.1', 8800), SocketMsgHandler)
+            self.start_server()
+
+    @threadable()
+    def start_server(self):
+        self.serve_forever()
 
     def write_p_book(self, p_name):
         """
@@ -41,8 +55,12 @@ class MsgCenter():
                 and p_name not in self._p_tunnel_cursor \
                 and not self._p_tunnel_cursor.get(p_name):
             self._p_name_l.append(p_name)
-            m_tunnel = MsgTunnel(p_name)
-            self._p_tunnel_cursor[p_name] = m_tunnel
+            if self._remote_flag:
+                m_tunnel = SocketMsgTunnel(p_name)
+                self._p_tunnel_cursor[p_name] = m_tunnel
+            else:
+                m_tunnel = MsgTunnel(p_name)
+                self._p_tunnel_cursor[p_name] = m_tunnel
 
     @threadable()
     def listen_p_book(self):
@@ -56,9 +74,9 @@ class MsgCenter():
     def do_send(self, msg, p_name, delay):
         """
         发送消息
-        :param msg:
-        :param p_name:
-        :param delay:
+        :param msg: 消息体
+        :param p_name: 消息标签
+        :param delay: 延时
         :return:
         """
         # 使用定时器发送消息
@@ -66,15 +84,33 @@ class MsgCenter():
         timer.start()
         self._p_tunnel_cursor[p_name].insert_msg(p_name)
 
+    def do_remote_send(self, msg, p_name, delay):
+        """
+        发送消息到消息通道
+        :param msg:
+        :param p_name: 消息标签
+        :param delay: 延时
+        :return: 消息体
+        """
+        # 使用定时器发送消息
+        timer = Timer(delay, self._p_tunnel_cursor[p_name].send_msg, [msg])
+        timer.start()
+        self._p_tunnel_cursor[p_name].insert_msg(p_name)
+
     # 启用多线程监听消息
     @threadable()
     def do_get(self, p_name, delay: int):
+        """
+        从消息管道获取消息
+        :param p_name:
+        :param delay:
+        :return:
+        """
         if p_name and p_name in self._p_tunnel_cursor:
-            print('监听：', p_name)
             self._p_tunnel_cursor[p_name].query_msg(delay)
 
 
-class MsgTunnel():
+class MsgTunnel:
     """
     消息隧道
     """
@@ -96,8 +132,8 @@ class MsgTunnel():
                 os.mkdir(msg_pool + self._p_name)
             with open(msg_pool + self._p_name + '/' + msg_mark, 'w') as file:
                 json.dump(msg, file, ensure_ascii=False)
-        except:
-            raise Exception('无法识别的消息类型')
+        except Exception as e:
+            raise Exception('无法识别的消息类型,原因: %s', e)
 
     def insert_msg(self, tag):
         """
@@ -191,3 +227,29 @@ class MsgTunnel():
             #                             # 消息已被消费或已被重命名
             #                             logger.warning('消息已被消费: %s', file_path, '::::', fnfe)
             self.insert_msg(self._p_name)
+
+
+class SocketMsgTunnel(MsgTunnel):
+
+    def __init__(self, p_name):
+        super(SocketMsgTunnel, self).__init__(p_name)
+        # 实例内部套接字初始化
+        self.__socket = socket()
+        self.__socket.connect(("127.0.0.1", 8800))
+
+    def send_msg(self, msg):
+        self.__socket.sendall(bytes(msg, encoding="utf-8"))
+
+
+class SocketMsgHandler(BaseRequestHandler):
+
+    def handle(self):
+
+        conn = self.request
+        conn.sendall(bytes("你好，我是机器人", encoding="utf-8"))
+        while True:
+            ret_bytes = conn.recv(1024)
+            ret_str = str(ret_bytes, encoding="utf-8")
+            if ret_str == "q":
+                break
+            conn.sendall(bytes(ret_str + "你好我好大家好", encoding="utf-8"))

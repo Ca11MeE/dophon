@@ -49,3 +49,9 @@ if debug_trace:
         'format': '%(levelname)s : <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
         'datefmt': '%Y-%m-%d %H:%M:%S'
     }
+
+
+# 此处为消息队列配置
+mq={
+    'remote_center':True
+}
