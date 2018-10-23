@@ -1,10 +1,9 @@
 # coding: utf-8
-import os
-from threading import Thread
 from dophon import logger
 import inspect
 import re
 from dophon.msg_queue import Producer, Consumer
+from dophon import properties
 
 producer = Producer.producer
 

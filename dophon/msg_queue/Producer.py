@@ -6,7 +6,7 @@ logger.inject_logger(globals())
 center = MsgCenter.get_center()
 
 
-def producer(tag, delay: int = 0):
+def local_producer(tag, delay: int = 0):
     def method(f):
         def single_tag(*args, **kwargs) -> dict:
             center.write_p_book(tag)
@@ -24,10 +24,17 @@ def producer(tag, delay: int = 0):
         def unsupport_tag(*args, **kwargs) -> dict:
             logger.warning('不支持的标签类型! %s' % (args, kwargs))
 
-        r_method=single_tag if isinstance(tag, str) \
+        r_method = single_tag if isinstance(tag, str) \
             else multi_tag if isinstance(tag, list) \
             else unsupport_tag
 
         return r_method
 
     return method
+
+
+def remote_producer(tag, delay: int = 0):
+    return
+
+
+producer = local_producer

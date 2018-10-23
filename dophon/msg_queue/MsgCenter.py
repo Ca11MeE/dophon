@@ -12,6 +12,7 @@ from dophon.msg_queue.utils import *
 from threading import Timer
 from dophon import logger
 import re
+from socketserver import *
 
 logger.inject_logger(globals())
 
@@ -21,7 +22,7 @@ def get_center(debug: bool = False):
     return MsgCenter(debug)
 
 
-class MsgCenter():
+class MsgCenter(req):
     _p_name_l = []
     _p_tunnel_cursor = {}
 
