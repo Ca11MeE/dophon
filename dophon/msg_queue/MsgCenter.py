@@ -8,16 +8,14 @@ import datetime
 import random
 import json
 import time
+from socketserver import *
+
 from dophon.msg_queue.utils import *
 from threading import Timer
 from dophon import logger
 import re
-<<<<<<< HEAD
-from socketserver import *
-=======
-from socketserver import BaseRequestHandler, ThreadingTCPServer
 from socket import socket
->>>>>>> 08c5067426918934fc6d377fe62a43e4837493a6
+from dophon import properties
 
 logger.inject_logger(globals())
 
@@ -26,15 +24,11 @@ logger.inject_logger(globals())
 def get_center(debug: bool = False, remote_center: bool = False):
     ins_obj = MsgCenter(debug, remote_center)
     if remote_center:
-        print('开启远程消息中心')
+        logger.info('开启远程消息')
     return ins_obj
 
 
-<<<<<<< HEAD
-class MsgCenter(req):
-=======
-class MsgCenter(ThreadingTCPServer):
->>>>>>> 08c5067426918934fc6d377fe62a43e4837493a6
+class MsgCenter():
     _p_name_l = []
     _p_tunnel_cursor = {}
 
@@ -44,13 +38,6 @@ class MsgCenter(ThreadingTCPServer):
             self.listen_p_book()
         # 记录远程中心标识
         self._remote_flag = remote_center
-        if remote_center:
-            super(MsgCenter, self).__init__(('127.0.0.1', 8800), SocketMsgHandler)
-            self.start_server()
-
-    @threadable()
-    def start_server(self):
-        self.serve_forever()
 
     def write_p_book(self, p_name):
         """
@@ -87,6 +74,12 @@ class MsgCenter(ThreadingTCPServer):
         :param delay: 延时
         :return:
         """
+        if self._remote_flag:
+            self.do_remote_send(msg, p_name, delay)
+        else:
+            self.do_local_send(msg, p_name, delay)
+
+    def do_local_send(self, msg, p_name, delay):
         # 使用定时器发送消息
         timer = Timer(delay, self._p_tunnel_cursor[p_name].recv_msg, [msg])
         timer.start()
@@ -184,80 +177,26 @@ class MsgTunnel:
                     os.remove(__r_file_path)
                 except Exception as e:
                     print(e)
-            # for root, dirs, files in os.walk(msg_pool + tag):
-            #     if files:
-            #         for name in files:
-            #             retrys = 0
-            #             file_path = os.path.join(root, name)
-            #             while retrys < retry:
-            #                 try:
-            #                     with open(file_path, 'r') as file:
-            #                         new_kwargs = json.load(file)
-            #                         # 执行失败启动重试流程
-            #                         if as_args:
-            #                             f(args=new_kwargs)
-            #                         else:
-            #                             f(**new_kwargs)
-            #                 except TypeError as te:
-            #                     logger.error('%s: %s', name, te)
-            #                     trace_manager[tag] = {
-            #                         'type': 'TypeError',
-            #                         'msg': traceback.format_exc()
-            #                     }
-            #                 except FileNotFoundError as fnfe:
-            #                     logger.error('%s: %s', name, fnfe)
-            #                     trace_manager[tag] = {
-            #                         'type': 'FileNotFoundError',
-            #                         'msg': traceback.format_exc()
-            #                     }
-            #                 except Exception as e:
-            #                     logger.warning('%s: %s', name, e)
-            #                     trace_manager[tag] = {
-            #                         'type': 'Exception',
-            #                         'msg': traceback.format_exc()
-            #                     }
-            #                 else:
-            #                     os.remove(file_path)
-            #                     break
-            #                 finally:
-            #                     retrys += 1
-            #                     time.sleep(delay)
-            #                     if retrys >= retry:
-            #                         logger.error('超出重试次数,文件名 %s', file_path)
-            #                         # 超出重试后重命名文件
-            #                         msg_mark = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + full_0(
-            #                             str(random.randint(0, 999999999999)), 6)
-            #                         logger.debug('新文件名 %s', str(msg_mark))
-            #                         n_file_path = os.path.join(root, msg_mark)
-            #                         try:
-            #                             os.rename(file_path, n_file_path)
-            #                         except FileNotFoundError as fnfe:
-            #                             # 消息已被消费或已被重命名
-            #                             logger.warning('消息已被消费: %s', file_path, '::::', fnfe)
             self.insert_msg(self._p_name)
 
 
 class SocketMsgTunnel(MsgTunnel):
-
-    def __init__(self, p_name):
+    def __init__(self, p_name: str):
         super(SocketMsgTunnel, self).__init__(p_name)
         # 实例内部套接字初始化
         self.__socket = socket()
-        self.__socket.connect(("127.0.0.1", 8800))
+        self.__socket.connect((properties.mq.get('remote_address'), properties.mq.get('remote_port')))
+        self._p_name = p_name
 
     def send_msg(self, msg):
-        self.__socket.sendall(bytes(msg, encoding="utf-8"))
-
-
-class SocketMsgHandler(BaseRequestHandler):
-
-    def handle(self):
-
-        conn = self.request
-        conn.sendall(bytes("你好，我是机器人", encoding="utf-8"))
-        while True:
-            ret_bytes = conn.recv(1024)
-            ret_str = str(ret_bytes, encoding="utf-8")
-            if ret_str == "q":
-                break
-            conn.sendall(bytes(ret_str + "你好我好大家好", encoding="utf-8"))
+        bound_dict = {
+            'tag': self._p_name,
+            'msg': msg
+        }
+        try:
+            # 尝试发送消息
+            self.__socket.sendall(bytes(json.dumps(bound_dict), encoding="utf-8"))
+            print('发送成功')
+            print(str(self.__socket.recv(1024),encoding='utf-8'))
+        except Exception as e:
+            print('发送失败', msg,'原因',e)

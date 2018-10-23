@@ -78,10 +78,10 @@ def consume3(args):
 
 
 if '__main__' == __name__:
-    produce1()
-    produce2()
-    produce3()
-    # produce4()
+    # produce1()
+    # produce2()
+    # produce3()
+    produce4()
     consume1()
     consume2()
     consume3()

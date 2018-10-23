@@ -53,5 +53,7 @@ if debug_trace:
 
 # 此处为消息队列配置
 mq={
-    'remote_center':True
+    'remote_center':True,
+    'remote_address':'127.0.0.1',
+    'remote_port':58800
 }

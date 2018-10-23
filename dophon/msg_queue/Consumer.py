@@ -1,5 +1,4 @@
 from dophon import logger
-import time
 from dophon.msg_queue import MsgCenter
 from dophon.msg_queue.utils import *
 
