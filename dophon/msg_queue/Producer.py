@@ -1,9 +1,10 @@
 from dophon.msg_queue import MsgCenter
 from dophon import logger
+from dophon import properties
 
 logger.inject_logger(globals())
 
-center = MsgCenter.get_center()
+center = MsgCenter.get_center(remote_center=properties.mq.get('remote_center',False))
 
 
 def local_producer(tag, delay: int = 0):
