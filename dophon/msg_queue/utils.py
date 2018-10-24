@@ -1,7 +1,9 @@
 """
 常用工具
 """
+import datetime
 import os
+import random
 from threading import Thread
 import functools
 
@@ -26,11 +28,21 @@ def full_0(string: str, num_of_zero: int) -> str:
     return string
 
 
+def get_msg_mark():
+    return datetime.datetime.now().strftime('%Y%m%d%H%M%S') + full_0(
+        str(random.randint(0, 999999999999)), 6)
+
+
 # 消息池(初步为本地缓存目录)
 msg_pool = os.path.expanduser('~') + '/.dophon_msg_pool/'
 
 if not os.path.exists(msg_pool):
     os.mkdir(msg_pool)
+
+remote_msg_pool = os.path.expanduser('~') + '/.dophon_remote_msg_pool/'
+
+if not os.path.exists(remote_msg_pool):
+    os.mkdir(remote_msg_pool)
 
 
 def join_threadable(f):

@@ -3,19 +3,22 @@
 
 处理消息发送信息落地
 初始化消息通道（单一消息通道模式，集群消息通道模式）
+暂时参照jms协议(点对点消息ps)
+消息消费使用拉(pull)模式(后期增加推模式)
 """
-import datetime
-import random
-import json
 import time
-from socketserver import *
 
 from dophon.msg_queue.utils import *
-from threading import Timer
-from dophon import logger
 import re
-from socket import socket
+from socket import *
 from dophon import properties
+import json
+import time
+from threading import Timer
+
+from dophon import logger
+from dophon.msg_queue.utils import threadable
+from dophon.msg_queue import bone_data
 
 logger.inject_logger(globals())
 
@@ -28,7 +31,7 @@ def get_center(debug: bool = False, remote_center: bool = False):
     return ins_obj
 
 
-class MsgCenter():
+class MsgCenter:
     _p_name_l = []
     _p_tunnel_cursor = {}
 
@@ -66,6 +69,7 @@ class MsgCenter():
             time.sleep(3)
             print(trace_manager)
 
+    @threadable()
     def do_send(self, msg, p_name, delay):
         """
         发送消息
@@ -74,10 +78,7 @@ class MsgCenter():
         :param delay: 延时
         :return:
         """
-        if self._remote_flag:
-            self.do_remote_send(msg, p_name, delay)
-        else:
-            self.do_local_send(msg, p_name, delay)
+        return self.do_remote_send(msg, p_name, delay) if self._remote_flag else self.do_local_send(msg, p_name, delay)
 
     def do_local_send(self, msg, p_name, delay):
         # 使用定时器发送消息
@@ -107,8 +108,27 @@ class MsgCenter():
         :param delay:
         :return:
         """
+        return self.do_remote_get(p_name, delay) if self._remote_flag else self.do_local_get(p_name, delay)
+
+    def do_local_get(self, p_name: str, delay: int):
+        """
+        从本地消息管道获取消息
+        :param p_name:
+        :param delay:
+        :return:
+        """
         if p_name and p_name in self._p_tunnel_cursor:
-            self._p_tunnel_cursor[p_name].query_msg(delay)
+            return self._p_tunnel_cursor[p_name].query_msg(delay)
+
+    def do_remote_get(self, p_name: str, delay: int):
+        """
+        从远程消息中心获取消息
+        :param p_name:
+        :param delay:
+        :return:
+        """
+        if p_name and p_name in self._p_tunnel_cursor:
+            return self._p_tunnel_cursor[p_name].get_msg(delay)
 
 
 class MsgTunnel:
@@ -127,8 +147,7 @@ class MsgTunnel:
     def recv_msg(self, msg):
         try:
             # 发送消息
-            msg_mark = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + full_0(
-                str(random.randint(0, 999999999999)), 6)
+            msg_mark = get_msg_mark()
             if not os.path.exists(msg_pool + self._p_name):
                 os.mkdir(msg_pool + self._p_name)
             with open(msg_pool + self._p_name + '/' + msg_mark, 'w') as file:
@@ -183,20 +202,55 @@ class MsgTunnel:
 class SocketMsgTunnel(MsgTunnel):
     def __init__(self, p_name: str):
         super(SocketMsgTunnel, self).__init__(p_name)
-        # 实例内部套接字初始化
-        self.__socket = socket()
-        self.__socket.connect((properties.mq.get('remote_address'), properties.mq.get('remote_port')))
         self._p_name = p_name
 
+    # @threadable()
     def send_msg(self, msg):
-        bound_dict = {
-            'tag': self._p_name,
-            'msg': msg
-        }
-        try:
-            # 尝试发送消息
-            self.__socket.sendall(bytes(json.dumps(bound_dict), encoding="utf-8"))
-            print('发送成功')
-            print(str(self.__socket.recv(1024),encoding='utf-8'))
-        except Exception as e:
-            print('发送失败', msg,'原因',e)
+        """
+        发送消息
+        :param msg:
+        :return:
+        """
+        bound_dict = bone_data.get_send_data(self._p_name, get_msg_mark(), msg, '1232333123123')
+        flag = True
+        msg_answer = ''
+        while flag:
+            # 实例内部套接字初始化
+            __socket = socket(AF_INET, SOCK_STREAM)
+            __socket.connect((properties.mq.get('remote_address'), properties.mq.get('remote_port')))
+            logger.info(str(__socket.recv(1024), encoding='utf-8'))
+            try:
+                # 尝试发送消息
+                if not __socket.sendall(bytes(json.dumps(bound_dict), encoding="utf-8")):
+                    while flag:
+                        msg_answer = json.loads(str(__socket.recv(1024), encoding='utf-8'), encoding='utf-8')
+                        logger.info('发送成功')
+                        flag = False
+            except Exception as e:
+                print('发送失败', msg, '原因', e)
+                raise e
+            __socket.close()
+        return msg_answer
+
+    def get_msg(self, delay: int):
+        """
+        获取消息()
+        :return:
+        """
+        # 实例内部套接字初始化
+        __socket = socket(AF_INET, SOCK_STREAM)
+        __socket.connect((properties.mq.get('remote_address'), properties.mq.get('remote_port')))
+        logger.info(str(__socket.recv(1024), encoding='utf-8'))
+        p_name = self._p_name
+        flag = True
+        msg = ''
+        while flag:
+            time.sleep(delay)
+            try:
+                __socket.sendall(bytes(str([p_name]), encoding='utf-8'))
+                while flag:
+                    msg = json.loads(str(__socket.recv(1024), encoding='utf-8'), encoding='utf-8')
+                    flag = False
+            except Exception as e:
+                print(e)
+        return msg

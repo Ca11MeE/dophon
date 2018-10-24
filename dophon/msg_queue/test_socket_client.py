@@ -1,22 +1,14 @@
+from socket import *
 
-import socket
-
-obj = socket.socket()
-
-obj.connect(("127.0.0.1", 8800))
-
-ret_bytes = obj.recv(1024)
-ret_str = str(ret_bytes, encoding="utf-8")
-print(ret_str)
-
+host = '127.0.0.1'
+port = 9999
+bufsize = 1024
+addr = (host, port)
+client = socket(AF_INET, SOCK_STREAM)
+client.connect(addr)
+data = '111'
 while True:
-    inp = input("你好请问您有什么问题？ \n >>>")
-    # inp = 'hello'
-    if inp == "q":
-        obj.sendall(bytes(inp, encoding="utf-8"))
-        break
-    else:
-        obj.sendall(bytes(inp, encoding="utf-8"))
-        ret_bytes = obj.recv(1024)
-        ret_str = str(ret_bytes, encoding="utf-8")
-        print(ret_str)
+    client.send(bytes('%s' % data,encoding='utf-8'))
+    data = client.recv(bufsize)
+    print(data.strip())
+client.close()

@@ -1,20 +1,26 @@
+# 创建SocketServerTCP服务器：
 import socketserver
+from socketserver import StreamRequestHandler as SRH
+from time import ctime
+
+host = '127.0.0.1'
+port = 9999
+addr = (host, port)
 
 
-class Myserver(socketserver.BaseRequestHandler):
+class Servers(SRH):
     def handle(self):
-
-        conn = self.request
-        conn.sendall(bytes("你好，我是机器人", encoding="utf-8"))
+        print('got connection from ', self.client_address)
+        self.wfile.write(bytes('connection %s:%s at %s succeed!' % (host, port, ctime()),encoding='utf-8'))
         while True:
-            ret_bytes = conn.recv(1024)
-            ret_str = str(ret_bytes, encoding="utf-8")
-            if ret_str == "q":
+            data = self.request.recv(1024)
+            if not data:
                 break
-            conn.sendall(bytes(ret_str + "你好我好大家好", encoding="utf-8"))
+            print(data)
+            print("RECV from ", self.client_address[0])
+            self.request.send(data)
 
 
-if __name__ == "__main__":
-    server = socketserver.ThreadingTCPServer(("127.0.0.1", 8080), Myserver)
-    server.serve_forever()
-
+print('server is running....')
+server = socketserver.ThreadingTCPServer(addr, Servers)
+server.serve_forever()
