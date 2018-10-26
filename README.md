@@ -5,6 +5,14 @@
 
 > 这是个python开发的基于flask服务器的一个快速web服务开发框架,集成开发所需部分常用功能,参考java中的对象管理以及实例注入的一些思路,还有部分后期添加的优化功能(例如请求黑名单 <--- 初步概念,防高频访问)之类的
 
+数据库项目链接:
+
+[dophon-db](https://gitee.com/callmee/dophon-db)
+
+消息队列项目链接:
+
+[dophon-mq](https://gitee.com/callmee/dophon-mq)
+
 ## 推荐使用场景:
 
 #### 用于解决部分需要快速开发或小成本服务器(正在考虑着手整合SpringCloud的sidecar)
@@ -401,89 +409,10 @@ logger_config={
 
 #### 7.2.5 critical:
 
-
-
 ## 8.消息队列
 
-1. 只是一个轻量级消息队列,承载能力中等
-2. 即使使用线程池处理消息,极为消耗cpu资源
-3. 该队列基于io作为消息持久化,高频消息容易导致io阻塞
-4. 消息消费默认有1-3秒延迟(本地)
+[项目说明](https://gitee.com/callmee/dophon-mq)
 
-### 8.1 配置
-
-// 消息队列单机承载上限为推荐30-50个话题(tag)
-
-> 上面这句话已经没有任何意义了,后续版本(1.18+)中通过封装了弹性容量的线程池(默认系数为2)进行自动伸缩尺容量
-
-可通过自定义配置配置上限
-
-
-<application.py>
-```python
-msg_queue_max_num = 30   # 消息队列线程池承载上限
-```
-
-### 8.2 生产者配置
-
-推荐使用json格式传递数据(便于消费者转义数据)
-
-```python
-from dophon.msg_queue import *
-
-@producer(tag='DEMO_TAG')
-def producer():
-    return 'aaa'
-
-```
-
-### 8.3 消费者配置
-
-方式一:
-
-```python
-from dophon.msg_queue import *
-
-@consumer(tag='DEMO_TAG')
-def consumer(args):
-    print(args)
-consumer()
-
-# ERROR : (2018-08-02 21:29:15) ==> ::: 2018080221291454499310002: consume() argument after ** must be a mapping, not str
-
-```
-
-> 非json会报错,需在装饰器上打开as_arg
-
-```python
-from dophon.msg_queue import *
-
-@consumer(tag='DEMO_TAG',as_args=True)
-def consumer(args):
-    print(args)
-consumer()
-
-# aaa
-
-```
-
-### 8.4 统一管理消费者
-
-```python
-from dophon.msg_queue import *
-
-class TestConsumer(Consumer):
-
-    @consumer(tag='test_msg_tag|test_msg_tag2', as_args=False, delay=1)
-    def consume_msg(msg, timestamp, tag):
-        print(msg)
-        print(timestamp)
-        print(tag)
-
-# 实例化衍生类启动消费者
-TestConsumer()
-
-```
 
 ## 9.容器启动
 
