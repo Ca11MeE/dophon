@@ -40,6 +40,10 @@ db_pool_exe_time = False
 msg_queue_max_num = 30
 # 消息队列调试标识
 msg_queue_debug = False
+# 此处为消息队列配置
+mq = {
+    'remote_center': False
+}
 
 # 此处为日志配置
 if debug_trace:
@@ -49,11 +53,3 @@ if debug_trace:
         'format': '%(levelname)s : <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
         'datefmt': '%Y-%m-%d %H:%M:%S'
     }
-
-
-# 此处为消息队列配置
-mq={
-    'remote_center':True,
-    'remote_address':'127.0.0.1',
-    'remote_port':58800
-}
