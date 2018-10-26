@@ -6,6 +6,10 @@ from multiprocessing import Process, freeze_support
 import time, socket, random
 from flask import request, make_response
 from urllib3 import PoolManager
+from dophon import logger
+from dophon import properties
+
+logger.inject_logger(globals())
 
 ports = []  # 记录监听端口
 
@@ -31,7 +35,7 @@ def outer_entity(boot):
     boot.run_app()
 
 
-def run_clusters(clusters: int, outer_port: bool = False, start_port:int=8800):
+def run_clusters(clusters: int, outer_port: bool = False, start_port: int = 8800):
     """
     运行集群式服务器
     :param clusters: 集群个数
@@ -47,13 +51,13 @@ def run_clusters(clusters: int, outer_port: bool = False, start_port:int=8800):
     while len(ports) != clusters:
         time.sleep(5)
 
-    print('启动检测端口监听')
+    logger.info('启动检测端口监听')
     for port in ports:
         if check_socket(int(port)):
             continue
-    print('集群端口: %s ' % ports)
+    logger.info('集群端口: %s ' % ports)
     if outer_port:
-        print('启动外部端口监听')
+        logger.info('启动外部端口监听[%s]' % (properties.port))
         outer_entity(boot)
 
 
