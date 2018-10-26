@@ -23,7 +23,7 @@ def main_freeze():
 
 
 def redirect_request():
-    print(request.path)
+    logger.info('touch path: %s [success]' % (request.path))
     res = pool.request(request.method, '127.0.0.1:' + str(random.choice(ports)) + request.path,
                        fields=request.json if request.is_json else request.form)
     return make_response(res.data)
