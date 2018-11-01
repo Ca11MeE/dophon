@@ -1,4 +1,4 @@
-# coding=utf-8
+# coding: utf-8
 import traceback, functools
 import os,sys,re
 from threading import *

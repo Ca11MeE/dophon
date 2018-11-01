@@ -1,3 +1,4 @@
+# coding: utf-8
 from dophon import logger
 from dophon import properties
 import os, sys

@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "dophon"
+version = "1.2.9r1"
+description = "dophon web framework like springboot"
+authors = ["CallMeE <ealohu@163.com>"]
+url="https://github.com/Ca11MeE/dophon"
+license='Apache 2.0'
+keywords = ['web', 'framework', 'dophon']
+
+[tool.poetry.dependencies]
+python = "*"
+dophon-manager = "*"
+flask="*"
+PyMySQL='*'
+urllib3="*"
+Flask_Bootstrap="*"
+gevent="*"
+schedule="*"
+
+[tool.poetry.dev-dependencies]
+pytest = "^3.6"
+dophon-manager = "*"
+flask="*"
+PyMySQL='*'
+urllib3="*"
+Flask_Bootstrap="*"
+gevent="*"
+schedule="*"
