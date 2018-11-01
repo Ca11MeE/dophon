@@ -33,6 +33,63 @@
 pip install dophon
 ```
 
+或使用dophon-manager(需要安装poetry)
+
+> 安装poetry
+```commandline
+pip install poetry
+```
+
+> 安装dophon-manager
+```commandline
+pip install dophon-manager
+```
+
+> 使用dophon_manager初始化dophon项目
+> --action_arg为项目名
+
+```commandline
+dophon_manager new [--action_arg=my_project] 
+```
+
+> 执行后会进行项目初始化询问
+```text
+project boot file (default:Bootstrap:run):
+like:(<file_name>:<function_name>)
+
+指定项目打包whl后执行文件(默认根路径Bootstrap文件下的run方法)
+并且生成该文件以及模板方法
+需要自定义入口方法请按照(文件名:方法名)格式填写
+多层目录请使用.分隔
+会自动生成文件以及入口方法模板
+
+```
+
+```text
+add others modules?
+(db/mq)
+can add multi,please sep with ,
+
+
+询问是否添加其他dophon模块(db数据库模块和mq消息队列模块)
+如需要添加多个模块请使用,分隔
+
+```
+```text
+want to init module.xml?(default:False)
+(True/False)
+
+是否需要初始化dophon框架的module.xml
+
+```
+
+```text
+would you want to initial project?(y/n),default no
+
+是否需要初始化项目
+
+```
+
 ## 2.启动服务器
 
 ```python

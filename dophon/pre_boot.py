@@ -46,10 +46,10 @@ def check_modules():
                         # print(e)
                         logger.info('install %s >=%s' % (module_name, version if version else 'release',))
                         # 利用pip模块安装所需模块
-                        pip_arg_list = ['install',
+                        pip_arg_list = ['pip', 'install',
                                         module_name + (('>=' + version) if version else ''),
                                         '--user']
                         if not version:
                             pip_arg_list.append('-U')
-                        from pip import __main__ as pip_main
-                        pip_main._main(pip_arg_list)
+                        raise ModuleNotFoundError(
+                            'please use \"%s\" to install module %s ' % (' '.join(pip_arg_list), module_name))
