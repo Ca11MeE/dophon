@@ -2,6 +2,7 @@
 import traceback, functools
 import os,sys,re
 from threading import *
+import json
 """
 初始化协程模块(必须,不然导致系统死锁)
 """
