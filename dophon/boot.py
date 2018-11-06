@@ -334,7 +334,7 @@ def handle_500(e):
     return '<h1>Wrong!!</h1>' + \
            '<h2>error info:' + str(e) + '</h2>' + \
            '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
-           trace_detail
+           trace_detail, 500
 
 
 @app.errorhandler(404)
@@ -346,7 +346,7 @@ def handle_404(e):
     return '<h1>Wrong!!</h1>' + \
            '<h2>error info:' + str(e) + '</h2>' + \
            '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
-           'request path:' + request.path
+           'request path:' + request.path, 404
 
 
 @app.errorhandler(405)
@@ -358,7 +358,7 @@ def handle_405(e):
     return '<h1>Wrong!!</h1>' + \
            '<h2>error info:' + str(e) + '</h2>' + \
            '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
-           'request method:' + request.method
+           'request method:' + request.method, 405
 
 
 @app.errorhandler(400)
@@ -367,8 +367,8 @@ def handle_400(e):
     处理异常请求
     :return:
     """
-    return '<h1>Wrong!!</h1>' + \
+    return ('<h1>Wrong!!</h1>' + \
            '<h2>error info:' + str(e) + '</h2>' + \
            '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
            'request form:' + request.form + \
-           'request body:' + request.json if request.is_json else ''
+           'request body:' + request.json if request.is_json else ''), 400
