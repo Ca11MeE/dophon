@@ -102,6 +102,14 @@ version = "1.1.6"
 
 [[package]]
 category = "main"
+description = "Infer file type and MIME type of any file/buffer. No external dependencies."
+name = "filetype"
+optional = false
+python-versions = "*"
+version = "1.0.1"
+
+[[package]]
+category = "main"
 description = "A simple framework for building complex web applications."
 name = "flask"
 optional = false
@@ -347,7 +355,7 @@ python-versions = "*"
 version = "0.14.1"
 
 [metadata]
-content-hash = "aa9a1879a70ad4418ace1091b2afaf15554dddd151723d5ca45fecc3816df925"
+content-hash = "43918d60755cb59760381b12ff7881e7046fbe71bd2249ff39470ed5ab2d86ad"
 python-versions = "*"
 
 [metadata.hashes]
@@ -361,6 +369,7 @@ cryptography = ["02602e1672b62e803e08617ec286041cc453e8d43f093a5f4162095506bc0be
 dominate = ["59abf22fe4072a97978afece563155279b3c3d6f26cb9fbbca28d0acc318cb1b", "8dfcca2bde3937a2d03db6e55efcb0c0dea0d4ab0923dc983d794b19e9247328"]
 dophon-manager = ["676b5bc138e39a1639dcb9d7b100e21b2b083c3fb22434742a071179a34a3c7a", "e26741952059c7f826632774ab66b4018a1248c27b1d8d226ab2ce35360439e8"]
 enum34 = ["2d81cbbe0e73112bdfe6ef8576f2238f2ba27dd0d55752a776c41d38b7da2850", "644837f692e5f550741432dd3f223bbb9852018674981b1664e5dc339387588a", "6bd0f6ad48ec2aa117d3d141940d484deccda84d4fcd884f5c3d93c23ecd8c79", "8ad8c4783bf61ded74527bffb48ed9b54166685e4230386a9ed9b1279e2df5b1"]
+filetype = ["97b4ec0974b07cbddb3e74cf323d8688749807014055cc91cdbfef5442a94dc5", "ef06220f3563ca6452c53470f0e624858c33c6344969cc3146e8d1b1c5989114"]
 flask = ["2271c0070dbcb5275fad4a82e29f23ab92682dc45f9dfbc22c02ba9b9322ce48", "a080b744b7e345ccfcbc77954861cb05b3c63786e93f2b3875e0913d44b43f05"]
 flask-bootstrap = ["cb08ed940183f6343a64e465e83b3a3f13c53e1baabb8d72b5da4545ef123ac8"]
 funcsigs = ["330cc27ccbf7f1e992e69fef78261dc7c6569012cf397db8d3de0234e6c937ca", "a7bb0f2cf3a3fd1ab2732cb49eba4252c2af4240442415b4abce3b87022a8f50"]

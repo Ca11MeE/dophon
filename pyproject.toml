@@ -16,6 +16,7 @@ urllib3="*"
 Flask_Bootstrap="*"
 gevent="*"
 schedule="*"
+#filetype = "^1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.6"

@@ -143,14 +143,14 @@ def OuterWired(obj_obj, g):
 """
 
 
-def bean(name: str = None):
+def bean(name: str = None, value=None):
     """
     向实例管理器插入实例
     :param by_name: 别名(不传值默认为类型)
     :return:
     """
 
-    def method(f):
+    def insert_method(f):
         def args(*args, **kwargs):
             result = f(*args, **kwargs)
             if result is None:
@@ -169,7 +169,19 @@ def bean(name: str = None):
 
         return args
 
-    return method
+    def insert_value():
+        if name:
+            if name in obj_manager:
+                raise UniqueError('存在已注册的实例:' + name)
+            obj_manager[name] = value
+        else:
+            alias_name = name
+            if alias_name in obj_manager:
+                raise UniqueError('存在已注册的实例')
+            else:
+                obj_manager[alias_name] = value
+
+    return insert_value if value else insert_method
 
 
 class BeanConfig:
@@ -194,9 +206,63 @@ class BeanConfig:
             logger.error('%s 实例不存在', str(exc_val))
         pass
 
-    def __init__(self):
+    def __init__(self, files: list = [], config_file: str = ''):
+        if obj_manager:
+            logger.warning('存在已初始化实例管理器,跳过初始化: %s' % (self,))
+            return
         logger.info('执行批量实例管理初始化')
-        self()
+        if files or config_file:
+            self.file_init(files if files else [config_file])
+        else:
+            # 无参构造,加载内部bean装饰方法,实例统一配置
+            self()
+
+    def file_init(self, files: list = []):
+        for config_file in files:
+            if isinstance(config_file, str):
+                logger.info('读取配置文件: %s ' % (config_file,))
+                # 字符串形式声明配置文件
+                # 有参构造,分布式实例配置
+                from dophon import properties
+                import os
+                file_path = properties.project_root + (config_file if config_file.startswith(os.sep) else (
+                        os.sep + config_file))
+                # import filetype
+                # 获取文件类型(暂时遗弃)
+                # kind = filetype.guess(file_path)
+                # if kind is None:
+                #     print('Cannot guess file type!')
+                #     return
+                #
+                # print('File extension: %s' % kind.extension)
+                # print('File MIME type: %s' % kind.mime)
+                if os.path.exists(file_path):
+                    try:
+                        bean_config = __import__(config_file.replace(os.sep, '.').rstrip('.py'), fromlist=True)
+                        self.sort_bean_config(bean_config)
+                    except Exception as e:
+                        logger.error('实例配置读取失败,信息: %s' % (e,))
+                else:
+                    logger.error('不存在实例配置文件')
+                    self()
+            elif isinstance(config_file, object):
+                try:
+                    logger.info('读取配置文件: %s ' % (config_file,))
+                    self.sort_bean_config(config_file)
+                except Exception as e:
+                    logger.error('实例配置读取失败,信息: %s' % (e,))
+            else:
+                # 其他形式声明配置
+                logger.error('配置文件声明无效(%s)' % (config_file,))
+                continue
+
+    def sort_bean_config(self, bean_config: object):
+        for k in dir(bean_config):
+            if not k.startswith('__') and not k.endswith('__'):
+                # 获取自定义参数
+                # print(k, '---', getattr(bean_config, k))
+                bean(k, getattr(bean_config, k))()
+                # print(obj_manager[k])
 
 
 class Bean:
