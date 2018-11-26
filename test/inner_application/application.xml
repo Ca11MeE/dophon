@@ -1,0 +1,9 @@
+<config>
+    <host>127.0.0.1</host>
+    <port>18080</port>
+    <server_processes>3</server_processes>
+    <blueprint_path>['/routes']</blueprint_path>
+    <mq>
+        <remote_center>False</remote_center>
+    </mq>
+</config>
