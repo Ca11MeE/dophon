@@ -189,6 +189,3 @@ def xml_handler(root, prop_file_name, file_name, file_type):
         print(file_dict)
         temp_path = root + os.sep + 'application.py'
         return translate_to_file(temp_path, file_dict.get('config'), file_name)
-
-
-xml_handler(os.getcwd(), 'a.xml', 'a', 'xml')
