@@ -17,6 +17,7 @@ Flask_Bootstrap="*"
 gevent="*"
 schedule="*"
 #filetype = "^1.0"
+pyyaml = "^3.13"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.6"
