@@ -38,6 +38,8 @@ def load_banner():
         with open(file_path, encoding='utf8') as banner:
             for line in banner.readlines():
                 sys.stdout.write(line)
+    else:
+        tools.show_banner()
     sys.stdout.flush()
 
 

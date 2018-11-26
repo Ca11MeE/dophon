@@ -10,6 +10,7 @@ import logging
 import re
 import os
 from . import properties_handler
+from urllib3 import PoolManager
 
 logger = logging.Logger(name=__name__)
 
@@ -40,6 +41,15 @@ def read_self_prop():
             if name in dir(u_prop):
                 continue
             setattr(u_prop, name, getattr(def_prop, name))
+        # 校验远程配置
+        if hasattr(u_prop, 'remote_prop'):
+            try:
+                url = getattr(u_prop, 'remote_prop')
+                pool = PoolManager()
+                res = pool.request('get',url)
+                print(res.data)
+            except Exception as inner_e:
+                print(inner_e)
         sys.modules['properties'] = u_prop
         sys.modules['dophon.properties'] = u_prop
     except Exception as e:
