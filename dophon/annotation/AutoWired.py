@@ -184,6 +184,9 @@ def bean(name: str = None, value=None):
     return insert_value if value else insert_method
 
 
+bean_const = ['file_init', 'sort_bean_config']
+
+
 class BeanConfig:
     """
     实力配置类,类内自定义方法带上bean注解即可(参照springboot中been定义)
@@ -191,7 +194,7 @@ class BeanConfig:
 
     def __call__(self, *args, **kwargs):
         for name in dir(self):
-            if re.match('__.+__', name):
+            if re.match('__.+__', name) or name in bean_const:
                 continue
             attr = getattr(self, name)
             if callable(attr):
@@ -226,7 +229,7 @@ class BeanConfig:
                 from dophon import properties
                 import os
                 file_path = properties.project_root + (config_file if config_file.startswith(os.sep) else (
-                        os.sep + config_file))
+                    os.sep + config_file))
                 # import filetype
                 # 获取文件类型(暂时遗弃)
                 # kind = filetype.guess(file_path)
