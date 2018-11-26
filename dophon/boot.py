@@ -1,8 +1,9 @@
 # coding: utf-8
 import traceback, functools
-import os,sys,re
+import os, sys, re
 from threading import *
 import json
+
 """
 初始化协程模块(必须,不然导致系统死锁)
 """
@@ -18,6 +19,7 @@ pre_boot.check_modules()
 
 from flask import Flask, request, abort
 from dophon import properties
+from dophon import tools
 
 try:
     mysql = __import__('dophon.db.mysql')
@@ -248,8 +250,15 @@ def run_app(host=properties.host, port=properties.port):
         from gevent.pywsgi import WSGIServer
         WSGIServer((host, port), app).serve_forever()
     else:
-        # 开启多线程处理
-        app.run(host=host, port=port, threaded=properties.server_threaded)
+        if properties.server_threaded:
+            # 开启多线程处理
+            app.run(host=host, port=port, threaded=properties.server_threaded)
+        elif tools.is_not_windows() and properties.server_processes > 1:
+            # 开启多进程处理
+            print('开启多进程', properties.server_processes)
+            app.run(host=host, port=port, threaded=False, processes=properties.server_processes)
+        else:
+            app.run(host=host, port=port)
 
 
 @free_source()
@@ -263,8 +272,15 @@ def run_app_ssl(host=properties.host, port=properties.port, ssl_context=properti
         }
         WSGIServer((host, port), app, **ssl_args).serve_forever()
     else:
-        # 开启多线程处理
-        app.run(host=host, port=port, ssl_context=ssl_context, threaded=properties.server_threaded)
+        if properties.server_threaded:
+            # 开启多线程处理
+            app.run(host=host, port=port, ssl_context=ssl_context, threaded=properties.server_threaded)
+        elif tools.is_not_windows() and properties.server_processes > 1:
+            # 开启多进程处理
+            app.run(host=host, port=port, ssl_context=ssl_context, threaded=False,
+                    processes=properties.server_processes)
+        else:
+            app.run(host=host, port=port, ssl_context=ssl_context)
 
 
 def bootstrap_app():
@@ -368,7 +384,7 @@ def handle_400(e):
     :return:
     """
     return ('<h1>Wrong!!</h1>' + \
-           '<h2>error info:' + str(e) + '</h2>' + \
-           '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
-           'request form:' + request.form + \
-           'request body:' + request.json if request.is_json else ''), 400
+            '<h2>error info:' + str(e) + '</h2>' + \
+            '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+            'request form:' + request.form + \
+            'request body:' + request.json if request.is_json else ''), 400

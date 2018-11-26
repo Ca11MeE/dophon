@@ -13,6 +13,7 @@ project_root = os.getcwd()
 # 服务器相关配置
 server_threaded = False  # 服务器多线程开关
 server_gevented = False  # 服务器gevent协程处理(会覆盖多线程开关)
+server_processes = 1  # 服务器多进程处理
 
 debug_trace = False  # 调试跟踪记录
 
