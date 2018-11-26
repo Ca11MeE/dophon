@@ -186,6 +186,5 @@ def xml_handler(root, prop_file_name, file_name, file_type):
     """
     with open(root + os.sep + prop_file_name, 'r', encoding='utf-8') as dom:
         file_dict = Xml(dom.read()).get_dict()
-        print(file_dict)
         temp_path = root + os.sep + 'application.py'
         return translate_to_file(temp_path, file_dict.get('config'), file_name)

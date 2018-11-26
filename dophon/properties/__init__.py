@@ -16,7 +16,7 @@ logger = logging.Logger(name=__name__)
 re_import_prop_flag = False
 
 properties_file_name_list = ['application.yml', 'application.yml', 'application.properties', 'application.prop',
-                             'application.py', 'application.xml']
+                             'application.xml', 'application.py']
 
 properties_file_handler = {
     'py': properties_handler.py_handler,
