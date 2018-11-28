@@ -3,7 +3,6 @@ import yaml
 import os
 from dophon.def_prop import default_properties
 from xml.parsers.expat import ParserCreate
-import json
 
 # yml文件格式后缀
 yml_file_type = ['yml', 'yaml']

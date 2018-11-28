@@ -8,7 +8,7 @@ license='Apache 2.0'
 keywords = ['web', 'framework', 'dophon']
 
 [tool.poetry.dependencies]
-python = "*"
+python = "^3.6"
 dophon-manager = "*"
 flask="*"
 PyMySQL='*'
