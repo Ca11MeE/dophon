@@ -11,7 +11,9 @@ import re
 import os
 from . import properties_handler
 from urllib3 import PoolManager
-import types
+
+# 取消flask banner
+os.environ.setdefault('WERKZEUG_RUN_MAIN','true')
 
 logger = logging.Logger(name=__name__)
 
