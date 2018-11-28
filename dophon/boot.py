@@ -233,7 +233,8 @@ def free_source():
             if mysql:
                 mysql.free_pool()
             logger.info('释放连接池')
-            logger.info('再次按下Ctrl+C退出')
+            sys.exit()
+            # logger.info('再次按下Ctrl+C退出')
 
         return args
 

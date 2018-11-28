@@ -93,7 +93,6 @@ def read_self_prop():
                     raise KeyError('缺少必要参数(base,mark)')
             except Exception as inner_e:
                 logger.error(inner_e)
-
         # for ttt in dir(u_prop):
         #     print(ttt, '------', getattr(u_prop, ttt))
         sys.modules['properties'] = u_prop
