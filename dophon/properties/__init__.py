@@ -12,6 +12,9 @@ import os
 from . import properties_handler
 from urllib3 import PoolManager
 
+# 取消flask banner
+os.environ.setdefault('WERKZEUG_RUN_MAIN','true')
+
 logger = logging.Logger(name=__name__)
 
 re_import_prop_flag = False
@@ -29,6 +32,15 @@ properties_file_handler = {
 }
 
 
+class UnknownError(Exception):
+    def __init__(self, *args, **kwargs):
+        super(UnknownError, self).__init__(*args, **kwargs)
+        self.__e_info = '错误: %s, 源头: %s' % args
+
+    def __str__(self):
+        return self.__e_info
+
+
 def read_self_prop():
     global re_import_prop_flag
     try:
@@ -43,13 +55,48 @@ def read_self_prop():
             setattr(u_prop, name, getattr(def_prop, name))
         # 校验远程配置
         if hasattr(u_prop, 'remote_prop'):
+            print('获取远程配置', end='...')
             try:
-                url = getattr(u_prop, 'remote_prop')
-                pool = PoolManager()
-                res = pool.request('get',url)
-                print(res.data)
+                remote_prop_prop = getattr(u_prop, 'remote_prop')
+                if 'mark' in remote_prop_prop and 'base' in remote_prop_prop:
+                    remote_prop_mark = remote_prop_prop['mark']
+                    url = remote_prop_prop['base']
+                    if isinstance(url, str) and isinstance(remote_prop_mark, list):
+                        url = (url if url.endswith('/') else (url + '/')) + '/'.join(remote_prop_mark)
+                        print('请求远程配置标签: %s' % (remote_prop_mark), end='...')
+                        pool = PoolManager()
+                        try:
+                            res = pool.request(
+                                remote_prop_prop.get('method') if 'method' in remote_prop_prop else 'get', url)
+                            result = str(res.data, encoding='utf-8')
+                            try:
+                                print('应用远程配置')
+                                result = eval(result)
+                                if isinstance(result, dict):
+                                    # 对比默认配置
+                                    # print(result)
+                                    for name in dir(def_prop):
+                                        if re.match('__.*__', name):
+                                            continue
+                                        if name in result:
+                                            # print(name,'---',getattr(u_prop,name),'---',result.get(name))
+                                            setattr(u_prop, name, result.get(name))
+                                    # 遍历完毕删除远程地址
+                                    delattr(u_prop, 'remote_prop')
+                                else:
+                                    raise TypeError('无法识别的配置类型')
+                            except Exception as eval_e:
+                                raise UnknownError(eval_e, result)
+                        except Exception as req_e:
+                            raise ConnectionError('远程配置获取失败,信息: %s' % req_e)
+                    else:
+                        raise TypeError('远程配置(remote_prop)参数值异常,获取远程配置失败')
+                else:
+                    raise KeyError('缺少必要参数(base,mark)')
             except Exception as inner_e:
-                print(inner_e)
+                logger.error(inner_e)
+        # for ttt in dir(u_prop):
+        #     print(ttt, '------', getattr(u_prop, ttt))
         sys.modules['properties'] = u_prop
         sys.modules['dophon.properties'] = u_prop
     except Exception as e:

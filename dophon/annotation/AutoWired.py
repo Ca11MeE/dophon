@@ -3,6 +3,7 @@
 import re
 import inspect
 from dophon import logger
+import types
 
 """
 自动注入注解
@@ -223,12 +224,13 @@ class BeanConfig:
     def file_init(self, files: list = []):
         for config_file in files:
             if isinstance(config_file, str):
+                # 字符串形式声明配置文件(文件名)
                 logger.info('读取配置文件: %s ' % (config_file,))
-                # 字符串形式声明配置文件
                 # 有参构造,分布式实例配置
                 from dophon import properties
                 import os
                 file_path = properties.project_root + (config_file if config_file.startswith(os.sep) else (
+<<<<<<< HEAD
                     os.sep + config_file))
                 # import filetype
                 # 获取文件类型(暂时遗弃)
@@ -239,6 +241,9 @@ class BeanConfig:
                 #
                 # print('File extension: %s' % kind.extension)
                 # print('File MIME type: %s' % kind.mime)
+=======
+                        os.sep + config_file))
+>>>>>>> bb31206f2e8c5a8f4b1ab79345850953284ba033
                 if os.path.exists(file_path):
                     try:
                         bean_config = __import__(config_file.replace(os.sep, '.').rstrip('.py'), fromlist=True)
@@ -248,7 +253,8 @@ class BeanConfig:
                 else:
                     logger.error('不存在实例配置文件')
                     self()
-            elif isinstance(config_file, object):
+            elif isinstance(config_file,types.ModuleType):
+                # 模块形式配置文件
                 try:
                     logger.info('读取配置文件: %s ' % (config_file,))
                     self.sort_bean_config(config_file)
@@ -293,3 +299,5 @@ class Bean:
             if not type_list:
                 raise KeyError('不存在该类型实例')
             return type_list[0]
+        else:
+            logger.error('无法获取的实例: %s' % (bean_key,))

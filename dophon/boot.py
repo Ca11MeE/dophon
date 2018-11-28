@@ -149,6 +149,9 @@ def persist_ip_count():
         ipcount_lock.release()
 
 
+blueprint_init_queue = {}  # 蓝图初始化方法缓存(用于初始化后启动)
+
+
 # 处理各模块中的自动注入以及组装各路由
 # dir_path中为路由模块路径,例如需要引入的路由都在routes文件夹中,则传入参数'/routes'
 def map_apps(dir_path):
@@ -169,12 +172,34 @@ def map_apps(dir_path):
                 continue
             f_model = __import__(re.sub('/', '', dir_path) + '.' + re.sub('\.py', '', file), fromlist=True)
             filter_method = f_model.app.before_request(before_request)
+            # 若需统计请求,装配请求统计方法
             if hasattr(properties, 'ip_count') and getattr(properties, 'ip_count'):
                 setattr(f_model, 'before_request', filter_method)
+            # 若存在初始化执行方法,执行该方法
+            if hasattr(f_model, 'blueprint_init'):
+                init_fun = getattr(f_model, 'blueprint_init')
+                # 判断是否方法
+                if callable(init_fun):
+                    blueprint_init_queue[f_model] = before_bp_init_fun(init_fun)
             app.register_blueprint(f_model.app)
         except Exception as e:
             raise e
             pass
+
+
+def before_bp_init_fun(f):
+    """
+    预留蓝图初始化装饰器
+    :param f:
+    :return:
+    """
+    # print(f)
+
+    def fields(*args, **kwargs):
+        # print('args: ', args, 'kwargs:', kwargs)
+        f(*args, **kwargs)
+
+    return fields
 
 
 logger.info('路由初始化')
@@ -192,6 +217,12 @@ def free_source():
         def args(*arg, **kwarg):
             logger.info('启动服务器')
             load_footer()
+            # 执行蓝图初始化方法
+            for blueprint_module, blue_print_init_method in blueprint_init_queue.items():
+                try:
+                    blue_print_init_method()
+                except Exception as e:
+                    logger.error('蓝图\'%s\'初始化失败,信息: %s' % (blueprint_module, e,))
             f(*arg, **kwarg)
             """
             释放所有资源
@@ -202,7 +233,8 @@ def free_source():
             if mysql:
                 mysql.free_pool()
             logger.info('释放连接池')
-            logger.info('再次按下Ctrl+C退出')
+            sys.exit()
+            # logger.info('再次按下Ctrl+C退出')
 
         return args
 
