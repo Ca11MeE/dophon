@@ -1,10 +1,6 @@
 [tool.poetry]
 name = "dophon"
-<<<<<<< HEAD
-version = "1.2.12a1"
-=======
 version = "1.2.11r3"
->>>>>>> bb31206f2e8c5a8f4b1ab79345850953284ba033
 description = "dophon web framework like springboot"
 authors = ["CallMeE <ealohu@163.com>"]
 url="https://github.com/Ca11MeE/dophon"

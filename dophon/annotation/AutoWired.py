@@ -230,20 +230,7 @@ class BeanConfig:
                 from dophon import properties
                 import os
                 file_path = properties.project_root + (config_file if config_file.startswith(os.sep) else (
-<<<<<<< HEAD
-                    os.sep + config_file))
-                # import filetype
-                # 获取文件类型(暂时遗弃)
-                # kind = filetype.guess(file_path)
-                # if kind is None:
-                #     print('Cannot guess file type!')
-                #     return
-                #
-                # print('File extension: %s' % kind.extension)
-                # print('File MIME type: %s' % kind.mime)
-=======
                         os.sep + config_file))
->>>>>>> bb31206f2e8c5a8f4b1ab79345850953284ba033
                 if os.path.exists(file_path):
                     try:
                         bean_config = __import__(config_file.replace(os.sep, '.').rstrip('.py'), fromlist=True)
