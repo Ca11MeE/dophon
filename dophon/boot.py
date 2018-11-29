@@ -1,6 +1,10 @@
 # coding: utf-8
-import traceback, functools
-import os, sys, re
+import traceback
+import functools
+import os
+import sys
+import re
+from datetime import datetime
 from threading import *
 import json
 
@@ -56,6 +60,8 @@ def load_footer():
                 sys.stdout.write(line)
     sys.stdout.flush()
 
+
+error_info = properties.error_info
 
 def boot_init():
     """
@@ -193,6 +199,7 @@ def before_bp_init_fun(f):
     :param f:
     :return:
     """
+
     # print(f)
 
     def fields(*args, **kwargs):
@@ -350,6 +357,9 @@ def view_ip_refuse():
     return ip_refuse_list
 
 
+from dophon.tools.framework_const import error_info_type, self_result
+
+
 @app.errorhandler(500)
 def handle_500(e):
     """
@@ -381,10 +391,19 @@ def handle_500(e):
         trace_detail += '</table>'
     else:
         trace_detail = ''
-    return '<h1>Wrong!!</h1>' + \
-           '<h2>error info:' + str(e) + '</h2>' + \
-           '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
-           trace_detail, 500
+    if error_info == error_info_type.HTML:
+        return '<h1>Wrong!!</h1>' + \
+               '<h2>error info:' + str(e) + '</h2>' + \
+               '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+               trace_detail, 500
+    elif error_info == error_info_type.JSON:
+        return self_result.JsonResult(500, tc, """
+        please contact coder or direct to dophon website and leave your question
+        """).as_res()
+    elif error_info == error_info_type.XML:
+        return self_result.XmlResult(500, tc, """
+        please contact coder or direct to dophon website and leave your question
+        """).as_res()
 
 
 @app.errorhandler(404)
@@ -393,10 +412,16 @@ def handle_404(e):
     处理路径匹配异常
     :return:
     """
-    return '<h1>Wrong!!</h1>' + \
-           '<h2>error info:' + str(e) + '</h2>' + \
-           '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
-           'request path:' + request.path, 404
+    global error_info
+    if error_info == error_info_type.HTML:
+        return '<h1>Wrong!!</h1>' + \
+               '<h2>error info:' + str(e) + '</h2>' + \
+               '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+               'request path:' + request.path, 404
+    elif error_info == error_info_type.JSON:
+        return self_result.JsonResult(404, request.path, 'please check your path').as_res()
+    elif error_info == error_info_type.XML:
+        return self_result.XmlResult(404, request.path, 'please check your path').as_res()
 
 
 @app.errorhandler(405)
@@ -405,10 +430,15 @@ def handle_405(e):
     处理请求方法异常
     :return:
     """
-    return '<h1>Wrong!!</h1>' + \
-           '<h2>error info:' + str(e) + '</h2>' + \
-           '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
-           'request method:' + request.method, 405
+    if error_info == error_info_type.HTML:
+        return '<h1>Wrong!!</h1>' + \
+               '<h2>error info:' + str(e) + '</h2>' + \
+               '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+               'request method:' + request.method, 405
+    elif error_info == error_info_type.JSON:
+        return self_result.JsonResult(405, {request.path, request.method}, 'please check your request method').as_res()
+    elif error_info == error_info_type.XML:
+        return self_result.XmlResult(405, {request.path, request.method}, 'please check your request method').as_res()
 
 
 @app.errorhandler(400)
@@ -417,8 +447,15 @@ def handle_400(e):
     处理异常请求
     :return:
     """
-    return ('<h1>Wrong!!</h1>' + \
-            '<h2>error info:' + str(e) + '</h2>' + \
-            '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
-            'request form:' + request.form + \
-            'request body:' + request.json if request.is_json else ''), 400
+    if error_info == error_info_type.HTML:
+        return ('<h1>Wrong!!</h1>' + \
+                '<h2>error info:' + str(e) + '</h2>' + \
+                '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+                'request form:' + request.form + \
+                'request body:' + request.json if request.is_json else ''), 400
+    elif error_info == error_info_type.JSON:
+        return self_result.JsonResult(400, request.json if request.is_json else '',
+                                      'please check your request data').as_res()
+    elif error_info == error_info_type.XML:
+        return self_result.XmlResult(400, request.json if request.is_json else '',
+                                     'please check your request data').as_res()

@@ -6,4 +6,9 @@
     <mq>
         <remote_center>False</remote_center>
     </mq>
+    <remote_prop>
+        <base>127.0.0.1:833</base>
+        <mark>["config", "get"]</mark>
+        <method>get</method>
+    </remote_prop>
 </config>

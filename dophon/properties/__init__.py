@@ -11,9 +11,10 @@ import re
 import os
 from . import properties_handler
 from urllib3 import PoolManager
+from dophon import tools
 
 # 取消flask banner
-os.environ.setdefault('WERKZEUG_RUN_MAIN','true')
+os.environ.setdefault('WERKZEUG_RUN_MAIN', 'true')
 
 logger = logging.Logger(name=__name__)
 
@@ -41,6 +42,10 @@ class UnknownError(Exception):
         return self.__e_info
 
 
+class NotFoundError(Exception):
+    pass
+
+
 def read_self_prop():
     global re_import_prop_flag
     try:
@@ -63,12 +68,15 @@ def read_self_prop():
                     url = remote_prop_prop['base']
                     if isinstance(url, str) and isinstance(remote_prop_mark, list):
                         url = (url if url.endswith('/') else (url + '/')) + '/'.join(remote_prop_mark)
-                        print('请求远程配置标签: %s' % (remote_prop_mark), end='...')
+                        print('请求远程配置标签: %s' % (remote_prop_mark,), end='...')
                         pool = PoolManager()
                         try:
                             res = pool.request(
                                 remote_prop_prop.get('method') if 'method' in remote_prop_prop else 'get', url)
                             result = str(res.data, encoding='utf-8')
+                            if res.status == 404:
+                                # 非成功请求抛出异常
+                                raise NotFoundError(result)
                             try:
                                 print('应用远程配置')
                                 result = eval(result)
@@ -131,24 +139,30 @@ def read_self_prop():
             raise e
 
 
-try:
-    read_self_prop()
-except Exception as e:
-    logger.error(e)
-    logger.error('没有找到自定义配置:(application.py)')
-    logger.error('引用默认配置')
-    logger.info('创建配置文件: application.py')
-    def_prop = __import__('dophon.def_prop.default_properties', fromlist=True)
-    with open(os.getcwd() + os.sep + 'application.py', 'wb') as app_prop:
-        for name in dir(def_prop):
-            if re.match('__.*__', name):
-                continue
-            else:
-                value = getattr(def_prop, name)
-                if type(value) is type(os):
+@tools.module_edge_print('properties module')
+def prop_init():
+    try:
+        read_self_prop()
+    except Exception as e:
+        logger.error(e)
+        logger.error('没有找到自定义配置:(application.py)')
+        logger.error('引用默认配置')
+        logger.info('创建配置文件: application.py')
+        def_prop = __import__('dophon.def_prop.__init__', fromlist=True)
+        with open(os.getcwd() + os.sep + 'application.py', 'wb') as app_prop:
+            for name in dir(def_prop):
+                if re.match('__.*__', name):
                     continue
-                app_prop.write(
-                    bytes(name + '=' + re.sub('\\\\', '/',
-                                              str(('\'' + value + '\'') if isinstance(value, str) else value)) + '\n',
-                          encoding='utf-8'))
-    read_self_prop()
+                else:
+                    value = getattr(def_prop, name)
+                    if type(value) is type(os):
+                        continue
+                    app_prop.write(
+                        bytes(name + '=' + re.sub('\\\\', '/',
+                                                  str(('\'' + value + '\'') if isinstance(value,
+                                                                                          str) else value)) + '\n',
+                              encoding='utf-8'))
+        read_self_prop()
+
+
+prop_init()

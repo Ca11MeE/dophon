@@ -8,5 +8,8 @@ mq:
   remote_center: False
 
 remote_prop:
-  base: '127.0.0.1:833'
-  mark: ['1']
+  base: '127.0.0.1:833/test'
+  mark: ['config','get']
+  method: 'get'
+
+error_info: 'JSON'

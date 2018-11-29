@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 import yaml
 import os
-from dophon.def_prop import default_properties
 from xml.parsers.expat import ParserCreate
 
 # yml文件格式后缀
@@ -10,6 +9,35 @@ yml_file_type = ['yml', 'yaml']
 properties_file_type = ['properties', 'prop']
 # xml 文件格式后缀
 xml_file_type = ['xml']
+
+# 配置文件基本标识
+base_prop_key = [
+    'project_root',
+    'server_threaded',
+    'server_gevented',
+    'server_processes',
+    'debug_trace',
+    'ip_count',
+    'host',
+    'port',
+    'ssl_context',
+    'blueprint_path',
+    'pool_conn_num',
+    'pydc_host',
+    'pydc_port',
+    'pydc_user',
+    'pydc_password',
+    'pydc_database',
+    'pydc_xmlupdate_sech',
+    'db_pool_exe_time',
+    'msg_queue_max_num',
+    'msg_queue_debug',
+    'mq',
+    'logger_config',
+    'error_info'
+]
+# 额外配置标识
+extra_prop_key = ['remote_prop']
 
 
 class Properties(object):
@@ -126,6 +154,10 @@ class Xml:
         return self.result
 
 
+def prop_keys():
+    return base_prop_key + extra_prop_key
+
+
 def translate_to_file(temp_path, file_dict, file_name):
     """
     将其他形式配置文件翻译成py文件
@@ -136,7 +168,7 @@ def translate_to_file(temp_path, file_dict, file_name):
     """
     with open(temp_path, 'w', encoding='utf-8') as d_prop_f:
         for k, v in file_dict.items():
-            if hasattr(default_properties, k):
+            if k in prop_keys():
                 d_prop_f.write(k + '=' + (('\'' + v + '\'') if isinstance(v, str) else str(v)))
                 d_prop_f.write('\n')
     return file_name

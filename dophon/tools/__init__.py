@@ -21,6 +21,19 @@ def show_banner():
                           888                                         
                          o888o                                                     
      Author:CallMeE
+     Base:Flask
      Url:https://github.com/Ca11MeE/dophon.git
          https://gitee.com/callmee/dophon.git                                                                          
     """)
+
+
+def module_edge_print(module_name):
+    def fun(f):
+        def fields(*args, **kwargs):
+            print('------------------', module_name, '<start>------------------\n')
+            f(*args, **kwargs)
+            print('\n------------------', module_name, '<end>------------------\n\n\n')
+
+        return fields
+
+    return fun

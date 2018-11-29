@@ -15,7 +15,7 @@ from urllib import request
 
 def read_self_prop():
     try:
-        def_prop = __import__('dophon.def_prop.default_properties', fromlist=True)
+        def_prop = __import__('dophon.def_prop.__init__', fromlist=True)
         u_prop = __import__('application', fromlist=True)
         # 对比配置文件
         for name in dir(def_prop):
