@@ -1,10 +1,6 @@
-host = '127.0.0.1'
-port = 18080
-
-server_processes = 3  # 服务器多进程处理
-
-blueprint_path = ['/routes']
-
-mq = {
-    'remote_center': False
-}
+host='127.0.0.1'
+port=18080
+server_processes=3
+blueprint_path=['/routes']
+mq={'remote_center': False}
+remote_prop={'base': '127.0.0.1:833/test', 'mark': ['config', 'get'], 'method': 'get'}

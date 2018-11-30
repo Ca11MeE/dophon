@@ -24,6 +24,7 @@ pre_boot.check_modules()
 from flask import Flask, request, abort
 from dophon import properties
 from dophon import tools
+from dophon.tools import gc
 
 try:
     mysql = __import__('dophon.db.mysql')
@@ -62,6 +63,7 @@ def load_footer():
 
 
 error_info = properties.error_info
+
 
 def boot_init():
     """
@@ -355,6 +357,16 @@ def view_ip_refuse():
     :return:
     """
     return ip_refuse_list
+
+
+GC_INFO = False  # gc信息开关
+
+
+@RequestMapping(app, '/framework/gc/show', ['get'])
+@ResponseBody()
+def show_gc_info():
+    # return gc.show_gc_leak(print)
+    return gc.show_gc_leak(logger.info) if GC_INFO else {}
 
 
 from dophon.tools.framework_const import error_info_type, self_result
