@@ -21,7 +21,7 @@ logger = logging.Logger(name=__name__)
 re_import_prop_flag = False
 
 properties_file_name_list = ['application.yml', 'application.yml', 'application.properties', 'application.prop',
-                             'application.xml', 'application.py']
+                             'application.xml', 'application.json', 'application.py']
 
 properties_file_handler = {
     'py': properties_handler.py_handler,
@@ -29,7 +29,8 @@ properties_file_handler = {
     'yaml': properties_handler.yml_handler,  # yml格式模块文件
     'properties': properties_handler.properties_handler,  # yml格式模块文件
     'prop': properties_handler.properties_handler,  # yml格式模块文件
-    'xml': properties_handler.xml_handler  # xml格式模块文件
+    'xml': properties_handler.xml_handler,  # xml格式模块文件
+    'json': properties_handler.json_handler  # json格式模块文件
 }
 
 

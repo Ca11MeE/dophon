@@ -9,6 +9,8 @@ yml_file_type = ['yml', 'yaml']
 properties_file_type = ['properties', 'prop']
 # xml 文件格式后缀
 xml_file_type = ['xml']
+# json 文件格式后缀
+json_file_type = ['json']
 
 # 配置文件基本标识
 base_prop_key = [
@@ -215,7 +217,29 @@ def xml_handler(root, prop_file_name, file_name, file_type):
     xml文件转换处理
     :return:
     """
-    with open(root + os.sep + prop_file_name, 'r', encoding='utf-8') as dom:
-        file_dict = Xml(dom.read()).get_dict()
-        temp_path = root + os.sep + 'application.py'
-        return translate_to_file(temp_path, file_dict.get('config'), file_name)
+    if file_type in xml_file_type:
+        with open(root + os.sep + prop_file_name, 'r', encoding='utf-8') as dom:
+            file_dict = Xml(dom.read()).get_dict()
+            temp_path = root + os.sep + 'application.py'
+            return translate_to_file(temp_path, file_dict.get('config'), file_name)
+    else:
+        raise Exception('不能识别的xml类型')
+
+
+def json_handler(root, prop_file_name, file_name, file_type):
+    """
+    json文件转换处理
+    :param root:
+    :param prop_file_name:
+    :param file_name:
+    :param file_type:
+    :return:
+    """
+    if file_type in json_file_type:
+        with open(root + os.sep + prop_file_name, 'r', encoding='utf-8') as j:
+            import json
+            file_dict = json.load(j)
+            temp_path = root + os.sep + 'application.py'
+            return translate_to_file(temp_path, file_dict, file_name)
+    else:
+        raise Exception('不能识别的json类型')
