@@ -12,6 +12,7 @@ import os
 from . import properties_handler
 from urllib3 import PoolManager
 from dophon import tools
+from dophon.tools import sys_utils
 
 # 取消flask banner
 os.environ.setdefault('WERKZEUG_RUN_MAIN', 'true')
@@ -33,6 +34,10 @@ properties_file_handler = {
     'json': properties_handler.json_handler  # json格式模块文件
 }
 
+default_properties = {}
+
+user_properties = {}
+
 
 class UnknownError(Exception):
     def __init__(self, *args, **kwargs):
@@ -48,10 +53,13 @@ class NotFoundError(Exception):
 
 
 def read_self_prop():
-    global re_import_prop_flag
+    global re_import_prop_flag, user_properties, default_properties
     try:
         def_prop = __import__('dophon.def_prop.__init__', fromlist=True)
         u_prop = __import__('application', fromlist=True)
+        # 记录原始字段
+        default_properties = sys_utils.to_dict(def_prop)
+        user_properties = sys_utils.to_dict(u_prop)
         # 对比配置文件
         for name in dir(def_prop):
             if re.match('__.*__', name):
