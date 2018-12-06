@@ -11,15 +11,15 @@ p_sys_type = platform.system()
 
 logging_config = \
     properties.logger_config \
-    if hasattr(properties,'logger_config') and properties.logger_config \
-    else \
-    {
-    # 'filename': 'app.log',
-    # 'level': 'logging.DEBUG',
-    'format': '%(levelname)s : (%(asctime)s) ==> ::: %(message)s',
-    # 'format': '%(levelname)s %(name)s: <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
-    'datefmt': '%Y-%m-%d %H:%M:%S'
-}
+        if hasattr(properties, 'logger_config') and properties.logger_config \
+        else \
+        {
+            # 'filename': 'app.log',
+            # 'level': 'logging.DEBUG',
+            'format': '%(levelname)s : (%(asctime)s) ==> ::: %(message)s',
+            # 'format': '%(levelname)s %(name)s: <%(module)s> (%(asctime)s) ==> %(filename)s {%(funcName)s} [line:%(lineno)d] ::: %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        }
 
 if 'level' in logging_config:
     logging_config['level'] = eval(logging_config['level'])
@@ -36,7 +36,6 @@ class DefFilter(logging.Filter):
 # 禁用调度的日志显示
 logging.getLogger('schedule').addFilter(DefFilter())
 
-
 CRITICAL = 50
 FATAL = CRITICAL
 ERROR = 40
@@ -46,9 +45,9 @@ INFO = 20
 DEBUG = 10
 NOTSET = 0
 
-formatter=logging.Formatter(fmt=logging_config['format'], datefmt=logging_config['datefmt'])
+formatter = logging.Formatter(fmt=logging_config['format'], datefmt=logging_config['datefmt'])
 
-stdOutHandle=None
+stdOutHandle = None
 
 if str(p_sys_type).upper() == 'WINDOWS':
     logging.basicConfig(**logging_config)
@@ -186,8 +185,8 @@ class DophonLogger:
         self.logger.addFilter(*args, **kwargs)
 
 
-def inject_logger(g: dict):
+def inject_logger(g: dict, var_name: str = 'logger'):
     # logger = logging.getLogger('dophon.' + re.sub('\..*', '', g['__file__'].split(os.path.sep)[-1]))
     logger = DophonLogger('dophon.' + re.sub('\..*', '', g['__file__'].split(os.path.sep)[-1]))
     logger.addFilter(DefFilter())
-    g['logger'] = logger
+    g[var_name] = logger

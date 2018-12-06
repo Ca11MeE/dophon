@@ -38,6 +38,18 @@ pydc_database = 'db'
 pydc_xmlupdate_sech = False
 db_pool_exe_time = False
 
+# 此处为分片数据库配置
+# db_cluster = [
+    # {
+    #     'alias': 'a',
+    #     'host': 'localhost',
+    #     'port': 3306,
+    #     'database': 'ezt',
+    #     'user': 'root',
+    #     'password': 'root'
+    # }
+# ]
+
 # 消息队列线程池工人数
 msg_queue_max_num = 30
 # 消息队列调试标识
