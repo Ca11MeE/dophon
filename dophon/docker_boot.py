@@ -15,7 +15,7 @@ from urllib import request
 
 def read_self_prop():
     try:
-        def_prop = __import__('dophon.def_prop.__init__', fromlist=True)
+        def_prop = __import__('dophon.def_prop.default_properties', fromlist=True)
         u_prop = __import__('application', fromlist=True)
         # 对比配置文件
         for name in dir(def_prop):
@@ -90,13 +90,14 @@ def listen_container_status(container_port, loop_count: int = 3, wait_sec: int =
         else:
             # 报错证明端口正常占用
             # 发起请求
-            url='http://' + get_docker_address() + ':' + container_port
+            url = 'http://' + get_docker_address() + ':' + container_port
             logger.info('容器存活性检查:' + url)
             res = request.urlopen(url)
             if not res.read():
                 raise Exception('服务启动异常')
         curr_count += 1
     logger.info('容器启动成功,请在命令行输入docker ps查看')
+
 
 def get_docker_address():
     """
@@ -134,7 +135,8 @@ def run_as_docker(
         entity_file_name: str = None,
         container_port: str = str(properties.port),
         docker_port: str = str(properties.port),
-        attach_cmd: bool = False
+        attach_cmd: bool = False,
+        extra_package: dict = {}
 ):
     """
     利用docker启动项目
@@ -142,6 +144,7 @@ def run_as_docker(
     :param container_port: 容器暴露端口
     :param docker_port: 容器内部端口 -> 集群模式下的暴露端口,一般为配置文件定义的端口
     :param attach_cmd: 是否进入容器内部sh
+    :param extra_package: 额外需要加载的包以及版本
     :return:
     """
     try:
@@ -164,6 +167,9 @@ def run_as_docker(
                         if re.search(module_path, key.lower()):
                             final_file.write(line)
                             continue
+                # 写入额外包
+                for package_name, package_version in extra_package.items():
+                    final_file.write(''.join([package_name, '>=', package_version, '\n']))
         # 生成Dockerfile
         logger.info('生成Dockerfile')
         with open('./Dockerfile', 'w') as file:
