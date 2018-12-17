@@ -18,6 +18,7 @@ gevent="*"
 schedule="*"
 #filetype = "^1.0"
 pyyaml = "^3.13"
+dophon-logger="*"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.6"
@@ -28,3 +29,4 @@ urllib3="*"
 Flask_Bootstrap="*"
 gevent="*"
 schedule="*"
+dophon-logger="*"
