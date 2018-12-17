@@ -2,8 +2,10 @@
 # 自动注入修饰器
 import re
 import inspect
-from dophon import logger
+from dophon_logger import *
 import types
+
+logger = get_logger(DOPHON)
 
 """
 自动注入注解

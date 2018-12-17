@@ -1,8 +1,10 @@
 # coding: utf-8
-from dophon import logger
+from dophon_logger import *
 from dophon import properties
 import os, sys
 import xml.dom.minidom as dom
+
+logger = get_logger(DOPHON)
 
 logger.inject_logger(globals())
 

@@ -15,7 +15,10 @@ from gevent import monkey
 
 monkey.patch_all()
 
-from dophon import pre_boot, logger
+from dophon import pre_boot
+from dophon_logger import *
+
+logger = get_logger(DOPHON)
 
 logger.inject_logger(globals())
 

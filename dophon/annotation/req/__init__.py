@@ -1,7 +1,9 @@
 # coding: utf-8
 import functools
 from flask import request, abort
-from dophon import logger
+from dophon_logger import *
+
+logger = get_logger(DOPHON)
 
 '''
 参数体可以为多个,形参名称必须与请求参数名一一对应(只少不多)
