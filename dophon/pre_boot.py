@@ -1,8 +1,12 @@
 # coding: utf-8
-from dophon_logger import *
-from dophon import properties
+from dophon_properties import *
 import os, sys
 import xml.dom.minidom as dom
+
+get_properties(DOPHON)
+
+import properties
+from dophon_logger import *
 
 logger = get_logger(DOPHON)
 
