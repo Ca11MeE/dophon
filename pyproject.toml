@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dophon"
-version = "1.2.12r2"
+version = "1.2.12r3"
 description = "dophon web framework like springboot"
 authors = ["CallMeE <ealohu@163.com>"]
 url="https://github.com/Ca11MeE/dophon"
@@ -19,6 +19,7 @@ schedule="*"
 #filetype = "^1.0"
 pyyaml = "^3.13"
 dophon-logger="*"
+dophon-properties="*"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.6"
