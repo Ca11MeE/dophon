@@ -6,8 +6,10 @@ from multiprocessing import Process, freeze_support
 import time, socket, random
 from flask import request, make_response
 from urllib3 import PoolManager
-from dophon import logger
 from dophon import properties
+from dophon_logger import *
+
+logger = get_logger(DOPHON)
 
 logger.inject_logger(globals())
 

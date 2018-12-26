@@ -39,7 +39,9 @@ except Exception as e:
     logging.error('引用默认配置')
 
 from dophon import properties
-from dophon import logger
+from dophon_logger import *
+
+logger = get_logger(DOPHON)
 
 logger.inject_logger(globals())
 
