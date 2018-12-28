@@ -209,12 +209,12 @@ class BeanConfig:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type and exc_val and exc_tb:
-            logger.error('%s 实例不存在', str(exc_val))
+            logger.error(f'{str(exc_val)} 实例不存在')
         pass
 
     def __init__(self, files: list = [], config_file: str = ''):
         if obj_manager:
-            logger.warning('存在已初始化实例管理器,跳过初始化: %s' % (self,))
+            logger.warning(f'存在已初始化实例管理器,跳过初始化: {self}')
             return
         logger.info('执行批量实例管理初始化')
         if files or config_file:
