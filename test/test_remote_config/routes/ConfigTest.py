@@ -17,3 +17,9 @@ def get_config():
         'port': 10010,
         'error_info': 'JSON'
     }
+
+@RequestMapping(app,'/raise/500',['get'])
+@ResponseBody()
+def raise_500():
+    1 / 0
+    return
