@@ -50,7 +50,7 @@ def check_modules():
                         break
                     except Exception as e:
                         # print(e)
-                        logger.info('install %s >=%s' % (module_name, version if version else 'release',))
+                        logger.info(f"install {module_name} >={version if version else 'release'}")
                         # 利用pip模块安装所需模块
                         pip_arg_list = ['pip', 'install',
                                         module_name + (('>=' + version) if version else ''),
@@ -58,4 +58,4 @@ def check_modules():
                         if not version:
                             pip_arg_list.append('-U')
                         raise ModuleNotFoundError(
-                            'please use \"%s\" to install module %s ' % (' '.join(pip_arg_list), module_name))
+                            f"please use '{' '.join(pip_arg_list)}{module_name}' to install module %s ")

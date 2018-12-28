@@ -171,7 +171,7 @@ def map_apps(dir_path):
         logger.error('路由文件夹不存在,创建路由文件夹')
         os.mkdir(path)
     f_list = os.listdir(path)
-    logger.info('路由文件夹: %s', dir_path)
+    logger.info(f'路由文件夹: {dir_path}')
     while f_list:
         try:
             file = f_list.pop(0)
@@ -179,7 +179,7 @@ def map_apps(dir_path):
                 continue
             i = os.path.join(path, file)
             if os.path.isdir(i):
-                logger.info('加载路由模块: %s', file)
+                logger.info(f'加载路由模块: {file}')
                 continue
             f_model = __import__(re.sub('/', '', dir_path) + '.' + re.sub('\.py', '', file), fromlist=True)
             filter_method = f_model.app.before_request(before_request)
@@ -232,7 +232,7 @@ def free_source():
                 try:
                     blue_print_init_method()
                 except Exception as e:
-                    logger.error('蓝图\'%s\'初始化失败,信息: %s' % (blueprint_module, e,))
+                    logger.error(f'蓝图"{blueprint_module}"初始化失败,信息: {e}')
             f(*arg, **kwarg)
             """
             释放所有资源
@@ -339,7 +339,7 @@ def fix_template(
 
 @free_source()
 def run_app(host=properties.host, port=properties.port):
-    logger.info('监听地址: %s : %s' % (host, port))
+    logger.info(f'监听地址: {host} : {port}')
     if properties.server_gevented:
         from gevent.pywsgi import WSGIServer
         WSGIServer((host, port), app).serve_forever()
@@ -357,7 +357,7 @@ def run_app(host=properties.host, port=properties.port):
 
 @free_source()
 def run_app_ssl(host=properties.host, port=properties.port, ssl_context=properties.ssl_context):
-    logger.info('监听地址: %s : %s' % (host, port))
+    logger.info(f'监听地址: {host} : {port}')
     if properties.server_gevented:
         from gevent.pywsgi import WSGIServer
         ssl_args = {

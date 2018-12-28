@@ -10,7 +10,7 @@ def is_not_windows():
 
 
 def show_banner():
-    print("""
+    print(f"""
           .o8                       oooo                              
          "888                       `888                              
      .oooo888   .ooooo.  oo.ooooo.   888 .oo.    .ooooo.  ooo. .oo.   
