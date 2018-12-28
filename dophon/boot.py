@@ -214,11 +214,6 @@ def before_bp_init_fun(f):
     return fields
 
 
-logger.info('路由初始化')
-for path in properties.blueprint_path:
-    map_apps(path)
-
-
 def get_app() -> Flask:
     return app
 
@@ -228,6 +223,9 @@ def free_source():
         @functools.wraps(f)
         def args(*arg, **kwarg):
             logger.info('启动服务器')
+            logger.info('路由初始化')
+            for path in properties.blueprint_path:
+                map_apps(path)
             load_footer()
             # 执行蓝图初始化方法
             for blueprint_module, blue_print_init_method in blueprint_init_queue.items():
@@ -255,7 +253,8 @@ def free_source():
 
 def fix_static(
         fix_target: Flask = app,
-        static_floder: str = 'static'
+        static_floder: str = 'static',
+        enhance_power: bool = False
 ):
     """
     修正静态文件路径
@@ -266,9 +265,58 @@ def fix_static(
             root_path = properties.project_root
         else:
             root_path = os.getcwd()
-        fix_target.static_folder = root_path + '/' + static_floder
+        static_floder_path = root_path + '/' + static_floder
+        fix_target.static_folder = static_floder_path
+        if os.path.exists(static_floder_path) and enhance_power:
+            enhance_static_route(static_floder_path)
     else:
         raise Exception('错误的修复对象')
+
+
+def enhance_static_route(static_floder_path: str):
+    """
+    增强静态文件路由能力
+    :param static_floder_path:
+    :param serlize:
+    :return:
+    """
+    framework_static_route_path = f'{properties.project_root}{properties.blueprint_path[0]}/FrameworkStaticRoute.py'
+    # if not os.path.exists(framework_static_route_path):
+    if True:
+        import types
+        import uuid
+        # 定义静态资源获取路径
+        logger.info('增强静态文件路由')
+        with open(framework_static_route_path, 'wb') as fsroute:
+            # 写入预设信息
+            fsroute.write(bytes(
+                f"# -*- coding: utf-8 -*-\n"
+                f"from dophon import blue_print\n"
+                f"from dophon.annotation import *\n"
+                f"from flask import url_for\n"
+                f"from flask import render_template\n"
+                f"from flask import send_from_directory\n"
+                f"app = blue_print('FrameworkStaticRoute', __name__,static_folder='{static_floder_path}')\n",
+                encoding='utf-8'))
+            for root, dir_path, file in os.walk(static_floder_path):
+                # 静态目录下的目录名
+                root_dir_path = re.sub('\\\\', '/', re.sub(static_floder_path, "", root))
+                # 解析静态资源路径
+                route_name = re.sub('[^(1-9a-zA-Z_)]', '',
+                                    f'{re.sub(static_floder_path, "", root)}_{root_dir_path}_{uuid.uuid1()}')
+                route_path = f'{root_dir_path}/<file_name>'
+                static_url_method_code_body = \
+                    f"@RequestMapping(app,'{route_path}',['get','post'])\ndef {route_name}(file_name):\n\t" \
+                        f"return render_template(f'{root_dir_path}/" \
+                        "{file_name}" \
+                        f"') if file_name.endswith('.html') " \
+                        f"else send_from_directory('{static_floder_path}{root_dir_path}',f" \
+                        "'{file_name}'" \
+                        ",as_attachment=True)\n"
+                fsroute.write(bytes(
+                    static_url_method_code_body,
+                    encoding='utf-8'))
+        logger.info("增强静态文件夹完毕")
 
 
 def fix_template(
@@ -409,7 +457,8 @@ def handle_500(e):
     if error_info == error_info_type.HTML:
         return '<h1>Wrong!!</h1>' + \
                '<h2>error info:' + str(e) + '</h2>' + \
-               '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+               '<h3>please contact coder or direct to ' \
+               '<a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
                trace_detail, 500
     elif error_info == error_info_type.JSON:
         return self_result.JsonResult(500, tc, """
@@ -431,7 +480,8 @@ def handle_404(e):
     if error_info == error_info_type.HTML:
         return '<h1>Wrong!!</h1>' + \
                '<h2>error info:' + str(e) + '</h2>' + \
-               '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+               '<h3>please contact coder or direct to ' \
+               '<a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
                'request path:' + request.path, 404
     elif error_info == error_info_type.JSON:
         return self_result.JsonResult(404, request.path, 'please check your path').as_res()
@@ -448,7 +498,8 @@ def handle_405(e):
     if error_info == error_info_type.HTML:
         return '<h1>Wrong!!</h1>' + \
                '<h2>error info:' + str(e) + '</h2>' + \
-               '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+               '<h3>please contact coder or direct to ' \
+               '<a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
                'request method:' + request.method, 405
     elif error_info == error_info_type.JSON:
         return self_result.JsonResult(405, {request.path, request.method}, 'please check your request method').as_res()
@@ -465,7 +516,8 @@ def handle_400(e):
     if error_info == error_info_type.HTML:
         return ('<h1>Wrong!!</h1>' + \
                 '<h2>error info:' + str(e) + '</h2>' + \
-                '<h3>please contact coder or direct to <a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
+                '<h3>please contact coder or direct to '
+                '<a href="https://dophon.blog">dophon</a> and leave your question</h3>' + \
                 'request form:' + request.form + \
                 'request body:' + request.json if request.is_json else ''), 400
     elif error_info == error_info_type.JSON:
