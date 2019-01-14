@@ -179,7 +179,7 @@ def run_as_docker(
             file.write('ADD . ' + work_dir + '\n')
             file.write('ADD . ' + work_dir + '/' + base_name + '\n')
             file.write('WORKDIR ' + work_dir + '\n')
-            file.write('RUN pip install -r requirements.txt' + '\n')
+            file.write('RUN pip install --no-cache-dir -r requirements.txt' + '\n')
             file.write('CMD ["python","./' + (entity_file_name if entity_file_name else 'Bootstrap.py') + '"]' + '\n')
             # file.write('CMD ["/bin/bash"]' + '\n')
         os.system('cd ' + root)
