@@ -37,14 +37,15 @@ class XmlResult:
         self.__dom = self.__dom + '<event>\n' + str(event) + '\n</event>\n'
         self.__dom = self.__dom + '<data>\n' + self.parse_to_node(data) + '\n</data>\n'
         self.__dom = self.__dom + '<msg>\n' + str(msg) + '\n</msg>\n'
-        self.__dom= self.__dom + '</root>'
+        self.__dom = self.__dom + '</root>'
 
     def parse_to_node(self, data):
         nodes = []
         if isinstance(data, dict):
             for k, v in data.items():
                 nodes.append(
-                    '<' + str(k) + '>\n' + (str(v) if not isinstance(v, dict) else self.parse_to_node(v)) + '\n</' + str(
+                    '<' + str(k) + '>\n' + (
+                        str(v) if not isinstance(v, dict) else self.parse_to_node(v)) + '\n</' + str(
                         k) + '>\n')
         elif isinstance(data, list):
             for index in range(len(data)):
