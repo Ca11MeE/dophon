@@ -1,14 +1,8 @@
-from dophon import blue_print
 from dophon.annotation import *
 from dophon import properties
 
-app = blue_print(
-    name='config_test',
-    import_name=__name__
-)
 
-
-@RequestMapping(app, '/config/get', ['get'])
+@GetRoute('/config/get')
 @ResponseBody()
 def get_config():
     print(properties.error_info)
@@ -18,7 +12,8 @@ def get_config():
         'error_info': 'JSON'
     }
 
-@RequestMapping(app,'/raise/500',['get'])
+
+@GetRoute('/raise/500')
 @ResponseBody()
 def raise_500():
     1 / 0

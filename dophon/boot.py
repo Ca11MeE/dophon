@@ -24,8 +24,8 @@ logger.inject_logger(globals())
 
 pre_boot.check_modules()
 
-from flask import Flask, request, abort
-from dophon import properties
+from flask import Flask, request, abort,jsonify
+from dophon import properties, blue_print
 from dophon import tools
 from dophon.tools import gc
 
@@ -181,8 +181,15 @@ def map_apps(dir_path):
             if os.path.isdir(i):
                 logger.info(f'加载路由模块: {file}')
                 continue
-            f_model = __import__(re.sub('/', '', dir_path) + '.' + re.sub('\.py', '', file), fromlist=True)
-            filter_method = f_model.app.before_request(before_request)
+            file_name = re.sub('\.py', '', file)
+            f_model = __import__(re.sub('/', '', dir_path) + '.' + file_name, fromlist=True)
+            # 自动装配蓝图实例并自动配置部分参数,免除繁琐配置以及精简代码
+            package_app = getattr(f_model, '__app') \
+                if hasattr(f_model, '__app') \
+                else f_model.app \
+                if hasattr(f_model, 'app') \
+                else blue_print(f"_boot_auto_reg_{file_name}", getattr(f_model, '__name__'))
+            filter_method = package_app.before_request(before_request)
             # 若需统计请求,装配请求统计方法
             if hasattr(properties, 'ip_count') and getattr(properties, 'ip_count'):
                 setattr(f_model, 'before_request', filter_method)
@@ -192,10 +199,16 @@ def map_apps(dir_path):
                 # 判断是否方法
                 if callable(init_fun):
                     blueprint_init_queue[f_model] = before_bp_init_fun(init_fun)
-            app.register_blueprint(f_model.app)
+            app.register_blueprint(package_app)
         except Exception as e:
             raise e
             pass
+
+    # for item in get_app().url_map.iter_rules():
+    #     print(item)
+    # print(get_app().blueprints)
+    # 注册路径列表入口
+    get_app().route('/rule/map')(lambda: jsonify([str(item) for item in get_app().url_map.iter_rules()]))
 
 
 def before_bp_init_fun(f):
@@ -306,7 +319,7 @@ def enhance_static_route(static_floder_path: str):
                                     f'{re.sub(static_floder_path, "", root)}_{root_dir_path}_{uuid.uuid1()}')
                 route_path = f'{root_dir_path}/<file_name>'
                 static_url_method_code_body = \
-                    f"@RequestMapping(app,'{route_path}',['get','post'])\ndef {route_name}(file_name):\n\t" \
+                    f"@RequestMapping('{route_path}',['get','post'])\ndef {route_name}(file_name):\n\t" \
                         f"return render_template(f'{root_dir_path}/" \
                         "{file_name}" \
                         f"') if file_name.endswith('.html') " \
@@ -390,7 +403,7 @@ def bootstrap_app():
 from dophon.annotation import *
 
 
-@RequestMapping(app, '/framework/ip/count', ['get', 'post'])
+@RequestMapping('/framework/ip/count', ['get', 'post'])
 @ResponseBody()
 def view_ip_count():
     """
@@ -400,7 +413,7 @@ def view_ip_count():
     return ip_count
 
 
-@RequestMapping(app, '/framework/ip/refuse', ['get', 'post'])
+@RequestMapping('/framework/ip/refuse', ['get', 'post'])
 @ResponseBody()
 def view_ip_refuse():
     """
@@ -413,7 +426,7 @@ def view_ip_refuse():
 GC_INFO = False  # gc信息开关
 
 
-@RequestMapping(app, '/framework/gc/show', ['get'])
+@RequestMapping('/framework/gc/show', ['get'])
 @ResponseBody()
 def show_gc_info():
     # return gc.show_gc_leak(print)

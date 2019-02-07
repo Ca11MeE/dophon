@@ -1,10 +1,22 @@
-from dophon import blue_print
 from dophon.annotation import *
 
-app = blue_print('main', __name__)
+
+# app = blue_print('main', __name__)
 
 
-@RequestMapping(app, '/', ['get'])
+@RequestMapping('/', ['get'])
 @ResponseTemplate(['index.html'])
 def index():
+    return {}
+
+
+@GetRoute('/get')
+@ResponseTemplate(['index.html'])
+def get_index():
+    return {}
+
+
+@PostRoute('/post')
+@ResponseTemplate(['index.html'])
+def post_index():
     return {}
