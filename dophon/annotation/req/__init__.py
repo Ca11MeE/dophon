@@ -1,5 +1,6 @@
 # coding: utf-8
 import functools
+import re
 from flask import request, abort
 from dophon_logger import *
 
@@ -11,6 +12,7 @@ logger = get_logger(DOPHON)
 '''
 
 logger.inject_logger(globals())
+
 
 # 处理请求参数装饰器(分离参数)
 
@@ -99,9 +101,9 @@ def file_param(alias_name: str = 'files', extra_param: str = 'args'):
                 logger.error('路由绑定参数数量异常')
                 raise Exception('路由绑定参数数量异常')
             try:
-                extra_param_value=(request.form if request.form else request.json).to_dict()
+                extra_param_value = (request.form if request.form else request.json).to_dict()
             except:
-                extra_param_value={}
+                extra_param_value = {}
             k_args = {
                 alias_name: request.files.to_dict(),
                 extra_param: extra_param_value
@@ -148,3 +150,92 @@ def is_json(arg_list):
 
 def is_form(arg_list):
     return arg_list.to_dict().values()
+
+
+# 路径绑定装饰器
+# 默认服务器从boot获取
+def request_mapping(path='', methods=[], app=None):
+    def method(f):
+        try:
+            # 自动获取蓝图实例并进行http协议绑定
+            current_package = __import__(str(getattr(f, "__module__")), fromlist=True)
+            # package_app = __import__('dophon.boot', fromlist=True).app \
+            package_app = __import__('dophon').blue_print(f"_annotation_auto_reg{getattr(current_package, '__name__')}",
+                                                          getattr(current_package, '__name__')) \
+                if not hasattr(current_package, '__app') \
+                else getattr(current_package, '__app') \
+                if not hasattr(current_package, 'app') \
+                else current_package.app \
+                if not hasattr(app, 'route') \
+                else app \
+                if not app \
+                else __import__('dophon.boot', fromlist=True).app
+            # 回设内部蓝图参数
+            # print(package_app)
+            setattr(current_package, '__app', package_app)
+            result = package_app.route(path, methods=methods)(f)
+        except Exception as e:
+            logger.error(f'{getattr(f, "__module__")}参数配置缺失,请检查({path},{methods},{package_app})')
+
+        def m_args(*args, **kwargs):
+            return result(*args, **kwargs)
+
+        return m_args
+
+    return method
+
+
+# get方法缩写
+def get_route(path=''):
+    def method(f):
+        result = request_mapping(path, ['get'])(f)
+
+        def m_args(*args, **kwargs):
+            return result(*args, **kwargs)
+
+        return m_args
+
+    return method
+
+
+# post方法缩写
+def post_route(path=''):
+    def method(f):
+        result = request_mapping(path, ['post'])(f)
+
+        def args(*args, **kwargs):
+            return result(*args, **kwargs)
+
+        return args
+
+    return method
+
+
+# get方法缩写
+def get(f, *args, **kwargs):
+    path = f'''{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}
+{re.sub("[^a-zA-Z0-9]", "/", getattr(f, "__name__"))}'''
+    result = request_mapping(path, ['get'])(f)
+
+    def method():
+        def args(*args, **kwargs):
+            return result(*args, **kwargs)
+
+        return args
+
+    return method
+
+
+# post方法缩写
+def post(f, *args, **kwargs):
+    path = f'''{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}
+{re.sub("[^a-zA-Z0-9]", "/", getattr(f, "__name__"))}'''
+    result = request_mapping(path, ['post'])(f)
+
+    def method():
+        def args(*args, **kwargs):
+            return result(*args, **kwargs)
+
+        return args
+
+    return method

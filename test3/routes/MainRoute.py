@@ -1,3 +1,4 @@
+from dophon import *
 from dophon.annotation import *
 
 
@@ -19,4 +20,10 @@ def get_index():
 @PostRoute('/post')
 @ResponseTemplate(['index.html'])
 def post_index():
+    return {}
+
+
+@Get
+@ResponseTemplate(['index.html'])
+def test_get():
     return {}
