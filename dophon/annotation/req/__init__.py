@@ -213,9 +213,8 @@ def post_route(path=''):
 
 # get方法缩写
 def get(f, *args, **kwargs):
-    path = f'''{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}
-{re.sub("[^a-zA-Z0-9]", "/", getattr(f, "__name__"))}'''
-    result = request_mapping(path, ['get'])(f)
+    path = f'{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/", getattr(f, "__name__"))}'
+    result = request_mapping(re.sub('\s+','',path), ['get'])(f)
 
     def method():
         def args(*args, **kwargs):
@@ -228,8 +227,8 @@ def get(f, *args, **kwargs):
 
 # post方法缩写
 def post(f, *args, **kwargs):
-    path = f'''{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/", getattr(f, "__name__"))}'''
-    result = request_mapping(path, ['post'])(f)
+    path = f'{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/", getattr(f, "__name__"))}'
+    result = request_mapping(re.sub('\s+','',path), ['post'])(f)
 
     def method():
         def args(*args, **kwargs):
