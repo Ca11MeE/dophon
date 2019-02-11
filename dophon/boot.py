@@ -319,6 +319,9 @@ def enhance_static_route(static_floder_path: str):
                 f"app = blue_print('FrameworkStaticRoute', __name__,static_folder='{static_floder_path}')\n",
                 encoding='utf-8'))
             for root, dir_path, file in os.walk(static_floder_path):
+                # 消除转义字符(win)
+                root = re.sub('\\\\', '/', root)
+                static_floder_path = re.sub('\\\\', '/', static_floder_path)
                 # 静态目录下的目录名
                 root_dir_path = re.sub('\\\\', '/', re.sub(static_floder_path, "", root))
                 # 解析静态资源路径
