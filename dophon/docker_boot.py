@@ -138,7 +138,9 @@ def run_as_docker(
         container_port: str = str(properties.port),
         docker_port: str = str(properties.port),
         attach_cmd: bool = False,
-        extra_package: dict = {}
+        extra_package: dict = {},
+        package_dir: str = '',
+        package_repository: str = '',
 ):
     """
     利用docker启动项目
@@ -147,6 +149,9 @@ def run_as_docker(
     :param docker_port: 容器内部端口 -> 集群模式下的暴露端口,一般为配置文件定义的端口
     :param attach_cmd: 是否进入容器内部sh
     :param extra_package: 额外需要加载的包以及版本
+    :param package_dir: 自带缓存包路径,若为空会自动执行pip安装
+    :param package_repository: 自带缓存包路径,若为空会自动执行pip安装
+                # 阿里云仓库  =>  https://mirrors.aliyun.com/pypi/simple/
     :return:
     """
     try:
@@ -179,7 +184,11 @@ def run_as_docker(
             file.write('ADD . ' + work_dir + '\n')
             file.write('ADD . ' + work_dir + '/' + base_name + '\n')
             file.write('WORKDIR ' + work_dir + '\n')
-            file.write('RUN pip install --no-cache-dir -r requirements.txt' + '\n')
+            if package_repository:
+                # 阿里云仓库  =>  https://mirrors.aliyun.com/pypi/simple/
+                file.write(f'RUN pip install -i {package_repository} -r requirements.txt' + '\n')
+            else:
+                file.write('RUN pip install --no-cache-dir -r requirements.txt' + '\n')
             file.write('CMD ["python","./' + (entity_file_name if entity_file_name else 'Bootstrap.py') + '"]' + '\n')
             # file.write('CMD ["/bin/bash"]' + '\n')
         os.system('cd ' + root)

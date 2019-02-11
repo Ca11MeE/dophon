@@ -246,6 +246,13 @@ def free_source():
                     blue_print_init_method()
                 except Exception as e:
                     logger.error(f'蓝图"{blueprint_module}"初始化失败,信息: {e}')
+            # for rule in get_app().url_map.iter_rules():
+            #     print(str(rule))
+                # print(rule.get_rules())
+                # for name in dir(rule):
+                #     print(f'{name}---{getattr(rule,name)}')
+                # print(help(rule))
+                # break
             f(*arg, **kwarg)
             """
             释放所有资源
