@@ -24,7 +24,7 @@ logger.inject_logger(globals())
 
 pre_boot.check_modules()
 
-from flask import Flask, request, abort,jsonify
+from flask import Flask, request, abort, jsonify
 from dophon import properties, blue_print
 from dophon import tools
 from dophon.tools import gc
@@ -208,7 +208,33 @@ def map_apps(dir_path):
     #     print(item)
     # print(get_app().blueprints)
     # 注册路径列表入口
-    get_app().route('/rule/map')(lambda: jsonify([str(item) for item in get_app().url_map.iter_rules()]))
+    get_app().route('/rule/<view>')(lambda view: f"""
+<!-- import Vue.js -->
+<script src="//vuejs.org/js/vue.min.js"></script>
+<!-- import stylesheet -->
+<link rel="stylesheet" href="//unpkg.com/iview/dist/styles/iview.css">
+<!-- import iView -->
+<script src="//unpkg.com/iview/dist/iview.min.js"></script>
+<style>
+.ivu-card""""{width: 100%; display: inline-block; margin-top: 10px; margin-bottom: 10px;}"f"""
+</style>
+<div style="display;flex;column-count:5;">
+<div class="ivu-card ivu-card-bordered"><div class="ivu-card-body">
+    {'</div></div><div class="ivu-card ivu-card-bordered"><div class="ivu-card-body">'.join(
+        [
+            str(item)
+            for item in get_app().url_map.iter_rules()
+
+        ]
+    )}
+</div></div>
+</div>
+    """ if view == 'map' else jsonify([
+        str(item)
+        for item in get_app().url_map.iter_rules()
+
+    ]) if view == 'json' else abort(404)
+                                 )
 
 
 def before_bp_init_fun(f):
@@ -248,11 +274,11 @@ def free_source():
                     logger.error(f'蓝图"{blueprint_module}"初始化失败,信息: {e}')
             # for rule in get_app().url_map.iter_rules():
             #     print(str(rule))
-                # print(rule.get_rules())
-                # for name in dir(rule):
-                #     print(f'{name}---{getattr(rule,name)}')
-                # print(help(rule))
-                # break
+            # print(rule.get_rules())
+            # for name in dir(rule):
+            #     print(f'{name}---{getattr(rule,name)}')
+            # print(help(rule))
+            # break
             f(*arg, **kwarg)
             """
             释放所有资源

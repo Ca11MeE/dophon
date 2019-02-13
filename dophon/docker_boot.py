@@ -122,7 +122,7 @@ def get_docker_address():
             r_l_copy.append(
                 re.search('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)', line).group(0)
             )
-    return r_l_copy.pop(0)
+    return r_l_copy.pop(0) if r_l_copy else 'can not get container ip'
 
 
 def attach_container(base_name: str):
@@ -139,7 +139,7 @@ def run_as_docker(
         docker_port: str = str(properties.port),
         attach_cmd: bool = False,
         extra_package: dict = {},
-        package_dir: str = '',
+        cache_virtual_env_dir: str = '',
         package_repository: str = '',
 ):
     """
@@ -149,7 +149,7 @@ def run_as_docker(
     :param docker_port: 容器内部端口 -> 集群模式下的暴露端口,一般为配置文件定义的端口
     :param attach_cmd: 是否进入容器内部sh
     :param extra_package: 额外需要加载的包以及版本
-    :param package_dir: 自带缓存包路径,若为空会自动执行pip安装
+    :param cache_virtual_env_dir: 指定的虚拟器路径
     :param package_repository: 自带缓存包路径,若为空会自动执行pip安装
                 # 阿里云仓库  =>  https://mirrors.aliyun.com/pypi/simple/
     :return:
@@ -184,6 +184,9 @@ def run_as_docker(
             file.write('ADD . ' + work_dir + '\n')
             file.write('ADD . ' + work_dir + '/' + base_name + '\n')
             file.write('WORKDIR ' + work_dir + '\n')
+            if cache_virtual_env_dir:
+                file.write(f'ADD {cache_virtual_env_dir} ~/.cache_virtual_env' + '\n')
+                file.write(f'CMD ~/.cache_virtual_env/Scripts/activate' + '\n')
             if package_repository:
                 # 阿里云仓库  =>  https://mirrors.aliyun.com/pypi/simple/
                 file.write(f'RUN pip install -i {package_repository} -r requirements.txt' + '\n')

@@ -159,17 +159,18 @@ def request_mapping(path='', methods=[], app=None):
         try:
             # 自动获取蓝图实例并进行http协议绑定
             current_package = __import__(str(getattr(f, "__module__")), fromlist=True)
-            # package_app = __import__('dophon.boot', fromlist=True).app \
-            package_app = __import__('dophon').blue_print(f"_annotation_auto_reg{getattr(current_package, '__name__')}",
-                                                          getattr(current_package, '__name__')) \
-                if not hasattr(current_package, '__app') \
-                else getattr(current_package, '__app') \
-                if not hasattr(current_package, 'app') \
-                else current_package.app \
-                if not hasattr(app, 'route') \
-                else app \
-                if not app \
-                else __import__('dophon.boot', fromlist=True).app
+            try:
+                package_app = getattr(current_package, '__app') \
+                    if hasattr(current_package, '__app') \
+                    else current_package.app \
+                    if hasattr(current_package, 'app') \
+                    else app \
+                    if hasattr(app, 'route') \
+                    else __import__('dophon').blue_print(f"_annotation_auto_reg{getattr(current_package, '__name__')}",
+                                                         getattr(current_package, '__name__'))
+            except Exception as e:
+                logger.warn(f'{e}')
+                package_app = __import__('dophon.boot', fromlist=True).app
             # 回设内部蓝图参数
             # print(package_app)
             setattr(current_package, '__app', package_app)
@@ -213,27 +214,31 @@ def post_route(path=''):
 
 # get方法缩写
 def get(f, *args, **kwargs):
-    path = f'{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/", getattr(f, "__name__"))}'
-    result = request_mapping(re.sub('\s+','',path), ['get'])(f)
+    path = f'{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/",getattr(f, "__name__"))}'
+    result = request_mapping(re.sub('\s+', '', path), ['get'])(f)
+
 
     def method():
         def args(*args, **kwargs):
             return result(*args, **kwargs)
 
         return args
+
 
     return method
 
 
 # post方法缩写
 def post(f, *args, **kwargs):
-    path = f'{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/", getattr(f, "__name__"))}'
-    result = request_mapping(re.sub('\s+','',path), ['post'])(f)
+    path = f'{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/",getattr(f, "__name__"))}'
+    result = request_mapping(re.sub('\s+', '', path), ['post'])(f)
+
 
     def method():
         def args(*args, **kwargs):
             return result(*args, **kwargs)
 
         return args
+
 
     return method

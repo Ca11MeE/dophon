@@ -2,7 +2,7 @@ from dophon import *
 from dophon.annotation import *
 
 
-# app = blue_print('main', __name__)
+app = blue_print('main', __name__,url_prefix='/main')
 
 
 @RequestMapping('/', ['get'])
