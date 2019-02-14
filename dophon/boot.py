@@ -234,7 +234,7 @@ def map_apps(dir_path):
         for item in get_app().url_map.iter_rules()
 
     ]) if view == 'json' else abort(404)
-                                 )
+                                    )
 
 
 def before_bp_init_fun(f):
@@ -405,6 +405,24 @@ def run_app(host=properties.host, port=properties.port):
 
 
 @free_source()
+def tornado(host=properties.host, port=properties.port):
+    logger.info(f'添加Tornado核心')
+    from tornado.wsgi import WSGIContainer
+    from tornado.httpserver import HTTPServer
+    from tornado.ioloop import IOLoop
+    logger.info(f'开始使用Tornado增强')
+    http_server = HTTPServer(WSGIContainer(get_app()))
+    logger.info(f'监听{port}')
+    if tools.is_not_windows() and properties.server_processes > 1:
+        http_server.bind(port)  # flask默认的端口
+        http_server.start(properties.server_processes)
+    else:
+        http_server.listen(port)  # flask默认的端口
+    logger.info(f'监听地址: {host}:{port}')
+    IOLoop.current().start()
+
+
+@free_source()
 def run_app_ssl(host=properties.host, port=properties.port, ssl_context=properties.ssl_context):
     logger.info(f'监听地址: {host} : {port}')
     if properties.server_gevented:
@@ -424,6 +442,27 @@ def run_app_ssl(host=properties.host, port=properties.port, ssl_context=properti
                     processes=properties.server_processes)
         else:
             app.run(host=host, port=port, ssl_context=ssl_context)
+
+
+@free_source()
+def tornado_ssl(host=properties.host, port=properties.port, ssl_context=properties.ssl_context):
+    logger.info(f'添加Tornado核心')
+    from tornado.wsgi import WSGIContainer
+    from tornado.httpserver import HTTPServer
+    from tornado.ioloop import IOLoop
+    logger.info(f'开始使用Tornado增强')
+    http_server = HTTPServer(WSGIContainer(get_app()), ssl_options={
+        'certfile': ssl_context[0],
+        'keyfile': ssl_context[1],
+    })
+    logger.info(f'监听{port}')
+    if tools.is_not_windows() and properties.server_processes > 1:
+        http_server.bind(port)  # flask默认的端口
+        http_server.start(properties.server_processes)
+    else:
+        http_server.listen(port)  # flask默认的端口
+    logger.info(f'监听地址: {host}:{port}')
+    IOLoop.current().start()
 
 
 def bootstrap_app():
@@ -459,7 +498,7 @@ def view_ip_refuse():
     return ip_refuse_list
 
 
-GC_INFO = False  # gc信息开关
+GC_INFO = properties.debug_trace if properties.debug_trace else False  # gc信息开关
 
 
 @RequestMapping('/framework/gc/show', ['get'])

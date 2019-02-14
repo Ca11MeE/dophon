@@ -21,7 +21,7 @@ def show_banner():
                           888                                         
                          o888o                                                     
      Author:CallMeE
-     Base:Flask
+     Base:Flask or Tornado
      Url:https://github.com/Ca11MeE/dophon.git
          https://gitee.com/callmee/dophon.git                                                                          
     """)
