@@ -1,4 +1,5 @@
 # encoding: utf-8
+from . import boot
 import logging
 
 import re
@@ -11,7 +12,6 @@ import threading
 
 import time
 from urllib import request
-from . import boot
 
 
 def read_self_prop():
@@ -93,7 +93,7 @@ def listen_container_status(container_port, loop_count: int = 3, wait_sec: int =
         else:
             # 报错证明端口正常占用
             # 发起请求
-            url = 'http://' + get_docker_address() + ':' + container_port
+            url = f'http://{get_docker_address()}:{container_port}/rule'
             logger.info('容器存活性检查:' + url)
             res = request.urlopen(url)
             if not res.read():
@@ -142,6 +142,7 @@ def run_as_docker(
         extra_package: dict = {},
         cache_virtual_env_dir: str = '',
         package_repository: str = '',
+        package_cache_path: str = '',
 ):
     """
     利用docker启动项目
@@ -150,9 +151,10 @@ def run_as_docker(
     :param docker_port: 容器内部端口 -> 集群模式下的暴露端口,一般为配置文件定义的端口
     :param attach_cmd: 是否进入容器内部sh
     :param extra_package: 额外需要加载的包以及版本
-    :param cache_virtual_env_dir: 指定的虚拟器路径
+    :param cache_virtual_env_dir: 指定的虚拟器路径,在启动文件同级目录或下级目录
     :param package_repository: 自带缓存包路径,若为空会自动执行pip安装
                 # 阿里云仓库  =>  https://mirrors.aliyun.com/pypi/simple/
+    :param package_cache_path: 包缓存路径
     :return:
     """
     try:
@@ -198,6 +200,9 @@ def run_as_docker(
             if cache_virtual_env_dir:
                 file.write(f'ADD {cache_virtual_env_dir} ~/.cache_virtual_env' + '\n')
                 file.write(f'CMD ~/.cache_virtual_env/Scripts/activate' + '\n')
+            if package_cache_path:
+                file.write(f'ADD {package_cache_path} ~/.package_cache' + '\n')
+                file.write(f'CMD python -m import sys;sys.path.append("~/.package_cache");' + '\n')
             if package_repository:
                 # 阿里云仓库  =>  https://mirrors.aliyun.com/pypi/simple/
                 file.write(f'RUN pip install -i {package_repository} -r requirements.txt' + '\n')

@@ -1,7 +1,8 @@
 # coding: utf-8
-from gevent import monkey
-
-monkey.patch_all()
+from . import tools
+if tools.is_not_windows():
+    from gevent import monkey
+    monkey.patch_all()
 from multiprocessing import Process, freeze_support
 import time, socket, random
 from flask import request, make_response

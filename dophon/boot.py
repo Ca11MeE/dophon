@@ -11,9 +11,10 @@ import json
 """
 初始化协程模块(必须,不然导致系统死锁)
 """
-from gevent import monkey
-
-monkey.patch_all()
+from . import tools
+if tools.is_not_windows():
+    from gevent import monkey
+    monkey.patch_all()
 
 from dophon import pre_boot
 from dophon_logger import *
@@ -26,7 +27,6 @@ pre_boot.check_modules()
 
 from flask import Flask, request, abort, jsonify
 from dophon import properties, blue_print
-from dophon import tools
 from dophon.tools import gc
 
 try:
@@ -414,10 +414,10 @@ def tornado(host=properties.host, port=properties.port):
     http_server = HTTPServer(WSGIContainer(get_app()))
     logger.info(f'监听{port}')
     if tools.is_not_windows() and properties.server_processes > 1:
-        http_server.bind(port)  # flask默认的端口
+        http_server.bind(port,host)  # flask默认的端口
         http_server.start(properties.server_processes)
     else:
-        http_server.listen(port)  # flask默认的端口
+        http_server.listen(port,host)  # flask默认的端口
     logger.info(f'监听地址: {host}:{port}')
     IOLoop.current().start()
 
