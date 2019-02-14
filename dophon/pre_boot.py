@@ -42,9 +42,10 @@ def check_modules():
                 # 添加模块到模块列表
                 modules_list.append(module_code_str)
                 while True:
+                    __module = None
                     try:
                         # 校验模块安装
-                        module = __import__(module_name)
+                        module = __module if __module else __import__(module_name)
                         # 等待模块安装完成
                         sys.modules[module_code_str] = module
                         break
@@ -55,7 +56,21 @@ def check_modules():
                         pip_arg_list = ['pip', 'install',
                                         module_name + (('>=' + version) if version else ''),
                                         '--user']
+                        exe_pip_args = ['install',
+                                        module_name + (('>=' + version) if version else ''),
+                                        '--user']
                         if not version:
                             pip_arg_list.append('-U')
-                        raise ModuleNotFoundError(
-                            f"please use '{' '.join(pip_arg_list)}{module_name}' to install module %s ")
+                            exe_pip_args.append('-U')
+                        # 利用pip安装模块
+                        import pip
+                        from pip._internal import main as _main
+                        # path = os.path.dirname(os.path.dirname(__file__))
+                        # sys.path.insert(0, path)
+                        os.system(f'pip install {module_name}')
+                        # _main(['list'])
+                        # _main(exe_pip_args)
+                        __module = __import__(module_name)
+                        # raise ModuleNotFoundError(
+                        #     f"please use '{' '.join(pip_arg_list)}' to install module %s ")
+    logger.info('模块校验完毕')
