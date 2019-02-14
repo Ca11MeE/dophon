@@ -23,6 +23,8 @@ def check_modules():
     :return:
     """
     logger.info('校验模块')
+    # logger.info('更新pip')
+    # os.system(f'python -m pip install --upgrade pip')
     modules_path = properties.project_root + '/module.xml'
     if os.path.exists(modules_path):
         with open(modules_path) as modules_file:
@@ -48,6 +50,7 @@ def check_modules():
                         module = __module if __module else __import__(module_name)
                         # 等待模块安装完成
                         sys.modules[module_code_str] = module
+                        logger.info(f'模块{getattr(module,"__name__")}依赖建立完毕,引入别名{pre_name}.{name}')
                         break
                     except Exception as e:
                         # print(e)

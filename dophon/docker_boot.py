@@ -164,20 +164,30 @@ def run_as_docker(
         work_dir = './' + base_name
         # 生成依赖文件
         logger.info('生成依赖文件')
-        os.system('pip freeze >pre_requirements.txt')
+        os.system('pip freeze --all >pre_requirements.txt')
         with open('./pre_requirements.txt', 'r') as file:
             with open('./requirements.txt', 'w') as final_file:
+
                 for line in file.readlines():
                     for key in sys.modules.keys():
                         if re.search('(_|__|\\.).+$', key):
                             continue
                         module_path = re.sub('(>=|==|=>|<=|=<|<|>|=).*\s+', '', line.lower())
                         if re.search(module_path, key.lower()):
-                            final_file.write(line)
+                            if module_path in extra_package:
+                                final_file.write(f'{module_path}>={extra_package[module_path]}\n')
+                                extra_package.pop(module_path)
+                            else:
+                                final_file.write(line)
+
                             continue
                 # 写入额外包
                 for package_name, package_version in extra_package.items():
-                    final_file.write(''.join([package_name, '>=', package_version, '\n']))
+                    if package_name in extra_package:
+                        final_file.write(''.join([package_name, '>=', extra_package[package_name], '\n']))
+                        extra_package.popitem()
+                    else:
+                        final_file.write(''.join([package_name, '>=', package_version, '\n']))
         # 生成Dockerfile
         logger.info('生成Dockerfile')
         with open('./Dockerfile', 'w') as file:

@@ -1,6 +1,10 @@
-<module>
-    <pre-name>dophon</pre-name>
-    <name>db</name>
-    <pre-name>dophon</pre-name>
-    <name>mq</name>
-</module>
+<modules>
+    <module>
+        <pre-name>dophon</pre-name>
+        <name>db</name>
+    </module>
+    <module>
+        <pre-name>dophon</pre-name>
+        <name>mq</name>
+    </module>
+</modules>
