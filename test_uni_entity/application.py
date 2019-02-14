@@ -1,0 +1,11 @@
+blueprint_path = ['/routes']
+debug_trace = False
+error_info = 'HTML'
+host = '127.0.0.1'
+ip_count = False
+port = 443
+project_root = 'D:/Desktop/dophon/test_uni_entity'
+server_gevented = False
+server_processes = 1
+server_threaded = False
+ssl_context = 'adhoc'

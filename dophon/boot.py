@@ -12,8 +12,10 @@ import json
 初始化协程模块(必须,不然导致系统死锁)
 """
 from . import tools
+
 if tools.is_not_windows():
     from gevent import monkey
+
     monkey.patch_all()
 
 from dophon import pre_boot
@@ -128,7 +130,7 @@ def before_request():
             """
             if (int(now_timestemp) - int(req_timestemp[0])) > 1 \
                     and \
-                    (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
+                            (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
                 # 检测3秒内请求数
                 if len(req_timestemp) > 50:
                     # 默认三秒内请求不超过300
@@ -356,12 +358,12 @@ def enhance_static_route(static_floder_path: str):
                 route_path = f'{root_dir_path}/<file_name>'
                 static_url_method_code_body = \
                     f"@RequestMapping('{route_path}',['get','post'])\ndef {route_name}(file_name):\n\t" \
-                        f"return render_template(f'{root_dir_path}/" \
-                        "{file_name}" \
-                        f"') if file_name.endswith('.html') " \
-                        f"else send_from_directory('{static_floder_path}{root_dir_path}',f" \
-                        "'{file_name}'" \
-                        ",as_attachment=True)\n"
+                    f"return render_template(f'{root_dir_path}/" \
+                    "{file_name}" \
+                    f"') if file_name.endswith('.html') " \
+                    f"else send_from_directory('{static_floder_path}{root_dir_path}',f" \
+                    "'{file_name}'" \
+                    ",as_attachment=True)\n"
                 fsroute.write(bytes(
                     static_url_method_code_body,
                     encoding='utf-8'))
@@ -414,10 +416,10 @@ def tornado(host=properties.host, port=properties.port):
     http_server = HTTPServer(WSGIContainer(get_app()))
     logger.info(f'监听{port}')
     if tools.is_not_windows() and properties.server_processes > 1:
-        http_server.bind(port,host)  # flask默认的端口
+        http_server.bind(port, host)  # flask默认的端口
         http_server.start(properties.server_processes)
     else:
-        http_server.listen(port,host)  # flask默认的端口
+        http_server.listen(port, host)  # flask默认的端口
     logger.info(f'监听地址: {host}:{port}')
     IOLoop.current().start()
 
@@ -463,6 +465,41 @@ def tornado_ssl(host=properties.host, port=properties.port, ssl_context=properti
         http_server.listen(port)  # flask默认的端口
     logger.info(f'监听地址: {host}:{port}')
     IOLoop.current().start()
+
+
+def run_f(ssl: bool = False, **kwargs):
+    """
+    flask 启动入口
+    :param ssl:
+    :param kwargs:
+    :return:
+    """
+    run_app_ssl(**kwargs) if ssl else run_app(**kwargs)
+
+
+def run_t(ssl: bool = False, **kwargs):
+    """
+    tornado 启动入口
+    :param ssl:
+    :param kwargs:
+    :return:
+    """
+    tornado_ssl(**kwargs) if ssl else tornado(**kwargs)
+
+
+FLASK = 0
+TORNADO = 1
+
+
+def run(run_type: int = FLASK, ssl: bool = False, **kwargs):
+    """
+    统一入口
+    :param run_type: 启动类型
+    :param ssl:  https开关
+    :param kwargs: 启动参数
+    :return:
+    """
+    run_f(ssl, **kwargs) if run_type == FLASK else run_t(ssl, **kwargs) if run_type == TORNADO else 1 / 0
 
 
 def bootstrap_app():
