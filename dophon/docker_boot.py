@@ -11,6 +11,7 @@ import threading
 
 import time
 from urllib import request
+from . import boot
 
 
 def read_self_prop():
