@@ -187,7 +187,8 @@ def run_as_docker(
                 for package_name, package_version in extra_package.items():
                     if package_name in extra_package:
                         final_file.write(''.join([package_name, '>=', extra_package[package_name], '\n']))
-                        extra_package.popitem()
+                        # 会报迭代修改异常
+                        # extra_package.popitem()
                     else:
                         final_file.write(''.join([package_name, '>=', package_version, '\n']))
         # 生成Dockerfile

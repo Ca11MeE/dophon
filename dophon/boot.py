@@ -182,6 +182,8 @@ def map_apps(dir_path):
             i = os.path.join(path, file)
             if os.path.isdir(i):
                 logger.info(f'加载路由模块: {file}')
+                # 扫描内部文件夹
+                map_apps(f'{dir_path}{os.sep}{file}')
                 continue
             file_name = re.sub('\.py', '', file)
             f_model = __import__(re.sub('/', '', dir_path) + '.' + file_name, fromlist=True)
