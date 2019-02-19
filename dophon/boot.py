@@ -130,7 +130,7 @@ def before_request():
             """
             if (int(now_timestemp) - int(req_timestemp[0])) > 1 \
                     and \
-                            (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
+                    (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
                 # 检测3秒内请求数
                 if len(req_timestemp) > 50:
                     # 默认三秒内请求不超过300
@@ -186,7 +186,9 @@ def map_apps(dir_path):
                 map_apps(f'{dir_path}{os.sep}{file}')
                 continue
             file_name = re.sub('\.py', '', file)
-            f_model = __import__(re.sub('/', '', dir_path) + '.' + file_name, fromlist=True)
+            module_path = re.sub('^\.', '', re.sub('\\\\|/', '.', dir_path))
+            # print(module_path)
+            f_model = __import__(f'{module_path}.{file_name}', fromlist=True)
             # 自动装配蓝图实例并自动配置部分参数,免除繁琐配置以及精简代码
             package_app = getattr(f_model, '__app') \
                 if hasattr(f_model, '__app') \
@@ -211,34 +213,37 @@ def map_apps(dir_path):
     # for item in get_app().url_map.iter_rules():
     #     print(item)
     # print(get_app().blueprints)
-    # 注册路径列表入口
-    get_app().route('/rule/<view>')(lambda view: f"""
-<!-- import Vue.js -->
-<script src="//vuejs.org/js/vue.min.js"></script>
-<!-- import stylesheet -->
-<link rel="stylesheet" href="//unpkg.com/iview/dist/styles/iview.css">
-<!-- import iView -->
-<script src="//unpkg.com/iview/dist/iview.min.js"></script>
-<style>
-.ivu-card""""{width: 100%; display: inline-block; margin-top: 10px; margin-bottom: 10px;}"f"""
-</style>
-<div style="display;flex;column-count:5;">
-<div class="ivu-card ivu-card-bordered"><div class="ivu-card-body">
-    {'</div></div><div class="ivu-card ivu-card-bordered"><div class="ivu-card-body">'.join(
-        [
+    try:
+        # 注册路径列表入口
+        get_app().route('/rule/<view>')(lambda view: f"""
+    <!-- import Vue.js -->
+    <script src="//vuejs.org/js/vue.min.js"></script>
+    <!-- import stylesheet -->
+    <link rel="stylesheet" href="//unpkg.com/iview/dist/styles/iview.css">
+    <!-- import iView -->
+    <script src="//unpkg.com/iview/dist/iview.min.js"></script>
+    <style>
+    .ivu-card""""{width: 100%; display: inline-block; margin-top: 10px; margin-bottom: 10px;}"f"""
+    </style>
+    <div style="display;flex;column-count:5;">
+    <div class="ivu-card ivu-card-bordered"><div class="ivu-card-body">
+        {'</div></div><div class="ivu-card ivu-card-bordered"><div class="ivu-card-body">'.join(
+            [
+                str(item)
+                for item in get_app().url_map.iter_rules()
+
+            ]
+        )}
+    </div></div>
+    </div>
+        """ if view == 'map' else jsonify([
             str(item)
             for item in get_app().url_map.iter_rules()
 
-        ]
-    )}
-</div></div>
-</div>
-    """ if view == 'map' else jsonify([
-        str(item)
-        for item in get_app().url_map.iter_rules()
-
-    ]) if view == 'json' else abort(404)
-                                    )
+        ]) if view == 'json' else abort(404)
+                                        )
+    except AssertionError:
+        pass
 
 
 def before_bp_init_fun(f):
@@ -360,12 +365,12 @@ def enhance_static_route(static_floder_path: str):
                 route_path = f'{root_dir_path}/<file_name>'
                 static_url_method_code_body = \
                     f"@RequestMapping('{route_path}',['get','post'])\ndef {route_name}(file_name):\n\t" \
-                    f"return render_template(f'{root_dir_path}/" \
-                    "{file_name}" \
-                    f"') if file_name.endswith('.html') " \
-                    f"else send_from_directory('{static_floder_path}{root_dir_path}',f" \
-                    "'{file_name}'" \
-                    ",as_attachment=True)\n"
+                        f"return render_template(f'{root_dir_path}/" \
+                        "{file_name}" \
+                        f"') if file_name.endswith('.html') " \
+                        f"else send_from_directory('{static_floder_path}{root_dir_path}',f" \
+                        "'{file_name}'" \
+                        ",as_attachment=True)\n"
                 fsroute.write(bytes(
                     static_url_method_code_body,
                     encoding='utf-8'))

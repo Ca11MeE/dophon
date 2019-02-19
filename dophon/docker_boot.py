@@ -93,7 +93,7 @@ def listen_container_status(container_port, loop_count: int = 3, wait_sec: int =
         else:
             # 报错证明端口正常占用
             # 发起请求
-            url = f'http://{get_docker_address()}:{container_port}/rule'
+            url = f'http://{get_docker_address()}:{container_port}/rule/json'
             logger.info('容器存活性检查:' + url)
             res = request.urlopen(url)
             if not res.read():
