@@ -1,6 +1,8 @@
 # coding: utf-8
 from . import tools
+from .tools import dynamic_import
 if tools.is_not_windows():
+    dynamic_import.d_import('gevent')
     from gevent import monkey
     monkey.patch_all()
 from multiprocessing import Process, freeze_support

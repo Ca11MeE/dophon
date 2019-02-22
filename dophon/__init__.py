@@ -1,6 +1,8 @@
 # coding: utf-8
 from flask import Blueprint
 
+from dophon.tools.dynamic_import import d_import
+
 name = 'dophon'
 
 
@@ -53,6 +55,7 @@ def dophon_boot(f):
     def arg(*args, **kwargs):
         from . import tools
         if tools.is_not_windows():
+            d_import('gevent')
             from gevent import monkey
             monkey.patch_all()
         boot = __import__('dophon.boot', fromlist=True)

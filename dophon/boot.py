@@ -7,6 +7,7 @@ import re
 from datetime import datetime
 from threading import *
 import json
+from .tools.dynamic_import import d_import
 
 """
 初始化协程模块(必须,不然导致系统死锁)
@@ -14,6 +15,7 @@ import json
 from . import tools
 
 if tools.is_not_windows():
+    d_import('gevent')
     from gevent import monkey
 
     monkey.patch_all()
@@ -164,6 +166,8 @@ def persist_ip_count():
 
 blueprint_init_queue = {}  # 蓝图初始化方法缓存(用于初始化后启动)
 
+from .annotation.description import DESC_INFO
+
 
 # 处理各模块中的自动注入以及组装各路由
 # dir_path中为路由模块路径,例如需要引入的路由都在routes文件夹中,则传入参数'/routes'
@@ -189,12 +193,13 @@ def map_apps(dir_path):
             module_path = re.sub('^\.', '', re.sub('\\\\|/', '.', dir_path))
             # print(module_path)
             f_model = __import__(f'{module_path}.{file_name}', fromlist=True)
+
             # 自动装配蓝图实例并自动配置部分参数,免除繁琐配置以及精简代码
             package_app = getattr(f_model, '__app') \
                 if hasattr(f_model, '__app') \
                 else f_model.app \
                 if hasattr(f_model, 'app') \
-                else blue_print(f"_boot_auto_reg_{file_name}", getattr(f_model, '__name__'))
+                else blue_print(f"_boot_auto_reg.{file_name}", getattr(f_model, '__name__'))
             filter_method = package_app.before_request(before_request)
             # 若需统计请求,装配请求统计方法
             if hasattr(properties, 'ip_count') and getattr(properties, 'ip_count'):
@@ -205,13 +210,18 @@ def map_apps(dir_path):
                 # 判断是否方法
                 if callable(init_fun):
                     blueprint_init_queue[f_model] = before_bp_init_fun(init_fun)
-            app.register_blueprint(package_app)
+            get_app().register_blueprint(package_app)
+
         except Exception as e:
             raise e
             pass
 
-    # for item in get_app().url_map.iter_rules():
-    #     print(item)
+    for item in get_app().url_map.iter_rules():
+        print(item.endpoint)
+
+        # for name in dir(item):
+        #     print(f'{name} ==> {getattr(item, name)}')
+
     # print(get_app().blueprints)
     try:
         # 注册路径列表入口
@@ -416,6 +426,7 @@ def run_app(host=properties.host, port=properties.port):
 @free_source()
 def tornado(host=properties.host, port=properties.port):
     logger.info(f'添加Tornado核心')
+    d_import('tornado')
     from tornado.wsgi import WSGIContainer
     from tornado.httpserver import HTTPServer
     from tornado.ioloop import IOLoop
@@ -522,6 +533,14 @@ def bootstrap_app():
 from dophon.annotation import *
 
 
+# region 定义内部接口
+
+@GetRoute('/find/function/desc/by/module/<module_path>')
+@ResponseBody()
+def find_function_desc_by_module(module_path: str):
+    print(module_path)
+
+
 @RequestMapping('/framework/ip/count', ['get', 'post'])
 @ResponseBody()
 def view_ip_count():
@@ -554,6 +573,10 @@ def show_gc_info():
 
 from dophon.tools.framework_const import error_info_type, self_result
 
+
+# endregion
+
+# region 定义报错页面
 
 @app.errorhandler(500)
 def handle_500(e):
@@ -658,3 +681,5 @@ def handle_400(e):
     elif error_info == error_info_type.XML:
         return self_result.XmlResult(400, request.json if request.is_json else '',
                                      'please check your request data').as_res()
+
+# endregion

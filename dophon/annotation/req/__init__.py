@@ -2,6 +2,7 @@
 import functools
 import re
 from flask import request, abort
+from dophon import properties
 from dophon_logger import *
 
 logger = get_logger(DOPHON)
@@ -151,7 +152,6 @@ def is_json(arg_list):
 def is_form(arg_list):
     return arg_list.to_dict().values()
 
-
 # 路径绑定装饰器
 # 默认服务器从boot获取
 def request_mapping(path='', methods=[], app=None):
@@ -166,7 +166,7 @@ def request_mapping(path='', methods=[], app=None):
                     if hasattr(current_package, 'app') \
                     else app \
                     if hasattr(app, 'route') \
-                    else __import__('dophon').blue_print(f"_annotation_auto_reg{getattr(current_package, '__name__')}",
+                    else __import__('dophon').blue_print(f"_annotation_auto_reg.{getattr(current_package, '__name__')}",
                                                          getattr(current_package, '__name__'))
             except Exception as e:
                 logger.warn(f'{e}')
@@ -179,6 +179,8 @@ def request_mapping(path='', methods=[], app=None):
             logger.error(f'{getattr(f, "__module__")}参数配置缺失,请检查({path},{methods},{package_app})')
 
         def m_args(*args, **kwargs):
+            if properties.debug_trace:
+                logger.info(f'router endpoint:{getattr(f, "__module__")}.{f},router path:{path}')
             return result(*args, **kwargs)
 
         return m_args
@@ -191,10 +193,10 @@ def get_route(path=''):
     def method(f):
         result = request_mapping(path, ['get'])(f)
 
-        def m_args(*args, **kwargs):
+        def _args(*args, **kwargs):
             return result(*args, **kwargs)
 
-        return m_args
+        return _args
 
     return method
 
@@ -204,41 +206,39 @@ def post_route(path=''):
     def method(f):
         result = request_mapping(path, ['post'])(f)
 
-        def args(*args, **kwargs):
+        def _args(*args, **kwargs):
             return result(*args, **kwargs)
 
-        return args
+        return _args
 
     return method
 
 
 # get方法缩写
 def get(f, *args, **kwargs):
-    path = f'{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/",getattr(f, "__name__"))}'
+    path = f"""{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/",
+                                                                                         getattr(f, "__name__"))}"""
     result = request_mapping(re.sub('\s+', '', path), ['get'])(f)
 
-
     def method():
-        def args(*args, **kwargs):
+        def _args():
             return result(*args, **kwargs)
 
-        return args
-
+        return _args
 
     return method
 
 
 # post方法缩写
 def post(f, *args, **kwargs):
-    path = f'{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/",getattr(f, "__name__"))}'
+    path = f"""{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/",
+                                                                                         getattr(f, "__name__"))}"""
     result = request_mapping(re.sub('\s+', '', path), ['post'])(f)
 
-
     def method():
-        def args(*args, **kwargs):
+        def _args():
             return result(*args, **kwargs)
 
-        return args
-
+        return _args
 
     return method

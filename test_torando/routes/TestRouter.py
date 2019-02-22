@@ -2,5 +2,6 @@ from dophon.annotation import *
 
 
 @Get
-def test():
+@Desc()
+def test(test_arg1:str='666'):
     return 'this is torando test'

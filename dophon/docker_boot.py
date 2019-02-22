@@ -1,4 +1,5 @@
 # encoding: utf-8
+from dophon.tools import is_windows
 from . import boot
 import logging
 
@@ -107,7 +108,7 @@ def get_docker_address():
     获取容器载体ip
     :return:
     """
-    result = os.popen('ipconfig').readlines()
+    result = os.popen('ipconfig' if is_windows() else 'ifconfig').readlines()
     result_lines = []
     r_l_copy = []
     while result:

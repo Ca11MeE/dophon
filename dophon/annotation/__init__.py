@@ -2,6 +2,7 @@
 from dophon.annotation import AutoWired
 from dophon.annotation import res, req
 from dophon.annotation.AutoWired import *
+from dophon.annotation.description import *
 
 """
 注解集合(部分)
@@ -28,7 +29,8 @@ __all__ = [
     'AsFile',
     'BeanConfig',
     'bean',
-    'Bean'
+    'Bean',
+    'Desc'
 ]
 
 AutoWired = AutoWired
@@ -58,3 +60,5 @@ PostRoute = req.post_route
 Get = req.get
 
 Post = req.post
+
+Desc = desc

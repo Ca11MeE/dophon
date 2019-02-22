@@ -42,6 +42,17 @@
 pip install dophon
 ```
 
+相关依赖项:
+dophon-manager
+flask
+tornado
+urllib3
+gevent(windows不生效)
+schedule
+pyyaml
+dophon-logger
+dophon-properties
+
 或使用dophon-manager(需要安装poetry)
 
 > 安装poetry
