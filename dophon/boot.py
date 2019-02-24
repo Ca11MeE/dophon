@@ -166,8 +166,6 @@ def persist_ip_count():
 
 blueprint_init_queue = {}  # 蓝图初始化方法缓存(用于初始化后启动)
 
-from .annotation.description import DESC_INFO
-
 
 # 处理各模块中的自动注入以及组装各路由
 # dir_path中为路由模块路径,例如需要引入的路由都在routes文件夹中,则传入参数'/routes'
@@ -216,44 +214,10 @@ def map_apps(dir_path):
             raise e
             pass
 
-    for item in get_app().url_map.iter_rules():
-        print(item.endpoint)
-
         # for name in dir(item):
         #     print(f'{name} ==> {getattr(item, name)}')
 
     # print(get_app().blueprints)
-    try:
-        # 注册路径列表入口
-        get_app().route('/rule/<view>')(lambda view: f"""
-    <!-- import Vue.js -->
-    <script src="//vuejs.org/js/vue.min.js"></script>
-    <!-- import stylesheet -->
-    <link rel="stylesheet" href="//unpkg.com/iview/dist/styles/iview.css">
-    <!-- import iView -->
-    <script src="//unpkg.com/iview/dist/iview.min.js"></script>
-    <style>
-    .ivu-card""""{width: 100%; display: inline-block; margin-top: 10px; margin-bottom: 10px;}"f"""
-    </style>
-    <div style="display;flex;column-count:5;">
-    <div class="ivu-card ivu-card-bordered"><div class="ivu-card-body">
-        {'</div></div><div class="ivu-card ivu-card-bordered"><div class="ivu-card-body">'.join(
-            [
-                str(item)
-                for item in get_app().url_map.iter_rules()
-
-            ]
-        )}
-    </div></div>
-    </div>
-        """ if view == 'map' else jsonify([
-            str(item)
-            for item in get_app().url_map.iter_rules()
-
-        ]) if view == 'json' else abort(404)
-                                        )
-    except AssertionError:
-        pass
 
 
 def before_bp_init_fun(f):
@@ -571,12 +535,85 @@ def show_gc_info():
     return gc.show_gc_leak(logger.info) if GC_INFO else {}
 
 
-from dophon.tools.framework_const import error_info_type, self_result
+@GetRoute('/rule/<view>')
+def show_rule_info(view):
+    __bind_rule_info_map = {}
+
+    for item in get_app().url_map.iter_rules():
+        # print(next(get_app().url_map.iter_rules(item.endpoint)))
+        # print(re.sub('_annotation_auto_reg\.', '', item.endpoint))
+
+        __bind_rule_info_map[str(next(get_app().url_map.iter_rules(item.endpoint)))] = \
+            re.sub('_annotation_auto_reg\.', '', item.endpoint)
+
+    print(__bind_rule_info_map)
+
+    from .annotation.description import DESC_INFO
+
+    print(DESC_INFO)
+
+    try:
+        # 注册路径列表入口
+
+        #    {'</div></div><div class="ivu-card ivu-card-bordered"><div class="ivu-card-body">'.join(
+        #     [
+        #         str(item)
+        #         for item in get_app().url_map.iter_rules()
+        #
+        #     ]
+        # )}
+        body_str = ''
+        for item in get_app().url_map.iter_rules():
+            body_str += f"""<div class="panel panel-default">
+		<div class="panel-heading">
+			<h4 class="panel-title">
+				<a data-toggle="collapse" data-parent="#accordion" 
+				   href="#collapse_{id(item)}">
+					{item}
+				</a>
+			</h4>
+		</div>
+		<div id="collapse_{id(item)}" class="panel-collapse collapse">
+			<div class="panel-body">
+				{ DESC_INFO[__bind_rule_info_map[str(item)]] if __bind_rule_info_map[str(item)] in DESC_INFO else dict()}
+			</div>
+		</div>
+	</div>
+<style>
+Collapse()
+</style>"""
+
+        return f"""
+<html>
+<head>
+	<meta charset="utf-8"> 
+	<title>Bootstrap 实例 - 折叠面板</title>
+	<link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+	<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+       <div class="panel-group" id="accordion">
+       {body_str}
+       </div>
+
+</body>
+</html>
+           """ if view == 'map' else jsonify([
+            str(item)
+            for item in get_app().url_map.iter_rules()
+
+        ]) if view == 'json' else abort(404)
+    except AssertionError:
+        pass
 
 
 # endregion
 
 # region 定义报错页面
+
+from dophon.tools.framework_const import error_info_type, self_result
+
 
 @app.errorhandler(500)
 def handle_500(e):
