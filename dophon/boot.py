@@ -546,11 +546,11 @@ def show_rule_info(view):
         __bind_rule_info_map[str(next(get_app().url_map.iter_rules(item.endpoint)))] = \
             re.sub('_annotation_auto_reg\.', '', item.endpoint)
 
-    print(__bind_rule_info_map)
+    # print(__bind_rule_info_map)
 
     from .annotation.description import DESC_INFO
 
-    print(DESC_INFO)
+    # print(DESC_INFO)
 
     try:
         # 注册路径列表入口
@@ -565,40 +565,37 @@ def show_rule_info(view):
         body_str = ''
         for item in get_app().url_map.iter_rules():
             body_str += f"""<div class="panel panel-default">
-		<div class="panel-heading">
-			<h4 class="panel-title">
-				<a data-toggle="collapse" data-parent="#accordion" 
-				   href="#collapse_{id(item)}">
-					{item}
-				</a>
-			</h4>
-		</div>
-		<div id="collapse_{id(item)}" class="panel-collapse collapse">
-			<div class="panel-body">
-				{ DESC_INFO[__bind_rule_info_map[str(item)]] if __bind_rule_info_map[str(item)] in DESC_INFO else dict()}
-			</div>
-		</div>
-	</div>
-<style>
-Collapse()
-</style>"""
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse"
+                           href="#collapse_{id(item)}">
+                            {item}
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapse_{id(item)}" class="panel-collapse collapse">
+                    <div class="panel-body">
+                        { DESC_INFO[__bind_rule_info_map[str(item)]] if __bind_rule_info_map[str(item)] in DESC_INFO else dict()}
+                    </div>
+                </div>
+            </div>"""
 
         return f"""
-<html>
-<head>
-	<meta charset="utf-8"> 
-	<title>Bootstrap 实例 - 折叠面板</title>
-	<link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
-	<script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
-	<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
-</head>
-<body>
-       <div class="panel-group" id="accordion">
-       {body_str}
-       </div>
-
-</body>
-</html>
+            <html>
+            <head>
+                <meta charset="utf-8"> 
+                <title>Bootstrap 实例 - 折叠面板</title>
+                <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+                <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+                <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+            </head>
+            <body>
+                   <div class="panel-group" id="accordion">
+                   {body_str}
+                   </div>
+            
+            </body>
+            </html>
            """ if view == 'map' else jsonify([
             str(item)
             for item in get_app().url_map.iter_rules()
