@@ -20,4 +20,4 @@
 --- 
 
 ---
-# 使用文档请移步至[wiki](https://gitee.com/callmee/dophon.wiki.git)
+# 使用文档请移步至[wiki](https://gitee.com/callmee/dophon.wiki.git)或点击下载[dophon.zip](http://dophon-file.oss-cn-shenzhen.aliyuncs.com/dophon.zip)
