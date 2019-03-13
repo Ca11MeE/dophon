@@ -553,6 +553,29 @@ def show_rule_info(view):
     # print(DESC_INFO)
 
     try:
+        def __sort_inner_desc_info(item_key: str):
+            result = ''
+            if __bind_rule_info_map[item_key] in DESC_INFO:
+                __desc_info = DESC_INFO[__bind_rule_info_map[item_key]]
+            else:
+                return result
+            for __arg_name, __arg_info in __desc_info.items():
+                result += f"""
+                    <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                        {__arg_name}
+                                </h4>
+                            </div>
+                            <div id="collapse_{id(__arg_name)}_{id(__arg_info)}" class="panel-collapse">
+                                <div class="panel-body">
+                                    { __arg_info }
+                                </div>
+                            </div>
+                        </div>
+                    """
+            return result
+
         # 注册路径列表入口
 
         #    {'</div></div><div class="ivu-card ivu-card-bordered"><div class="ivu-card-body">'.join(
@@ -565,37 +588,37 @@ def show_rule_info(view):
         body_str = ''
         for item in get_app().url_map.iter_rules():
             body_str += f"""<div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="panel-title">
-                        <a data-toggle="collapse"
-                           href="#collapse_{id(item)}">
-                            {item}
-                        </a>
-                    </h4>
-                </div>
-                <div id="collapse_{id(item)}" class="panel-collapse collapse">
-                    <div class="panel-body">
-                        { DESC_INFO[__bind_rule_info_map[str(item)]] if __bind_rule_info_map[str(item)] in DESC_INFO else dict()}
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" 
+                               href="#collapse_{id(item)}">
+                                {item}
+                            </a>
+                        </h4>
                     </div>
-                </div>
-            </div>"""
+                    <div id="collapse_{id(item)}" class="panel-collapse collapse">
+                        <div class="panel-body">
+                            { __sort_inner_desc_info(str(item)) }
+                        </div>
+                    </div>
+                </div>"""
 
         return f"""
-            <html>
-            <head>
-                <meta charset="utf-8"> 
-                <title>Bootstrap 实例 - 折叠面板</title>
-                <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
-                <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
-                <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
-            </head>
-            <body>
-                   <div class="panel-group" id="accordion">
-                   {body_str}
-                   </div>
-            
-            </body>
-            </html>
+                <html>
+                <head>
+                    <meta charset="utf-8"> 
+                    <title>infos</title>
+                    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+                    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+                    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+                </head>
+                <body>
+                       <div class="panel-group" id="accordion">
+                       {body_str}
+                       </div>
+                
+                </body>
+                </html>
            """ if view == 'map' else jsonify([
             str(item)
             for item in get_app().url_map.iter_rules()
