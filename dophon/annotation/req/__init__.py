@@ -152,6 +152,7 @@ def is_json(arg_list):
 def is_form(arg_list):
     return arg_list.to_dict().values()
 
+
 # 路径绑定装饰器
 # 默认服务器从boot获取
 def request_mapping(path='', methods=[], app=None):
@@ -188,10 +189,23 @@ def request_mapping(path='', methods=[], app=None):
     return method
 
 
+# 请求方法缩写
+def method_route(req_method: str, path: str = '', ):
+    def method(f):
+        result = request_mapping(path, [req_method])(f)
+
+        def _args(*args, **kwargs):
+            return result(*args, **kwargs)
+
+        return _args
+
+    return method
+
+
 # get方法缩写
 def get_route(path=''):
     def method(f):
-        result = request_mapping(path, ['get'])(f)
+        result = method_route('get', path)(f)
 
         def _args(*args, **kwargs):
             return result(*args, **kwargs)
@@ -204,7 +218,7 @@ def get_route(path=''):
 # post方法缩写
 def post_route(path=''):
     def method(f):
-        result = request_mapping(path, ['post'])(f)
+        result = method_route('post', path)(f)
 
         def _args(*args, **kwargs):
             return result(*args, **kwargs)
@@ -214,11 +228,16 @@ def post_route(path=''):
     return method
 
 
+func_to_path = lambda f: f"""{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]",
+                                                                                                       "/",
+                                                                                                       getattr(f,
+                                                                                                               "__name__"))}"""
+
+
 # get方法缩写
 def get(f, *args, **kwargs):
-    path = f"""{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/",
-                                                                                         getattr(f, "__name__"))}"""
-    result = request_mapping(re.sub('\s+', '', path), ['get'])(f)
+    path = func_to_path(f)
+    result = get_route(re.sub('\s+', '', path))(f)
 
     def method():
         def _args():
@@ -231,9 +250,9 @@ def get(f, *args, **kwargs):
 
 # post方法缩写
 def post(f, *args, **kwargs):
-    path = f"""{"/" if re.match("^[a-zA-Z0-9]+", getattr(f, "__name__")) else ""}{re.sub("[^a-zA-Z0-9]", "/",
-                                                                                         getattr(f, "__name__"))}"""
-    result = request_mapping(re.sub('\s+', '', path), ['post'])(f)
+    path = func_to_path(f)
+
+    result = post_route(re.sub('\s+', '', path))(f)
 
     def method():
         def _args():
