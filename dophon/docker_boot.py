@@ -1,6 +1,6 @@
 # encoding: utf-8
 from dophon.tools import is_windows
-from . import boot
+from dophon import boot
 import logging
 
 import re
@@ -135,19 +135,29 @@ def attach_container(base_name: str):
     os.system('docker attach ' + base_name)
 
 
+def has_version_expr(info: str):
+    return re.search('(>=|==|=>|<=|=<)', info)
+
+
 def run_as_docker(
         entity_file_name: str = None,
         container_port: str = str(properties.port),
         docker_port: str = str(properties.port),
         attach_cmd: bool = False,
+        alive_test: bool = False,
+        save_image: bool = False,
         extra_package: dict = {},
         cache_virtual_env_dir: str = '',
         package_repository: str = '',
         package_cache_path: str = '',
-        timezone:str='Asia/Shanghai'
+        timezone: str = 'Asia/Shanghai',
+        img_author: str = 'local_user',
+        img_message: str = 'a new image',
 ):
     """
     利用docker启动项目
+    :param save_image: 是否保存镜像(选择后不启动,直接导出镜像)
+    :param alive_test: 容器存活检测(默认不检测)
     :param entity_file_name: 入口文件名(包括后缀)
     :param container_port: 容器暴露端口
     :param docker_port: 容器内部端口 -> 集群模式下的暴露端口,一般为配置文件定义的端口
@@ -157,8 +167,11 @@ def run_as_docker(
     :param package_repository: 自带缓存包路径,若为空会自动执行pip安装
                 # 阿里云仓库  =>  https://mirrors.aliyun.com/pypi/simple/
     :param package_cache_path: 包缓存路径
+    :param timezone: 时区代号
     :return:
     """
+    # 依赖包的缓存
+    package_cache = []
     try:
         logger.info('容器前期准备')
         root = re.sub('\\\\', '/', properties.project_root)
@@ -173,11 +186,26 @@ def run_as_docker(
             with open('./requirements.txt', 'w') as final_file:
 
                 for line in file.readlines():
+                    if line.startswith('-e'):
+                        continue
                     for key in sys.modules.keys():
-                        if re.search('(_|__|\\.).+$', key):
-                            continue
-                        module_path = re.sub('(>=|==|=>|<=|=<|<|>|=).*\s+', '', line.lower())
-                        if re.search(module_path, key.lower()):
+                        if re.search('^dophon(_\w+)*$', key):
+                            pass
+                        else:
+                            if re.search('^_+', key) or re.search('(_|__|\.)+.+$', key):
+                                # print(key,end=']')
+                                continue
+                        module_path = re.sub(
+                            '-',
+                            '_',
+                            re.sub('''(>=|==|=>|<=|=<|<|>|=)['"\w\.]+\s+''', '', line.lower())
+                        )
+                        # print(module_path, '===>', line, '====>', key) if line.startswith('dophon') and key.startswith(
+                        #     'dophon') else None
+                        if re.search(module_path.lower(), key.lower()) or re.search(key.lower(), module_path.lower()):
+                            if module_path in package_cache:
+                                continue
+                            package_cache.append(module_path)
                             if module_path in extra_package:
                                 final_file.write(f'{module_path}>={extra_package[module_path]}\n')
                                 extra_package.pop(module_path)
@@ -188,11 +216,27 @@ def run_as_docker(
                 # 写入额外包
                 for package_name, package_version in extra_package.items():
                     if package_name in extra_package:
-                        final_file.write(''.join([package_name, '>=', extra_package[package_name], '\n']))
+                        final_file.write(
+                            ''.join(
+                                [
+                                    package_name,
+                                    '' if has_version_expr(extra_package[package_name]) else '>=',
+                                    extra_package[package_name],
+                                    '\n']
+                            )
+                        )
                         # 会报迭代修改异常
                         # extra_package.popitem()
                     else:
-                        final_file.write(''.join([package_name, '>=', package_version, '\n']))
+                        final_file.write(
+                            ''.join(
+                                [
+                                    package_name,
+                                    '' if has_version_expr(extra_package[package_name]) else '>=',
+                                    package_version,
+                                    '\n']
+                            )
+                        )
         # 生成Dockerfile
         logger.info('生成Dockerfile')
         with open('./Dockerfile', 'w') as file:
@@ -239,12 +283,48 @@ def run_as_docker(
             base_name + ' ' +
             os.path.basename(
                 root))
+        if save_image:
+            logger.info('检测容器状态')
+            from subprocess import Popen, PIPE
+            status_code = '\'{{.State.Status}}\''
+            __status = 'running'
+            while __status == 'running':
+                p = Popen(
+                    f"docker inspect {base_name} -f {status_code}",
+                    stdout=PIPE,
+                    stderr=PIPE
+                )
+                p.wait()
+                __status = eval(p.stdout.read().decode('utf-8'))
+                from urllib import request
+                try:
+                    res = request.urlopen(f'http://127.0.0.1:{container_port}/rule/map')
+                    # for name in dir(res):
+                    #     print(f'{name}===>{getattr(res, name)}')
+                    if int(res.code) == 200:
+                        break
+                except:
+                    pass
+                if __status == 'exited':
+                    raise Exception(f'容器启动失败,状态为{__status}')
+            logger.info('提交镜像')
+            from datetime import datetime
+            __commit_image_name = f'image_{base_name}{datetime.now().timestamp()}'
+            # 保存镜像
+            os.system(f"""
+            docker commit --author "{img_author}" --message "{img_message}" {base_name} {__commit_image_name}
+            """)
+            logger.info('生成镜像')
+            os.system(f"""docker save -o {base_name}.img.bak.__ {__commit_image_name}""")
+            exit(0)
+            return
         logger.info('打印容器内部地址(空地址代表启动失败)')
         os.system('docker inspect --format=\'{{.NetworkSettings.IPAddress}}\' ' + base_name)
         logger.info('打印容器载体地址')
         print(get_docker_address())
-        logger.info('启动检测容器端口')
-        threading.Thread(target=listen_container_status, args=(container_port,)).start()
+        if alive_test:
+            logger.info('启动检测容器端口')
+            threading.Thread(target=listen_container_status, args=(container_port,)).start()
         if attach_cmd:
             logger.info('进入镜像')
             # threading.Thread(target=attach_container,args=(base_name,)).start()

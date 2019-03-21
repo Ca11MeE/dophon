@@ -1,14 +1,11 @@
-from test_pip_async import d_import
+from dophon import docker_boot
 
-
-d_import('dophon_db')
-d_import('dophon_mq')
-
-import dophon_db
-import dophon_mq
-
-print(dophon_db)
-print(dophon_mq)
-
-while True:
-    pass
+docker_boot.run_as_docker(
+    entity_file_name='bootstrap.py',
+    package_repository='https://mirrors.aliyun.com/pypi/simple/',
+    extra_package={
+        'dophon': '*',
+        'gevent':'*'
+    },
+    save_image=True
+)

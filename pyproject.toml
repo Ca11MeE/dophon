@@ -11,6 +11,7 @@ keywords = ['web', 'framework', 'dophon']
 python = "^3.6"
 dophon-manager = "*"
 flask="*"
+tqdm="*"
 #tornado="*"
 #PyMySQL='*'
 urllib3="*"
@@ -20,7 +21,7 @@ schedule="*"
 #filetype = "^1.0"
 #pyyaml = "^3.13"
 dophon-logger="*"
-#dophon-properties="*"
+dophon-properties="*"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.6"

@@ -1,6 +1,8 @@
+import os
 from subprocess import Popen, PIPE, DEVNULL
 
 from dophon_properties import *
+from tqdm import tqdm
 
 get_property(DOPHON)
 from dophon_logger import *
@@ -36,9 +38,13 @@ def __dynamic_import(module_name, version='*'):
                 pip_arg_list.append('-U')
                 exe_pip_args.append('-U')
             # 利用popen执行命令安装包
-            p = Popen(f'pip install {module_name} {"" if is_windows() else "--user"}', stdout=DEVNULL, stderr=DEVNULL)
-            # tqdm(p.stdout.readlines(), f'install {module_name}')
+            # p = Popen(f'pip install {module_name} {"" if is_windows() else "--user"}', stdout=DEVNULL, stderr=DEVNULL)
+            p = Popen(f'pip install {module_name} {"" if is_windows() else "--user"}',stdout=PIPE,stderr=PIPE)
             p.wait()
+            # tqdm(p.stdout.readlines(), f'install {module_name}')
+            lines_queue = tqdm(p.stdout.readlines())
+            for item in lines_queue:
+                lines_queue.set_description(item)
             __module = __import__(module_name)
 
 
@@ -66,3 +72,10 @@ def d_import(module_name, version: str = '*'):
     :return:
     """
     __d_import(module_name=module_name, version=version)
+    restart_program()
+
+
+# 重启程序
+def restart_program():
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
