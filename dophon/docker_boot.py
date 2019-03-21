@@ -144,6 +144,7 @@ def run_as_docker(
         cache_virtual_env_dir: str = '',
         package_repository: str = '',
         package_cache_path: str = '',
+        timezone:str='Asia/Shanghai'
 ):
     """
     利用docker启动项目
@@ -210,6 +211,9 @@ def run_as_docker(
                 file.write(f'RUN pip install -i {package_repository} -r requirements.txt' + '\n')
             else:
                 file.write('RUN pip install --no-cache-dir -r requirements.txt' + '\n')
+            # 设置系统时区
+            file.write(f'ENV TZ={timezone}' + '\n')
+            file.write('RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone' + '\n')
             file.write('CMD ["python","./' + (entity_file_name if entity_file_name else 'Bootstrap.py') + '"]' + '\n')
             # file.write('CMD ["/bin/bash"]' + '\n')
         os.system('cd ' + root)
