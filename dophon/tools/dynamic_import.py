@@ -72,10 +72,3 @@ def d_import(module_name, version: str = '*'):
     :return:
     """
     __d_import(module_name=module_name, version=version)
-    restart_program()
-
-
-# 重启程序
-def restart_program():
-    python = sys.executable
-    os.execl(python, python, *sys.argv)
