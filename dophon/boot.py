@@ -1,15 +1,4 @@
 # coding: utf-8
-"""
-初始化协程模块(必须,不然导致系统死锁)
-"""
-from .tools.dynamic_import import d_import
-from . import tools
-
-if tools.is_not_windows():
-    d_import('gevent')
-    from gevent import monkey
-
-    monkey.patch_all()
 import traceback
 import functools
 import os
