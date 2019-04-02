@@ -166,7 +166,7 @@ def request_mapping(path='', methods=[], app=None):
                     else current_package.app \
                     if hasattr(current_package, 'app') \
                     else app \
-                    if hasattr(app, 'route') \
+                    if hasattr(app, 'routes') \
                     else __import__('dophon').blue_print(f"_annotation_auto_reg.{getattr(current_package, '__name__')}",
                                                          getattr(current_package, '__name__'))
             except Exception as e:

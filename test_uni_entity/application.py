@@ -1,4 +1,4 @@
-blueprint_path = ['/route']
+blueprint_path = ['/routes']
 debug_trace = False
 error_info = 'HTML'
 host = '127.0.0.1'

@@ -4,6 +4,7 @@ import re
 import inspect
 from dophon_logger import *
 import types
+from dophon.tools import sys_utils
 
 logger = get_logger(DOPHON)
 
@@ -242,7 +243,7 @@ class BeanConfig:
                 else:
                     logger.error('不存在实例配置文件')
                     self()
-            elif isinstance(config_file,types.ModuleType):
+            elif isinstance(config_file, types.ModuleType):
                 # 模块形式配置文件
                 try:
                     logger.info('读取配置文件: %s ' % (config_file,))
@@ -274,7 +275,7 @@ class Bean:
         if isinstance(bean_key, str):
             if bean_key in obj_manager:
                 return obj_manager[bean_key]
-            raise KeyError('不存在该别名实例')
+            raise KeyError(f'不存在该别名实例:({bean_key})')
         elif isinstance(bean_key, type):
             type_list = []
             for key in obj_manager.keys():
@@ -283,16 +284,26 @@ class Bean:
                 bean_obj = obj_manager[key]
                 if isinstance(bean_obj, bean_key):
                     if len(type_list) > 0:
-                        raise UniqueError('存在定义模糊的实例获取类型')
+                        raise UniqueError(f'存在定义模糊的实例获取类型:({bean_key})')
                     type_list.append(bean_obj)
             if not type_list:
-                raise KeyError('不存在该类型实例')
+                raise KeyError(f'不存在该类型实例:({bean_key})')
             return type_list[0]
         else:
             logger.error('无法获取的实例: %s' % (bean_key,))
 
 
-def Bean(clz):
-    print(f'define bean class{clz}')
-    obj_manager[getattr(clz,'__name__')] = clz()
-    print(obj_manager)
+def DefBean(clz):
+    # print(f'define bean class{clz}')
+    if type(clz) is type:
+        __instance = clz()
+        # for name in dir(clz):
+        #     print(f'{name} => {getattr(clz, name)}')
+        # print(f'''{clz} => {}''')
+        alias_fstr = f"_{getattr(clz, '__name__')}__bean_alias"
+        clz_alias = sys_utils.to_lower_camel(getattr(clz, alias_fstr)) \
+            if hasattr(clz, alias_fstr) \
+            else getattr(clz, '__name__')
+        if clz_alias not in obj_manager:
+            obj_manager[sys_utils.to_lower_camel(clz_alias)] = __instance
+    # print(obj_manager)

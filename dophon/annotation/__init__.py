@@ -30,7 +30,8 @@ __all__ = [
     'BeanConfig',
     'bean',
     'Bean',
-    'Desc'
+    'Desc',
+    'DefBean'
 ]
 
 AutoWired = AutoWired
@@ -62,3 +63,5 @@ Get = req.get
 Post = req.post
 
 Desc = desc
+
+DefBean = DefBean

@@ -1,5 +1,5 @@
 ab_mode=-1
-blueprint_path=['/route']
+blueprint_path=['/routes']
 db_pool_exe_time=False
 debug_trace=False
 error_info='HTML'

@@ -1,5 +1,8 @@
 from dophon.annotation import *
+from .BaseController import BaseController
 
-@Bean
-class DefBean:
-    print("this is a bean")
+
+@DefBean
+class DefBean(BaseController):
+    def call_method(self):
+        return 'this is DefBean'

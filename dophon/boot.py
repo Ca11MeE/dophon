@@ -157,7 +157,7 @@ blueprint_init_queue = {}  # 蓝图初始化方法缓存(用于初始化后启�
 
 
 # 处理各模块中的自动注入以及组装各路由
-# dir_path中为路由模块路径,例如需要引入的路由都在routes文件夹中,则传入参数'/route'
+# dir_path中为路由模块路径,例如需要引入的路由都在routes文件夹中,则传入参数'/routes'
 def map_apps(dir_path):
     path = os.getcwd() + dir_path
     if not os.path.exists(path):
@@ -208,32 +208,38 @@ def map_apps(dir_path):
 
     # print(get_app().blueprints)
 
-def map_bean(bean_path:str):
+
+def map_bean(bean_path: str):
     __project_root = properties.project_root.replace("\\", "/")
     bean_dir = re.sub('(\\\\|/)', '', bean_path)
     # 不存在路由定义
-    print(f'bean_path: {bean_path}')
-    for root,dirs,files in os.walk(f'{__project_root}{bean_path}'):
-        relative_path = re.sub(f'{__project_root}','',root)
-            # exec(f'from {re.sub("/", ".", __bean_dir)} import {module_path.split(".")[-1]}')
-        print(f'{relative_path} => {dirs} => {files}')
-        for file in files:
-            file_short_name = os.path.basename(file).split(".")[0]
-            if not file.endswith('.py') or re.match('__.+__',file_short_name):
-                # 不是python脚本文件
+    # print(f'bean_path: {bean_path}')
+    try:
+        for root, dirs, files in os.walk(f'{__project_root}{bean_path}'):
+            relative_path = re.sub(f'{__project_root}', '', root)
+            # 若处于路由定义则跳过
+            if relative_path in properties.blueprint_path or relative_path == '/':
                 continue
-            # 获取内部文件路径
-            __file_path = f'{relative_path}/{file_short_name}'
-            # 整理成包形式
-            __file_package = re.sub('(\\\\|/)','.',__file_path)
-            print(__file_package)
-            __file_package_part = __file_package.split('.')[1:]
-            print(__file_package_part)
-            __exec_code = f'from {".".join(__file_package_part[:-1])} import {__file_package_part[-1]}'
-            print(__exec_code)
-            exec(__exec_code)
-    __import__(bean_dir,fromlist=bean_dir)
-
+            # exec(f'from {re.sub("/", ".", __bean_dir)} import {module_path.split(".")[-1]}')
+            # print(f'{relative_path} => {dirs} => {files}')
+            for file in files:
+                file_short_name = os.path.basename(file).split(".")[0]
+                if not file.endswith('.py') or re.match('__.+__', file_short_name):
+                    # 不是python脚本文件
+                    continue
+                # 获取内部文件路径
+                __file_path = f'{relative_path}/{file_short_name}'
+                # 整理成包形式
+                __file_package = re.sub('(\\\\|/)', '.', __file_path)
+                # print(__file_package)
+                __file_package_part = __file_package.split('.')[1:]
+                # print(__file_package_part)
+                __exec_code = f'from {".".join(__file_package_part[:-1])} import {__file_package_part[-1]}'
+                # print(__exec_code)
+                exec(__exec_code)
+        __import__(bean_dir, fromlist=bean_dir)
+    except Exception as e:
+        pass
 
 
 def before_bp_init_fun(f):
@@ -262,14 +268,11 @@ def free_source():
         def args(*arg, **kwarg):
             logger.info('启动服务器')
             logger.info('路由初始化')
-            logger.debug('mapping route')
+            logger.debug('mapping routes')
             for path in properties.blueprint_path:
                 map_apps(path)
             logger.debug('mapping beans')
-            for bean_path in ['/controller']:
-                # 若处于路由定义则跳过
-                if bean_path in properties.blueprint_path:
-                    continue
+            for bean_path in ['/controller', '/']:
                 map_bean(bean_path)
             load_footer()
             # 执行蓝图初始化方法
@@ -291,10 +294,10 @@ def free_source():
             :return:
             """
             logger.info('服务器关闭')
-            logger.info('释放资源')
+            logger.debug('释放资源')
             if mysql:
                 mysql.free_pool()
-            logger.info('释放连接池')
+            logger.debug('释放连接池')
             sys.exit()
             # logger.info('再次按下Ctrl+C退出')
 
@@ -335,7 +338,7 @@ def enhance_static_route(static_floder_path: str):
     framework_static_route_path = f'{properties.project_root}{properties.blueprint_path[0]}/FrameworkStaticRoute.py'
     # if not os.path.exists(framework_static_route_path):
     if True:
-        import types
+        # import types
         import uuid
         # 定义静态资源获取路径
         logger.info('增强静态文件路由')
