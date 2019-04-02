@@ -290,3 +290,9 @@ class Bean:
             return type_list[0]
         else:
             logger.error('无法获取的实例: %s' % (bean_key,))
+
+
+def Bean(clz):
+    print(f'define bean class{clz}')
+    obj_manager[getattr(clz,'__name__')] = clz()
+    print(obj_manager)

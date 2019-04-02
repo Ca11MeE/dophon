@@ -5,7 +5,8 @@ docker_boot.run_as_docker(
     package_repository='https://mirrors.aliyun.com/pypi/simple/',
     extra_package={
         'dophon': '*',
-        'gevent':'*'
+        'gevent': '*'
     },
-    save_image=True
+    save_image=True,
+    attach_cmd=True,
 )

@@ -3,7 +3,7 @@ port: 18080
 
 server_processes: 3  # 服务器多进程处理
 
-blueprint_path: ['/routes']
+blueprint_path: ['/route']
 mq:
   remote_center: False
 
