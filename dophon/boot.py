@@ -272,7 +272,7 @@ def free_source():
             for path in properties.blueprint_path:
                 map_apps(path)
             logger.debug('mapping beans')
-            for bean_path in ['/']:
+            for bean_path in properties.components_path:
                 map_bean(bean_path)
             load_footer()
             # 执行蓝图初始化方法

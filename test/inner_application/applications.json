@@ -19,5 +19,6 @@
   "logger_config" :{
         "format": "%(message)s",
         "datefmt": "%Y-%m-%d %H:%M:%S"
-    }
+    },
+  "components_path":["/routes"]
 }
