@@ -54,10 +54,6 @@ def dophon_boot(f):
 
     def arg(*args, **kwargs):
         from . import tools
-        if tools.is_not_windows():
-            d_import('gevent')
-            from gevent import monkey
-            monkey.patch_all()
         boot = __import__('dophon.boot', fromlist=True)
         kwargs['boot'] = boot
         return f(*args, **kwargs)

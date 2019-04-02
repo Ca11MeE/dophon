@@ -398,19 +398,15 @@ def fix_template(
 @free_source()
 def run_app(host=properties.host, port=properties.port):
     logger.info(f'监听地址: {host} : {port}')
-    if properties.server_gevented:
-        from gevent.pywsgi import WSGIServer
-        WSGIServer((host, port), app).serve_forever()
+    if properties.server_threaded:
+        # 开启多线程处理
+        app.run(host=host, port=port, threaded=properties.server_threaded)
+    elif tools.is_not_windows() and properties.server_processes > 1:
+        # 开启多进程处理
+        print('开启多进程', properties.server_processes)
+        app.run(host=host, port=port, threaded=False, processes=properties.server_processes)
     else:
-        if properties.server_threaded:
-            # 开启多线程处理
-            app.run(host=host, port=port, threaded=properties.server_threaded)
-        elif tools.is_not_windows() and properties.server_processes > 1:
-            # 开启多进程处理
-            print('开启多进程', properties.server_processes)
-            app.run(host=host, port=port, threaded=False, processes=properties.server_processes)
-        else:
-            app.run(host=host, port=port)
+        app.run(host=host, port=port)
 
 
 @free_source()
@@ -435,23 +431,15 @@ def tornado(host=properties.host, port=properties.port):
 @free_source()
 def run_app_ssl(host=properties.host, port=properties.port, ssl_context=properties.ssl_context):
     logger.info(f'监听地址: {host} : {port}')
-    if properties.server_gevented:
-        from gevent.pywsgi import WSGIServer
-        ssl_args = {
-            'certfile': ssl_context[0],
-            'keyfile': ssl_context[1],
-        }
-        WSGIServer((host, port), app, **ssl_args).serve_forever()
+    if properties.server_threaded:
+        # 开启多线程处理
+        app.run(host=host, port=port, ssl_context=ssl_context, threaded=properties.server_threaded)
+    elif tools.is_not_windows() and properties.server_processes > 1:
+        # 开启多进程处理
+        app.run(host=host, port=port, ssl_context=ssl_context, threaded=False,
+                processes=properties.server_processes)
     else:
-        if properties.server_threaded:
-            # 开启多线程处理
-            app.run(host=host, port=port, ssl_context=ssl_context, threaded=properties.server_threaded)
-        elif tools.is_not_windows() and properties.server_processes > 1:
-            # 开启多进程处理
-            app.run(host=host, port=port, ssl_context=ssl_context, threaded=False,
-                    processes=properties.server_processes)
-        else:
-            app.run(host=host, port=port, ssl_context=ssl_context)
+        app.run(host=host, port=port, ssl_context=ssl_context)
 
 
 @free_source()
