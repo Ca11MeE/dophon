@@ -21,7 +21,10 @@ from flask import Flask, request, abort, jsonify
 from dophon import properties, blue_print
 from dophon.tools import gc
 from . import tools
+from .tools.dynamic_import import d_import
 
+
+# 旧版本与数据库的耦合,后期版本移除
 try:
     mysql = __import__('dophon.db.mysql')
 except:
@@ -209,7 +212,7 @@ def map_apps(dir_path):
     # print(get_app().blueprints)
 
 
-def map_bean(bean_path: str):
+def map_bean(bean_path: str,is_project_root:bool = False):
     __project_root = properties.project_root.replace("\\", "/")
     bean_dir = re.sub('(\\\\|/)', '', bean_path)
     # 不存在路由定义
@@ -218,7 +221,11 @@ def map_bean(bean_path: str):
         for root, dirs, files in os.walk(f'{__project_root}{bean_path}'):
             relative_path = re.sub(f'{__project_root}', '', root)
             # 若处于路由定义则跳过
-            if relative_path in properties.blueprint_path or relative_path == '/':
+            # 相对路径为根路径也跳过
+            # 强制指定为项目根路径也跳过
+            if relative_path in properties.blueprint_path \
+                    or relative_path == '/' \
+                    or is_project_root:
                 continue
             # exec(f'from {re.sub("/", ".", __bean_dir)} import {module_path.split(".")[-1]}')
             # print(f'{relative_path} => {dirs} => {files}')
@@ -273,6 +280,10 @@ def free_source():
                 map_apps(path)
             logger.debug('mapping beans')
             for bean_path in properties.components_path:
+                is_project_root = os.path.abspath(properties.project_root + bean_path) == os.path.abspath(properties.project_root)
+                if is_project_root:
+                    # 若配置项目自身路径则提示警告
+                    logger.warning(f'扫描路径(components_path)存在项目根路径的配置会导致项目异常启动,请注意')
                 map_bean(bean_path)
             load_footer()
             # 执行蓝图初始化方法

@@ -1,3 +1,4 @@
+import re
 from functools import wraps
 from ..req import auto_param
 from inspect import getfullargspec
@@ -27,14 +28,23 @@ def desc(
         # print(full_arg_spec)
         # 处理参数信息,放入参数信息列
         __function_arg_info = {}
+        __func_info = {
+            'own_doc': re.sub('(\n)','<br />',__own_doc)
+        }
         for __inner_arg_index in range(len(__args)):
             __function_arg_info[__args[__inner_arg_index]] = {
                 'name': __args[__inner_arg_index],
-                'default_value': __defaults[__inner_arg_index],
-                'annotation_type': __annotations[__args[__inner_arg_index]],
-                'own_doc': __own_doc
+                # 获取参数上的默认值
+                'default_value': __defaults[__inner_arg_index]
+                if __defaults and __inner_arg_index in __defaults
+                else 'nothing',
+                # 获取参数上的类型修饰
+                'annotation_type': __annotations[__args[__inner_arg_index]].__name__
+                if __annotations and __args[__inner_arg_index] in __annotations
+                else 'any',
             }
-        DESC_INFO[f'{getattr(f, "__module__")}.{getattr(f, "__name__")}'] = __function_arg_info
+        __func_info['args_info'] = __function_arg_info
+        DESC_INFO[f'{getattr(f, "__module__")}.{getattr(f, "__name__")}'] = __func_info
 
         @wraps(f)
         def inner_args(*args, **kwargs):
