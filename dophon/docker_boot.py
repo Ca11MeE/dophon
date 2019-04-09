@@ -242,7 +242,7 @@ def run_as_docker(
         with open('./Dockerfile', 'w') as file:
             file.write('FROM python:' + p_version + '\n')
             file.write('ADD . ' + work_dir + '\n')
-            file.write('ADD . ' + work_dir + '/' + base_name + '\n')
+            # file.write('ADD . ' + work_dir + '/' + base_name + '\n')
             file.write('WORKDIR ' + work_dir + '\n')
             if cache_virtual_env_dir:
                 file.write(f'ADD {cache_virtual_env_dir} ~/.cache_virtual_env' + '\n')

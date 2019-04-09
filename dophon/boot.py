@@ -212,6 +212,24 @@ def map_apps(dir_path):
     # print(get_app().blueprints)
 
 
+def BeanScan(scan_path: list = []):
+    def method(f):
+        def method_args(*args, **kwargs):
+            logger.debug('mapping beans')
+            for bean_path in scan_path if scan_path else properties.components_path:
+                is_project_root = os.path.abspath(properties.project_root + bean_path) == os.path.abspath(
+                    properties.project_root)
+                if is_project_root:
+                    # 若配置项目自身路径则提示警告
+                    logger.warning(f'扫描路径(components_path)存在项目根路径的配置会导致项目异常启动,请注意')
+                map_bean(bean_path)
+            return f(*args,**kwargs)
+
+        return method_args
+
+    return method
+
+
 def map_bean(bean_path: str, is_project_root: bool = False):
     __project_root = properties.project_root.replace("\\", "/")
     bean_dir = re.sub('(\\\\|/)', '', bean_path)
@@ -225,11 +243,12 @@ def map_bean(bean_path: str, is_project_root: bool = False):
             # 强制指定为项目根路径也跳过
             if relative_path in properties.blueprint_path \
                     or relative_path == '/' \
+                    or relative_path.endswith('__') \
                     or is_project_root:
                 continue
+            logger.debug(f'scan path {relative_path}')
             # exec(f'from {re.sub("/", ".", __bean_dir)} import {module_path.split(".")[-1]}')
             # print(f'{relative_path} => {dirs} => {files}')
-            logger.debug(f'scan path {relative_path}')
             for file in files:
                 file_short_name = os.path.basename(file).split(".")[0]
                 if not file.endswith('.py') or re.match('__.+__', file_short_name):
@@ -275,45 +294,40 @@ def free_source():
     def method(f):
         @functools.wraps(f)
         def args(*arg, **kwarg):
-            logger.info('启动服务器')
-            logger.info('路由初始化')
-            logger.debug('mapping beans')
-            for bean_path in properties.components_path:
-                is_project_root = os.path.abspath(properties.project_root + bean_path) == os.path.abspath(
-                    properties.project_root)
-                if is_project_root:
-                    # 若配置项目自身路径则提示警告
-                    logger.warning(f'扫描路径(components_path)存在项目根路径的配置会导致项目异常启动,请注意')
-                map_bean(bean_path)
-            logger.debug('mapping routes')
-            for path in properties.blueprint_path:
-                map_apps(path)
-            load_footer()
-            # 执行蓝图初始化方法
-            for blueprint_module, blue_print_init_method in blueprint_init_queue.items():
-                try:
-                    blue_print_init_method()
-                except Exception as e:
-                    logger.error(f'蓝图"{blueprint_module}"初始化失败,信息: {e}')
-            # for rule in get_app().url_map.iter_rules():
-            #     print(str(rule))
-            # print(rule.get_rules())
-            # for name in dir(rule):
-            #     print(f'{name}---{getattr(rule,name)}')
-            # print(help(rule))
-            # break
-            f(*arg, **kwarg)
-            """
-            释放所有资源
-            :return:
-            """
-            logger.info('服务器关闭')
-            logger.debug('释放资源')
-            if mysql:
-                mysql.free_pool()
-            logger.debug('释放连接池')
-            sys.exit()
-            # logger.info('再次按下Ctrl+C退出')
+            try:
+                logger.info('启动服务器')
+                logger.info('路由初始化')
+                logger.debug('mapping routes')
+                for path in properties.blueprint_path:
+                    map_apps(path)
+                load_footer()
+                # 执行蓝图初始化方法
+                for blueprint_module, blue_print_init_method in blueprint_init_queue.items():
+                    try:
+                        blue_print_init_method()
+                    except Exception as e:
+                        logger.error(f'蓝图"{blueprint_module}"初始化失败,信息: {e}')
+                # for rule in get_app().url_map.iter_rules():
+                #     print(str(rule))
+                # print(rule.get_rules())
+                # for name in dir(rule):
+                #     print(f'{name}---{getattr(rule,name)}')
+                # print(help(rule))
+                # break
+                f(*arg, **kwarg)
+                """
+                释放所有资源
+                :return:
+                """
+                logger.info('服务器关闭')
+                logger.debug('释放资源')
+                if mysql:
+                    mysql.free_pool()
+                logger.debug('释放连接池')
+                sys.exit()
+                # logger.info('再次按下Ctrl+C退出')
+            except Exception as e:
+                logger.error(e)
 
         return args
 
