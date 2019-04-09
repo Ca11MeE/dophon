@@ -23,7 +23,6 @@ from dophon.tools import gc
 from . import tools
 from .tools.dynamic_import import d_import
 
-
 # 旧版本与数据库的耦合,后期版本移除
 try:
     mysql = __import__('dophon.db.mysql')
@@ -212,7 +211,7 @@ def map_apps(dir_path):
     # print(get_app().blueprints)
 
 
-def map_bean(bean_path: str,is_project_root:bool = False):
+def map_bean(bean_path: str, is_project_root: bool = False):
     __project_root = properties.project_root.replace("\\", "/")
     bean_dir = re.sub('(\\\\|/)', '', bean_path)
     # 不存在路由定义
@@ -280,7 +279,8 @@ def free_source():
                 map_apps(path)
             logger.debug('mapping beans')
             for bean_path in properties.components_path:
-                is_project_root = os.path.abspath(properties.project_root + bean_path) == os.path.abspath(properties.project_root)
+                is_project_root = os.path.abspath(properties.project_root + bean_path) == os.path.abspath(
+                    properties.project_root)
                 if is_project_root:
                     # 若配置项目自身路径则提示警告
                     logger.warning(f'扫描路径(components_path)存在项目根路径的配置会导致项目异常启动,请注意')
@@ -579,6 +579,18 @@ def show_rule_info(view):
 
     try:
         def __sort_inner_desc_info(item_key: str):
+            def parse_param(info: dict):
+                __result = ''
+                for __param_name, __param_info in info.items():
+                    __result += f'''<div style="margin: 10px;"><span class="label label-primary">
+                                    {__param_name}
+                                </span></div>'''
+                    __result += '<table class="table table-hover"><tbody>'
+                    for __name, __value in __param_info.items():
+                        __result += f'''<tr><td class="">{__name}</td><td class="">{__value}</td></tr>'''
+                    __result += '</tbody></table>'
+                return __result
+
             result = ''
             if __bind_rule_info_map[item_key] in DESC_INFO:
                 __desc_info = DESC_INFO[__bind_rule_info_map[item_key]]
@@ -589,12 +601,12 @@ def show_rule_info(view):
                     <div class="panel panel-default">
                             <div class="panel-heading">
                                 <h4 class="panel-title">
-                                        {__arg_name}
+                                        {'Doc' if __arg_name == 'own_doc' else 'Params'}
                                 </h4>
                             </div>
                             <div id="collapse_{id(__arg_name)}_{id(__arg_info)}" class="panel-collapse">
                                 <div class="panel-body">
-                                    { __arg_info }
+                                    { __arg_info if __arg_name == 'own_doc' else parse_param(__arg_info) }
                                 </div>
                             </div>
                         </div>
