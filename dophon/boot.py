@@ -19,6 +19,7 @@ pre_boot.check_modules()
 
 from flask import Flask, request, abort, jsonify
 from dophon import properties, blue_print
+from html import escape
 from dophon.tools import gc
 from . import tools
 from .tools.dynamic_import import d_import
@@ -228,6 +229,7 @@ def map_bean(bean_path: str, is_project_root: bool = False):
                 continue
             # exec(f'from {re.sub("/", ".", __bean_dir)} import {module_path.split(".")[-1]}')
             # print(f'{relative_path} => {dirs} => {files}')
+            logger.debug(f'scan path {relative_path}')
             for file in files:
                 file_short_name = os.path.basename(file).split(".")[0]
                 if not file.endswith('.py') or re.match('__.+__', file_short_name):
@@ -242,6 +244,7 @@ def map_bean(bean_path: str, is_project_root: bool = False):
                 # print(__file_package_part)
                 __exec_code = f'from {".".join(__file_package_part[:-1])} import {__file_package_part[-1]}'
                 # print(__exec_code)
+                logger.debug(f'mapping bean {__file_package_part[-1]} {__exec_code}')
                 exec(__exec_code)
         __import__(bean_dir, fromlist=bean_dir)
     except Exception as e:
@@ -274,9 +277,6 @@ def free_source():
         def args(*arg, **kwarg):
             logger.info('启动服务器')
             logger.info('路由初始化')
-            logger.debug('mapping routes')
-            for path in properties.blueprint_path:
-                map_apps(path)
             logger.debug('mapping beans')
             for bean_path in properties.components_path:
                 is_project_root = os.path.abspath(properties.project_root + bean_path) == os.path.abspath(
@@ -285,6 +285,9 @@ def free_source():
                     # 若配置项目自身路径则提示警告
                     logger.warning(f'扫描路径(components_path)存在项目根路径的配置会导致项目异常启动,请注意')
                 map_bean(bean_path)
+            logger.debug('mapping routes')
+            for path in properties.blueprint_path:
+                map_apps(path)
             load_footer()
             # 执行蓝图初始化方法
             for blueprint_module, blue_print_init_method in blueprint_init_queue.items():
@@ -585,9 +588,9 @@ def show_rule_info(view):
                     __result += f'''<div style="margin: 10px;"><span class="label label-primary">
                                     {__param_name}
                                 </span></div>'''
-                    __result += '<table class="table table-hover"><tbody>'
+                    __result += '<table class="table table-hover table-striped"><tbody>'
                     for __name, __value in __param_info.items():
-                        __result += f'''<tr><td class="">{__name}</td><td class="">{__value}</td></tr>'''
+                        __result += f'''<tr><td class="">{__name}</td><td class="">{escape(str(__value))}</td></tr>'''
                     __result += '</tbody></table>'
                 return __result
 
@@ -629,7 +632,10 @@ def show_rule_info(view):
                         <h4 class="panel-title">
                             <a data-toggle="collapse" 
                                href="#collapse_{id(item)}">
-                                {item}
+                                {escape(str(item))}
+                                <span class="label label-primary" style="float:right;">
+                                    {__bind_rule_info_map[str(item)]}
+                                </span
                             </a>
                         </h4>
                     </div>
@@ -648,6 +654,14 @@ def show_rule_info(view):
                     <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
                     <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
                     <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+                    <style>
+                        """"""
+                        td {
+                            width:50%;
+                            text-align:left;
+                        }
+                        """f"""
+                    </style>
                 </head>
                 <body>
                        <div class="panel-group" id="accordion">
