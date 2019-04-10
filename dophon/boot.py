@@ -124,7 +124,7 @@ def before_request():
             """
             if (int(now_timestemp) - int(req_timestemp[0])) > 1 \
                     and \
-                    (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
+                            (int(now_timestemp) - int(req_timestemp[len(req_timestemp) - 1])) < 1:
                 # 检测3秒内请求数
                 if len(req_timestemp) > 50:
                     # 默认三秒内请求不超过300
@@ -206,10 +206,10 @@ def map_apps(dir_path):
             raise e
             pass
 
-        # for name in dir(item):
-        #     print(f'{name} ==> {getattr(item, name)}')
+            # for name in dir(item):
+            #     print(f'{name} ==> {getattr(item, name)}')
 
-    # print(get_app().blueprints)
+            # print(get_app().blueprints)
 
 
 def BeanScan(scan_path: list = []):
@@ -223,7 +223,7 @@ def BeanScan(scan_path: list = []):
                     # 若配置项目自身路径则提示警告
                     logger.warning(f'扫描路径(components_path)存在项目根路径的配置会导致项目异常启动,请注意')
                 map_bean(bean_path)
-            return f(*args,**kwargs)
+            return f(*args, **kwargs)
 
         return method_args
 
@@ -365,6 +365,7 @@ def enhance_static_route(static_floder_path: str):
     """
     framework_static_route_path = f'{properties.project_root}{properties.blueprint_path[0]}/FrameworkStaticRoute.py'
     # if not os.path.exists(framework_static_route_path):
+    linux_static_floder_path = static_floder_path.replace('\\', '/')
     if True:
         # import types
         import uuid
@@ -379,26 +380,31 @@ def enhance_static_route(static_floder_path: str):
                 f"from flask import url_for\n"
                 f"from flask import render_template\n"
                 f"from flask import send_from_directory\n"
-                f"app = blue_print('FrameworkStaticRoute', __name__,static_folder='{static_floder_path}')\n",
+                f"app = blue_print('FrameworkStaticRoute', __name__,static_folder='{linux_static_floder_path}')\n",
                 encoding='utf-8'))
-            for root, dir_path, file in os.walk(static_floder_path):
+            for root, dir_path, file in os.walk(linux_static_floder_path):
                 # 消除转义字符(win)
                 root = re.sub('\\\\', '/', root)
-                static_floder_path = re.sub('\\\\', '/', static_floder_path)
+                linux_static_floder_path = re.sub('\\\\', '/', linux_static_floder_path)
                 # 静态目录下的目录名
-                root_dir_path = re.sub('\\\\', '/', re.sub(static_floder_path, "", root))
+                root_dir_path = re.sub('\\\\', '/', re.sub(linux_static_floder_path, "", root))
                 # 解析静态资源路径
                 route_name = re.sub('[^(1-9a-zA-Z_)]', '',
                                     f'{re.sub(static_floder_path, "", root)}_{root_dir_path}_{uuid.uuid1()}')
                 route_path = f'{root_dir_path}/<file_name>'
                 static_url_method_code_body = \
                     f"@RequestMapping('{route_path}',['get','post'])\ndef {route_name}(file_name):\n\t" \
-                        f"return render_template(f'{root_dir_path}/" \
-                        "{file_name}" \
-                        f"') if file_name.endswith('.html') " \
-                        f"else send_from_directory('{static_floder_path}{root_dir_path}',f" \
-                        "'{file_name}'" \
-                        ",as_attachment=True)\n"
+                    f"\"\"\"\n\t" \
+                    f"static file route in {route_path}\n\t" \
+                    f":param file_name: static file name\n\t" \
+                    f":return static file blob\n\t" \
+                    f"\"\"\"\n\t" \
+                    f"return render_template(f'{root_dir_path}/" \
+                    "{file_name}" \
+                    f"') if file_name.endswith('.html') " \
+                    f"else send_from_directory('{linux_static_floder_path}{root_dir_path}',f" \
+                    "'{file_name}'" \
+                    ",as_attachment=True)\n"
                 fsroute.write(bytes(
                     static_url_method_code_body,
                     encoding='utf-8'))
@@ -588,7 +594,7 @@ def show_rule_info(view):
         __bind_rule_info_map[str(next(get_app().url_map.iter_rules(item.endpoint)))] = \
             re.sub('_annotation_auto_reg\.', '', item.endpoint)
 
-    # print(__bind_rule_info_map)
+    # print([ v for v in sorted(__bind_rule_info_map.values())] )
 
     from .annotation.description import DESC_INFO
 
@@ -641,24 +647,27 @@ def show_rule_info(view):
         # )}
         body_str = ''
         for item in get_app().url_map.iter_rules():
-            body_str += f"""<div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <a data-toggle="collapse" 
-                               href="#collapse_{id(item)}">
-                                {escape(str(item))}
-                                <span class="label label-primary" style="float:right;">
-                                    {__bind_rule_info_map[str(item)]}
-                                </span
-                            </a>
-                        </h4>
-                    </div>
-                    <div id="collapse_{id(item)}" class="panel-collapse collapse">
-                        <div class="panel-body">
-                            { __sort_inner_desc_info(str(item)) }
+            route_method_path = __bind_rule_info_map[str(item)]
+            if re.search('\.', route_method_path) and not re.match('FrameworkStaticRoute\..*', route_method_path):
+                # 非框架定义的路由参与路由显示
+                body_str += f"""<div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" 
+                                   href="#collapse_{id(item)}">
+                                    {escape(str(item))}
+                                    <span class="label label-primary" style="float:right;">
+                                        {route_method_path}
+                                    </span
+                                </a>
+                            </h4>
                         </div>
-                    </div>
-                </div>"""
+                        <div id="collapse_{id(item)}" class="panel-collapse collapse">
+                            <div class="panel-body">
+                                { __sort_inner_desc_info(str(item)) }
+                            </div>
+                        </div>
+                    </div>"""
 
         return f"""
                 <html>
